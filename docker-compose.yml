@@ -1,0 +1,70 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: railtracker-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/railtrack_db
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - RAILRADAR_API_KEY=${RAILRADAR_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - JWT_SECRET=${JWT_SECRET:-d2FudC10by10cmFjay10cmFpbnMtc2VjdXJlLWtleS0yNTYtYml0LXZhbHVlLXRvLWJlLXJlcGxhY2VkLWluLXByb2R1Y3Rpb24=}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - railtracker-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: railtracker-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: railtrack_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d railtrack_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - railtracker-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: railtracker-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - railtracker-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  railtracker-net:
+    driver: bridge
