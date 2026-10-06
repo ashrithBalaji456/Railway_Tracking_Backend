@@ -157,7 +157,7 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void seedTrains() {
         long currentCount = trainRepository.count();
-        if (currentCount >= 1000) {
+        if (currentCount >= 8000) {
             logger.info("Train database already contains {} trains. Skipping seed.", currentCount);
             return;
         }
