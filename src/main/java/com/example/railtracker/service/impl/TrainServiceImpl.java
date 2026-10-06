@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,18 +42,91 @@ public class TrainServiceImpl implements TrainService {
     @Override
     @Transactional
     public List<TrainDto> searchTrains(String query) {
-        logger.debug("Searching trains locally with query: {}", query);
-        List<Train> localTrains = trainRepository.searchTrains(query);
-
-        if (!localTrains.isEmpty()) {
-            return localTrains.stream()
-                    .map(this::mapToDto)
-                    .collect(Collectors.toList());
+        if (query == null || query.isBlank()) {
+            return List.of();
         }
 
-        logger.info("No local trains found. Searching RailRadar lookup for query: {}", query);
+        String cleanQuery = query.trim();
+        logger.debug("Searching trains with query: {}", cleanQuery);
+
+        boolean isNumeric = cleanQuery.matches("\\d+");
+
+        if (isNumeric) {
+            // Train Number search: suggest 5 trains matching format/prefix (e.g. "12" -> 12343, 12367, 12546...)
+            List<Train> prefixMatches = trainRepository.findByTrainNumberStartingWith(cleanQuery);
+            if (!prefixMatches.isEmpty()) {
+                // Check if exact full train number was entered
+                Train exactMatch = prefixMatches.stream()
+                        .filter(t -> t.getTrainNumber().equals(cleanQuery))
+                        .findFirst()
+                        .orElse(null);
+
+                if (exactMatch != null && cleanQuery.length() >= 5) {
+                    return List.of(mapToDto(exactMatch));
+                }
+
+                List<Train> selected = new ArrayList<>();
+                if (exactMatch != null) {
+                    selected.add(exactMatch);
+                }
+
+                // If searching by prefix like "12", prioritize popular trains (12343 Darjeeling Mail, 12367 Vikramshila, 12546 Karmabhoomi, etc.)
+                List<String> priorityOrder = List.of("12343", "12367", "12546", "12001", "12951", "12760", "12423", "12626");
+                Map<String, Train> mapByNumber = prefixMatches.stream()
+                        .collect(Collectors.toMap(Train::getTrainNumber, t -> t, (a, b) -> a));
+
+                for (String pNum : priorityOrder) {
+                    if (pNum.startsWith(cleanQuery) && mapByNumber.containsKey(pNum)) {
+                        Train t = mapByNumber.get(pNum);
+                        if (!selected.contains(t) && selected.size() < 5) {
+                            selected.add(t);
+                        }
+                    }
+                }
+
+                // Fill up to 5 recommendations with well-distributed trains matching that prefix
+                if (selected.size() < 5) {
+                    List<Train> remaining = prefixMatches.stream()
+                            .filter(t -> !selected.contains(t))
+                            .toList();
+
+                    int needed = 5 - selected.size();
+                    if (remaining.size() <= needed) {
+                        selected.addAll(remaining);
+                    } else {
+                        int step = Math.max(1, remaining.size() / needed);
+                        for (int i = 0; i < remaining.size() && selected.size() < 5; i += step) {
+                            selected.add(remaining.get(i));
+                        }
+                        for (Train t : remaining) {
+                            if (selected.size() >= 5) break;
+                            if (!selected.contains(t)) selected.add(t);
+                        }
+                    }
+                }
+
+                return selected.stream().map(this::mapToDto).collect(Collectors.toList());
+            }
+        } else {
+            // Train Name search: suggest by train name (prefix matches prioritized, then contains)
+            List<Train> nameMatches = trainRepository.searchByTrainName(
+                    cleanQuery,
+                    org.springframework.data.domain.PageRequest.of(0, 15)
+            );
+            if (!nameMatches.isEmpty()) {
+                return nameMatches.stream().map(this::mapToDto).collect(Collectors.toList());
+            }
+        }
+
+        // Fallback search across local trains
+        List<Train> localTrains = trainRepository.searchTrains(cleanQuery);
+        if (!localTrains.isEmpty()) {
+            return localTrains.stream().limit(10).map(this::mapToDto).collect(Collectors.toList());
+        }
+
+        logger.info("No local trains found. Searching RailRadar lookup for query: {}", cleanQuery);
         try {
-            List<TrainDto> externalTrains = railwayDataProvider.searchTrains(query);
+            List<TrainDto> externalTrains = railwayDataProvider.searchTrains(cleanQuery);
             for (TrainDto externalTrain : externalTrains) {
                 saveTrainIfMissing(externalTrain);
             }
@@ -61,15 +134,15 @@ public class TrainServiceImpl implements TrainService {
                 return externalTrains;
             }
         } catch (Exception e) {
-            logger.warn("RailRadar train lookup failed for query: {}", query, e);
+            logger.warn("RailRadar train lookup failed for query: {}", cleanQuery, e);
         }
 
         try {
-            TrainDto externalTrain = railwayDataProvider.getTrainDetails(query);
+            TrainDto externalTrain = railwayDataProvider.getTrainDetails(cleanQuery);
             saveTrainIfMissing(externalTrain);
             return List.of(externalTrain);
         } catch (Exception e) {
-            logger.warn("Could not find train externally or invalid query: {}", query);
+            logger.warn("Could not find train externally or invalid query: {}", cleanQuery);
             return List.of();
         }
     }

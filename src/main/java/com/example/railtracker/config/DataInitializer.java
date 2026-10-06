@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.InputStream;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Profile("!test")
@@ -83,13 +84,14 @@ public class DataInitializer implements CommandLineRunner {
     );
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
         seedStations();
+        seedTrains();
         seedSampleTrains();
     }
 
-    private void seedStations() {
+    @Transactional
+    public void seedStations() {
         long currentCount = stationRepository.count();
         if (currentCount >= 8000) {
             logger.info("Station database already contains {} stations. Skipping seed.", currentCount);
@@ -138,13 +140,116 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    private void seedSampleTrains() {
-        if (trainRepository.count() > 0) {
-            logger.info("Sample trains already seeded. Skipping.");
+    private static record TrainSeedRecord(
+            String trainNumber,
+            String trainName,
+            String trainType,
+            String category,
+            String sourceStation,
+            String destinationStation,
+            Integer distance,
+            Integer duration,
+            String runningDays,
+            String coachPosition,
+            Boolean active
+    ) {}
+
+    @Transactional
+    public void seedTrains() {
+        long currentCount = trainRepository.count();
+        if (currentCount >= 1000) {
+            logger.info("Train database already contains {} trains. Skipping seed.", currentCount);
             return;
         }
 
-        logger.info("Seeding sample trains (12760 Charminar Express and 12626 Kerala Express)...");
+        logger.info("Seeding Indian Railway trains into database from trains_data.json...");
+        try (InputStream is = getClass().getResourceAsStream("/trains_data.json")) {
+            if (is == null) {
+                logger.error("trains_data.json not found in classpath!");
+                return;
+            }
+
+            List<TrainSeedRecord> records = objectMapper.readValue(is, new TypeReference<List<TrainSeedRecord>>() {});
+            Set<String> existingNumbers = trainRepository.findAll().stream()
+                    .map(Train::getTrainNumber)
+                    .collect(Collectors.toSet());
+            List<Train> trainsToSave = new ArrayList<>();
+
+            for (TrainSeedRecord r : records) {
+                if (r.trainNumber() == null || r.trainNumber().isBlank()) continue;
+                String num = r.trainNumber().trim();
+
+                if (existingNumbers.contains(num)) {
+                    continue;
+                }
+                existingNumbers.add(num);
+
+                Train t = new Train(
+                        num,
+                        r.trainName() != null ? r.trainName().trim() : "Express",
+                        r.trainType() != null ? r.trainType().trim() : "Express",
+                        r.category() != null ? r.category().trim() : "EXPRESS",
+                        r.sourceStation() != null ? r.sourceStation().trim() : "",
+                        r.destinationStation() != null ? r.destinationStation().trim() : "",
+                        r.distance(),
+                        r.duration(),
+                        r.runningDays() != null ? r.runningDays() : "Daily",
+                        r.coachPosition()
+                );
+                if (r.active() != null) {
+                    t.setActive(r.active());
+                }
+                trainsToSave.add(t);
+            }
+
+            if (!trainsToSave.isEmpty()) {
+                trainRepository.saveAll(trainsToSave);
+                logger.info("Successfully seeded {} Indian Railway trains into database!", trainsToSave.size());
+            }
+        } catch (Exception e) {
+            logger.error("Failed to seed trains from trains_data.json", e);
+        }
+    }
+
+    @Transactional
+    public void seedSampleTrains() {
+        // Ensure sample trains exist
+        Train t12760 = trainRepository.findByTrainNumber("12760").orElseGet(() -> {
+            Train t = new Train(
+                    "12760",
+                    "Charminar Express",
+                    "Superfast",
+                    "EXPRESS",
+                    "HYB",
+                    "MS",
+                    660,
+                    720,
+                    "Mon,Tue,Wed,Thu,Fri,Sat,Sun"
+            );
+            return trainRepository.save(t);
+        });
+
+        Train t12626 = trainRepository.findByTrainNumber("12626").orElseGet(() -> {
+            Train t = new Train(
+                    "12626",
+                    "Kerala Express",
+                    "Superfast",
+                    "EXPRESS",
+                    "BZA",
+                    "NDLS",
+                    1400,
+                    1260,
+                    "Mon,Tue,Wed,Thu,Fri,Sat,Sun"
+            );
+            return trainRepository.save(t);
+        });
+
+        if (trainStationRepository.count() > 0) {
+            logger.info("Sample train halts already seeded. Skipping.");
+            return;
+        }
+
+        logger.info("Seeding sample train halts for 12760 Charminar Express and 12626 Kerala Express...");
 
         // Helper to retrieve or create fallback station
         Station hyb = getOrCreateStation("HYB", "Hyderabad Deccan", "Hyderabad", "Telangana", 17.385, 78.486);
@@ -166,33 +271,6 @@ public class DataInitializer implements CommandLineRunner {
         Station vglj = getOrCreateStation("VGLJ", "VGL Jhansi Junction", "Jhansi", "Uttar Pradesh", 25.448, 78.568);
         Station agc = getOrCreateStation("AGC", "Agra Cantt", "Agra", "Uttar Pradesh", 27.158, 77.994);
         Station ndls = getOrCreateStation("NDLS", "New Delhi", "New Delhi", "Delhi", 28.614, 77.209);
-
-        // 2. Create Trains
-        Train t12760 = new Train(
-                "12760",
-                "Charminar Express",
-                "Superfast",
-                "EXPRESS",
-                "HYB",
-                "MS",
-                660,
-                720,
-                "Mon,Tue,Wed,Thu,Fri,Sat,Sun"
-        );
-
-        Train t12626 = new Train(
-                "12626",
-                "Kerala Express",
-                "Superfast",
-                "EXPRESS",
-                "BZA",
-                "NDLS",
-                1400,
-                1260,
-                "Mon,Tue,Wed,Thu,Fri,Sat,Sun"
-        );
-
-        trainRepository.saveAll(List.of(t12760, t12626));
 
         // 3. Create Halts for Train 12760 (Charminar Express)
         TrainStation ts1 = new TrainStation(t12760, hyb, 1, null, LocalTime.of(18, 0), 0, 0, 0, "STOPPING", true);
@@ -224,7 +302,7 @@ public class DataInitializer implements CommandLineRunner {
                 tsK1, tsK2, tsK3, tsK4, tsK5, tsK6, tsK7, tsK8, tsK9, tsK10
         ));
 
-        logger.info("Railway sample trains initialization complete!");
+        logger.info("Railway sample train halts initialization complete!");
     }
 
     private Station getOrCreateStation(String code, String defaultName, String city, String state, double lat, double lon) {

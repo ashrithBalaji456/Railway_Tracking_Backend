@@ -11,31 +11,31 @@ public class Train {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 10)
+    @Column(unique = true, nullable = false, length = 20)
     private String trainNumber;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 255)
     private String trainName;
 
-    @Column(length = 50)
+    @Column(length = 100)
     private String trainType;
 
-    @Column(length = 50)
+    @Column(length = 100)
     private String category;
 
-    @Column(length = 10)
+    @Column(length = 150)
     private String sourceStation;
 
-    @Column(length = 10)
+    @Column(length = 150)
     private String destinationStation;
 
     private Integer distance; // in km
     private Integer duration; // in minutes
 
-    @Column(length = 50)
+    @Column(length = 100)
     private String runningDays; // e.g. "Mon,Tue,Wed,Thu,Fri,Sat,Sun" or "1,2,3,4,5,6,7"
 
-    @Column(length = 255)
+    @Column(length = 500)
     private String coachPosition;
 
     @Column(nullable = false)
