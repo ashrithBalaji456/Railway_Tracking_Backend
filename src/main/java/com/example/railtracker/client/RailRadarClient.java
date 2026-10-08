@@ -57,7 +57,8 @@ public class RailRadarClient {
                 .defaultHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                 .exchangeStrategies(strategies)
                 .build();
-        logger.info("Initialized RailRadarClient with baseUrl: '{}' and apiKey: '{}'", baseUrl, apiKey);
+        String maskedKey = (apiKey == null || apiKey.isBlank()) ? "NOT SET" : (apiKey.length() > 6 ? apiKey.substring(0, 4) + "..." + apiKey.substring(apiKey.length() - 2) : "***");
+        logger.info("Initialized RailRadarClient with baseUrl: '{}' and apiKey: '{}'", baseUrl, maskedKey);
     }
 
     private JsonNode executeGet(String path) {
