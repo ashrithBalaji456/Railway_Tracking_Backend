@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface TrainRepository extends JpaRepository<Train, Long> {
     Optional<Train> findByTrainNumber(String trainNumber);
+    boolean existsByTrainNumber(String trainNumber);
 
     @Query("SELECT t FROM Train t WHERE t.trainNumber LIKE CONCAT(:prefix, '%') ORDER BY t.trainNumber ASC")
     List<Train> findByTrainNumberStartingWith(@Param("prefix") String prefix);

@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.example.railtracker.entity.Train;
+import com.example.railtracker.repository.TrainRepository;
+
 @Service
 public class StationServiceImpl implements StationService {
 
@@ -28,11 +31,17 @@ public class StationServiceImpl implements StationService {
     private final StationRepository stationRepository;
     private final RailwayDataProvider railwayDataProvider;
     private final TrainStationRepository trainStationRepository;
+    private final TrainRepository trainRepository;
 
-    public StationServiceImpl(StationRepository stationRepository, RailwayDataProvider railwayDataProvider, TrainStationRepository trainStationRepository) {
+    public StationServiceImpl(
+            StationRepository stationRepository,
+            RailwayDataProvider railwayDataProvider,
+            TrainStationRepository trainStationRepository,
+            TrainRepository trainRepository) {
         this.stationRepository = stationRepository;
         this.railwayDataProvider = railwayDataProvider;
         this.trainStationRepository = trainStationRepository;
+        this.trainRepository = trainRepository;
     }
 
     @Override
@@ -114,6 +123,11 @@ public class StationServiceImpl implements StationService {
         }
 
         List<StationBoardTrainDto> allTrains = railwayDataProvider.getStationBoard(stationCode, true);
+        if (allTrains != null) {
+            for (StationBoardTrainDto t : allTrains) {
+                saveTrainIfMissing(t);
+            }
+        }
         allTrains = enrichArrivalDays(allTrains, stationCode);
 
         if (type == null || type.equalsIgnoreCase("ALL")) {
@@ -141,6 +155,11 @@ public class StationServiceImpl implements StationService {
         }
 
         List<StationBoardTrainDto> liveBoard = railwayDataProvider.getStationLiveBoard(stationCode, hoursAhead, type);
+        if (liveBoard != null) {
+            for (StationBoardTrainDto t : liveBoard) {
+                saveTrainIfMissing(t);
+            }
+        }
         return enrichArrivalDays(liveBoard, stationCode);
     }
 
@@ -158,6 +177,12 @@ public class StationServiceImpl implements StationService {
         LiveStationBoardResponse rawResponse = railwayDataProvider.getLiveStationBoardDetails(stationCode, hours);
         if (rawResponse == null) {
             return null;
+        }
+
+        if (rawResponse.trains() != null) {
+            for (LiveStationBoardResponse.LiveStationBoardTrain t : rawResponse.trains()) {
+                saveTrainIfMissing(t);
+            }
         }
         
         List<LiveStationBoardResponse.LiveStationBoardTrain> enrichedTrains = rawResponse.trains().stream()
@@ -281,6 +306,78 @@ public class StationServiceImpl implements StationService {
             logger.warn("Failed to enrich arrival days from database for station: {}", stationCode, e);
             return trains;
         }
+    }
+
+    private void saveTrainIfMissing(StationBoardTrainDto t) {
+        if (t == null || t.trainNumber() == null || t.trainNumber().isBlank()) return;
+        try {
+            String num = t.trainNumber().trim();
+            if (!trainRepository.existsByTrainNumber(num)) {
+                String name = t.trainName() != null ? t.trainName().trim() : "Express";
+                String type = t.trainType() != null ? t.trainType().trim() : "Express";
+                String cat = determineCategory(name, type);
+                Train train = new Train(
+                        num,
+                        name,
+                        type,
+                        cat,
+                        t.sourceStation() != null ? t.sourceStation().trim() : "",
+                        t.destinationStation() != null ? t.destinationStation().trim() : "",
+                        null,
+                        null,
+                        t.runningDays() != null ? t.runningDays() : "Daily"
+                );
+                trainRepository.save(train);
+                logger.info("Auto-populated new train {} ({}) from station board into database", num, name);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to auto-populate train {}: {}", t.trainNumber(), e.getMessage());
+        }
+    }
+
+    private void saveTrainIfMissing(LiveStationBoardResponse.LiveStationBoardTrain t) {
+        if (t == null || t.trainNumber() == null || t.trainNumber().isBlank()) return;
+        try {
+            String num = t.trainNumber().trim();
+            if (!trainRepository.existsByTrainNumber(num)) {
+                String name = t.trainName() != null ? t.trainName().trim() : "Express";
+                String type = t.trainType() != null ? t.trainType().trim() : "Express";
+                String cat = determineCategory(name, type);
+                String src = t.source() != null && t.source().name() != null ? t.source().name() : (t.source() != null ? t.source().code() : "");
+                String dest = t.destination() != null && t.destination().name() != null ? t.destination().name() : (t.destination() != null ? t.destination().code() : "");
+                Train train = new Train(
+                        num,
+                        name,
+                        type,
+                        cat,
+                        src,
+                        dest,
+                        null,
+                        null,
+                        t.runningDays() != null ? t.runningDays() : "Daily"
+                );
+                trainRepository.save(train);
+                logger.info("Auto-populated new train {} ({}) from live station board into database", num, name);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to auto-populate train {}: {}", t.trainNumber(), e.getMessage());
+        }
+    }
+
+    private String determineCategory(String trainName, String trainType) {
+        String text = ((trainName != null ? trainName : "") + " " + (trainType != null ? trainType : "")).toUpperCase();
+        if (text.contains("VANDE BHARAT")) return "VANDE_BHARAT";
+        if (text.contains("RAJDHANI")) return "RAJDHANI";
+        if (text.contains("SHATABDI")) return "SHATABDI";
+        if (text.contains("DURONTO")) return "DURONTO";
+        if (text.contains("GARIB RATH")) return "GARIB_RATH";
+        if (text.contains("HUMSAFAR")) return "HUMSAFAR";
+        if (text.contains("TEJAS")) return "TEJAS";
+        if (text.contains("SUPERFAST") || text.contains("SF")) return "SUPERFAST";
+        if (text.contains("PASSENGER")) return "PASSENGER";
+        if (text.contains("MEMU") || text.contains("DEMU") || text.contains("EMU")) return "SUBURBAN";
+        if (text.contains("MAIL")) return "MAIL";
+        return "EXPRESS";
     }
 
     private StationDto mapToDto(Station station) {

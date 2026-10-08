@@ -123,38 +123,128 @@ public class TrainServiceImpl implements TrainService {
     }
 
     private void saveTrainIfMissing(TrainDto externalTrain) {
-        if (externalTrain == null || externalTrain.trainNumber() == null) return;
-        var existingOpt = trainRepository.findByTrainNumber(externalTrain.trainNumber());
-        if (existingOpt.isEmpty()) {
-            Train train = new Train(
-                    externalTrain.trainNumber(),
-                    externalTrain.trainName(),
-                    externalTrain.trainType(),
-                    externalTrain.category(),
-                    externalTrain.sourceStation(),
-                    externalTrain.destinationStation(),
-                    externalTrain.distance(),
-                    externalTrain.duration(),
-                    externalTrain.runningDays(),
-                    externalTrain.coachPosition()
-            );
-            trainRepository.save(train);
-            logger.debug("Saved train {} locally with coachPosition", externalTrain.trainNumber());
-        } else {
-            Train train = existingOpt.get();
-            if (externalTrain.coachPosition() != null && !externalTrain.coachPosition().equals(train.getCoachPosition())) {
-                train.setCoachPosition(externalTrain.coachPosition());
+        if (externalTrain == null || externalTrain.trainNumber() == null || externalTrain.trainNumber().isBlank()) return;
+        try {
+            var existingOpt = trainRepository.findByTrainNumber(externalTrain.trainNumber());
+            if (existingOpt.isEmpty()) {
+                String name = externalTrain.trainName() != null ? externalTrain.trainName().trim() : "Express";
+                String type = externalTrain.trainType() != null ? externalTrain.trainType().trim() : "Express";
+                String cat = externalTrain.category() != null ? externalTrain.category() : determineCategory(name, type);
+                Train train = new Train(
+                        externalTrain.trainNumber().trim(),
+                        name,
+                        type,
+                        cat,
+                        externalTrain.sourceStation(),
+                        externalTrain.destinationStation(),
+                        externalTrain.distance(),
+                        externalTrain.duration(),
+                        externalTrain.runningDays() != null ? externalTrain.runningDays() : "Daily",
+                        externalTrain.coachPosition()
+                );
                 trainRepository.save(train);
+                logger.info("Saved train {} ({}) locally with coachPosition", externalTrain.trainNumber(), name);
+            } else {
+                Train train = existingOpt.get();
+                boolean changed = false;
+                if (externalTrain.coachPosition() != null && !externalTrain.coachPosition().equals(train.getCoachPosition())) {
+                    train.setCoachPosition(externalTrain.coachPosition());
+                    changed = true;
+                }
+                if ((train.getSourceStation() == null || train.getSourceStation().isBlank()) && externalTrain.sourceStation() != null) {
+                    train.setSourceStation(externalTrain.sourceStation());
+                    changed = true;
+                }
+                if ((train.getDestinationStation() == null || train.getDestinationStation().isBlank()) && externalTrain.destinationStation() != null) {
+                    train.setDestinationStation(externalTrain.destinationStation());
+                    changed = true;
+                }
+                if (changed) {
+                    trainRepository.save(train);
+                }
             }
+        } catch (Exception e) {
+            logger.warn("Failed to auto-save train {}: {}", externalTrain.trainNumber(), e.getMessage());
         }
     }
+
+    private void saveTrainIfMissing(TrainRouteDto routeDto) {
+        if (routeDto == null || routeDto.trainNumber() == null || routeDto.trainNumber().isBlank()) return;
+        try {
+            String num = routeDto.trainNumber().trim();
+            if (!trainRepository.existsByTrainNumber(num)) {
+                String name = routeDto.trainName() != null ? routeDto.trainName().trim() : "Express";
+                String type = routeDto.trainType() != null ? routeDto.trainType().trim() : "Express";
+                Train train = new Train(
+                        num,
+                        name,
+                        type,
+                        determineCategory(name, type),
+                        routeDto.sourceStation(),
+                        routeDto.destinationStation(),
+                        routeDto.distance(),
+                        routeDto.duration(),
+                        routeDto.runningDays() != null ? routeDto.runningDays() : "Daily",
+                        routeDto.coachPosition()
+                );
+                trainRepository.save(train);
+                logger.info("Auto-populated new train {} ({}) locally from route schedule", num, name);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to auto-populate train from route: {}", e.getMessage());
+        }
+    }
+
+    private void saveTrainIfMissingFromLive(TrainLiveStatusDto live) {
+        if (live == null || live.trainNumber() == null || live.trainNumber().isBlank()) return;
+        try {
+            String num = live.trainNumber().trim();
+            if (!trainRepository.existsByTrainNumber(num)) {
+                String name = live.trainName() != null ? live.trainName().trim() : "Express";
+                Train train = new Train(
+                        num,
+                        name,
+                        "Express",
+                        determineCategory(name, "Express"),
+                        "",
+                        "",
+                        null,
+                        null,
+                        "Daily"
+                );
+                trainRepository.save(train);
+                logger.info("Auto-populated new train {} ({}) locally from live status", num, name);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to auto-populate train from live status: {}", e.getMessage());
+        }
+    }
+
+    private String determineCategory(String trainName, String trainType) {
+        String text = ((trainName != null ? trainName : "") + " " + (trainType != null ? trainType : "")).toUpperCase();
+        if (text.contains("VANDE BHARAT")) return "VANDE_BHARAT";
+        if (text.contains("RAJDHANI")) return "RAJDHANI";
+        if (text.contains("SHATABDI")) return "SHATABDI";
+        if (text.contains("DURONTO")) return "DURONTO";
+        if (text.contains("GARIB RATH")) return "GARIB_RATH";
+        if (text.contains("HUMSAFAR")) return "HUMSAFAR";
+        if (text.contains("TEJAS")) return "TEJAS";
+        if (text.contains("SUPERFAST") || text.contains("SF")) return "SUPERFAST";
+        if (text.contains("PASSENGER")) return "PASSENGER";
+        if (text.contains("MEMU") || text.contains("DEMU") || text.contains("EMU")) return "SUBURBAN";
+        if (text.contains("MAIL")) return "MAIL";
+        return "EXPRESS";
+    }
+
     @Override
     public TrainDto getTrainDetails(String trainNumber, String journeyDate) {
         if (journeyDate == null || journeyDate.isBlank()) {
             return getTrainDetails(trainNumber);
         }
         logger.info("Retrieving details for train: {} with journeyDate: {}", trainNumber, journeyDate);
-        return railwayDataProvider.getTrainDetails(trainNumber, journeyDate);
+        TrainDto dto = railwayDataProvider.getTrainDetails(trainNumber, journeyDate);
+        saveTrainIfMissing(dto);
+        return dto;
     }
 
     @Override
@@ -167,18 +257,7 @@ public class TrainServiceImpl implements TrainService {
                 .orElseGet(() -> {
                     logger.info("Train {} not found locally. Searching externally.", trainNumber);
                     TrainDto foundDto = railwayDataProvider.getTrainDetails(trainNumber);
-                    Train train = new Train(
-                            foundDto.trainNumber(),
-                            foundDto.trainName(),
-                            foundDto.trainType(),
-                            foundDto.category(),
-                            foundDto.sourceStation(),
-                            foundDto.destinationStation(),
-                            foundDto.distance(),
-                            foundDto.duration(),
-                            foundDto.runningDays()
-                    );
-                    trainRepository.save(train);
+                    saveTrainIfMissing(foundDto);
                     return foundDto;
                 });
     }
@@ -190,6 +269,7 @@ public class TrainServiceImpl implements TrainService {
         }
         logger.info("Retrieving dynamic route for train: {} on date: {}", trainNumber, journeyDate);
         TrainRouteDto routeDto = railwayDataProvider.getTrainRoute(trainNumber, journeyDate);
+        saveTrainIfMissing(routeDto);
 
         // Enrich halts and stop types from the local database to prevent losing halt classification
         if (routeDto != null && routeDto.stations() != null) {
@@ -343,15 +423,18 @@ public class TrainServiceImpl implements TrainService {
         if (journeyDate == null || journeyDate.isBlank()) {
             return getTrainLiveStatus(trainNumber);
         }
-        logger.info("Retrieving dynamic live status for train: {} on date: {}", trainNumber, journeyDate);
-        return railwayDataProvider.getTrainLiveStatus(trainNumber, journeyDate);
+        TrainLiveStatusDto status = railwayDataProvider.getTrainLiveStatus(trainNumber, journeyDate);
+        saveTrainIfMissingFromLive(status);
+        return status;
     }
 
     @Override
     @Cacheable(value = "train:live", key = "#trainNumber + '_current'")
     public TrainLiveStatusDto getTrainLiveStatus(String trainNumber) {
         logger.debug("Retrieving live status for train: {}", trainNumber);
-        return railwayDataProvider.getTrainLiveStatus(trainNumber);
+        TrainLiveStatusDto status = railwayDataProvider.getTrainLiveStatus(trainNumber);
+        saveTrainIfMissingFromLive(status);
+        return status;
     }
 
     private boolean hasRealCoordinates(Double latitude, Double longitude) {

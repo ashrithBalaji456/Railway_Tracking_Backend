@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.railtracker.entity.Train;
+import com.example.railtracker.repository.TrainRepository;
+
 @Service
 public class JourneyServiceImpl implements JourneyService {
 
@@ -26,18 +29,21 @@ public class JourneyServiceImpl implements JourneyService {
     private final TrainStationRepository trainStationRepository;
     private final RailwayDataProvider railwayDataProvider;
     private final StationRepository stationRepository;
+    private final TrainRepository trainRepository;
 
     public JourneyServiceImpl(
             TrainStationRepository trainStationRepository,
             RailwayDataProvider railwayDataProvider,
-            StationRepository stationRepository) {
+            StationRepository stationRepository,
+            TrainRepository trainRepository) {
         this.trainStationRepository = trainStationRepository;
         this.railwayDataProvider = railwayDataProvider;
         this.stationRepository = stationRepository;
+        this.trainRepository = trainRepository;
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<JourneyOptionDto> planJourney(String sourceCode, String destinationCode, String date) {
         logger.info("Solving journeys from '{}' to '{}' with date '{}'", sourceCode, destinationCode, date);
         
@@ -197,6 +203,7 @@ public class JourneyServiceImpl implements JourneyService {
                             .orElse(destinationCode);
                             
                     for (TrainBetweenStationsDto t : trains) {
+                        saveTrainIfMissing(t);
                         options.add(new JourneyOptionDto(
                                 true,
                                 t.trainNumber(),
@@ -229,6 +236,49 @@ public class JourneyServiceImpl implements JourneyService {
         });
 
         return options;
+    }
+
+    private void saveTrainIfMissing(TrainBetweenStationsDto t) {
+        if (t == null || t.trainNumber() == null || t.trainNumber().isBlank()) return;
+        try {
+            String num = t.trainNumber().trim();
+            if (!trainRepository.existsByTrainNumber(num)) {
+                String name = t.trainName() != null ? t.trainName().trim() : "Express";
+                String type = t.trainType() != null ? t.trainType().trim() : "Express";
+                String cat = determineCategory(name, type);
+                Train train = new Train(
+                        num,
+                        name,
+                        type,
+                        cat,
+                        t.fromStationCode() != null ? t.fromStationCode().trim() : "",
+                        t.toStationCode() != null ? t.toStationCode().trim() : "",
+                        null,
+                        t.durationMinutes(),
+                        t.runningDays() != null ? t.runningDays() : "Daily"
+                );
+                trainRepository.save(train);
+                logger.info("Auto-populated new train {} ({}) into database from journey search", num, name);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to auto-populate train {}: {}", t.trainNumber(), e.getMessage());
+        }
+    }
+
+    private String determineCategory(String trainName, String trainType) {
+        String text = ((trainName != null ? trainName : "") + " " + (trainType != null ? trainType : "")).toUpperCase();
+        if (text.contains("VANDE BHARAT")) return "VANDE_BHARAT";
+        if (text.contains("RAJDHANI")) return "RAJDHANI";
+        if (text.contains("SHATABDI")) return "SHATABDI";
+        if (text.contains("DURONTO")) return "DURONTO";
+        if (text.contains("GARIB RATH")) return "GARIB_RATH";
+        if (text.contains("HUMSAFAR")) return "HUMSAFAR";
+        if (text.contains("TEJAS")) return "TEJAS";
+        if (text.contains("SUPERFAST") || text.contains("SF")) return "SUPERFAST";
+        if (text.contains("PASSENGER")) return "PASSENGER";
+        if (text.contains("MEMU") || text.contains("DEMU") || text.contains("EMU")) return "SUBURBAN";
+        if (text.contains("MAIL")) return "MAIL";
+        return "EXPRESS";
     }
 
     private int calculateDuration(LocalTime startTime, int startDay, LocalTime endTime, int endDay) {
