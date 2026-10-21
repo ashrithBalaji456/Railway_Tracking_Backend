@@ -1,51 +1,142 @@
 package com.example.railtracker.service.impl;
 
+import com.example.railtracker.ai.GeminiClient;
+import com.example.railtracker.ai.GeminiClient.GeminiConversationResult;
+import com.example.railtracker.ai.RailAiToolExecutor;
+import com.example.railtracker.ai.RailAiToolRegistry;
 import com.example.railtracker.dto.RailAiRequest;
 import com.example.railtracker.dto.RailAiResponse;
 import com.example.railtracker.dto.TrainLiveStatusDto;
 import com.example.railtracker.dto.TrainRouteDto;
 import com.example.railtracker.service.RailAiService;
 import com.example.railtracker.service.TrainService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Enhanced RailAI service that uses Gemini function calling to gather evidence
+ * from backend services before generating responses. Falls back to rule-based
+ * parsing when Gemini API is unavailable.
+ */
 @Service
 public class RailAiServiceImpl implements RailAiService {
 
     private static final Logger logger = LoggerFactory.getLogger(RailAiServiceImpl.class);
 
     private final TrainService trainService;
-    private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate;
+    private final GeminiClient geminiClient;
+    private final RailAiToolRegistry toolRegistry;
+    private final RailAiToolExecutor toolExecutor;
 
-    @Value("${gemini.api.key:}")
-    private String apiKey;
-
-    @Value("${gemini.api.url}")
-    private String apiUrl;
-
-    public RailAiServiceImpl(TrainService trainService, ObjectMapper objectMapper) {
+    public RailAiServiceImpl(
+            TrainService trainService,
+            GeminiClient geminiClient,
+            RailAiToolRegistry toolRegistry,
+            RailAiToolExecutor toolExecutor) {
         this.trainService = trainService;
-        this.objectMapper = objectMapper;
-        this.restTemplate = new RestTemplate();
+        this.geminiClient = geminiClient;
+        this.toolRegistry = toolRegistry;
+        this.toolExecutor = toolExecutor;
     }
 
     @Override
     public RailAiResponse getAiResponse(String username, RailAiRequest request) {
         logger.debug("Generating RailAI response for user '{}', trainContext={}", username, request.trainNumber());
 
-        // 1. Gather context
-        StringBuilder contextBuilder = new StringBuilder();
+        // 1. Try Gemini function-calling intelligence path
+        if (geminiClient.isConfigured()) {
+            try {
+                return executeIntelligenceMode(username, request);
+            } catch (Exception e) {
+                logger.error("Gemini intelligence mode failed, falling back to rules: {}", e.getMessage());
+            }
+        }
+
+        // 2. Fallback: rule-based response
+        logger.info("Executing rules-based parsing engine fallback.");
+        return executeFallbackMode(request);
+    }
+
+    // ==================== Intelligence Mode (Gemini + Function Calling) ====================
+
+    private RailAiResponse executeIntelligenceMode(String username, RailAiRequest request) {
+        String systemPrompt = buildSystemPrompt(request);
+        String userPrompt = buildUserPrompt(request);
+
+        List<Map<String, Object>> toolDefinitions = toolRegistry.getToolDefinitions();
+
+        logger.info("Submitting RailAI intelligence query with {} tool definitions", toolDefinitions.size());
+
+        GeminiConversationResult result = geminiClient.generateWithTools(
+            systemPrompt,
+            userPrompt,
+            toolDefinitions,
+            toolExecutor
+        );
+
+        logger.info("RailAI intelligence response generated. Tools used: {}", result.toolsUsed());
+
+        return new RailAiResponse(result.response(), result.toolsUsed());
+    }
+
+    private String buildSystemPrompt(RailAiRequest request) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("""
+            You are RailAI, an intelligent Indian Railways assistant built into the RailTrack India platform.
+            
+            YOUR CAPABILITIES:
+            - You have access to LIVE railway data through function calls (tools).
+            - You can check train live status, routes, station boards, and find trains between stations.
+            - You provide accurate, data-driven answers based on real backend evidence.
+            
+            CRITICAL RULES:
+            1. NEVER invent or fabricate train numbers, schedules, or delay information.
+            2. ALWAYS use the provided tools to fetch real data before answering railway-specific questions.
+            3. If a tool returns an error, acknowledge the limitation honestly.
+            4. For delay questions, check live status AND route to identify where delays occurred.
+            5. Present delay information clearly: "Train X is running Y minutes late, last seen at Z station."
+            6. When showing station-by-station delays, highlight where delay increased significantly.
+            7. Use the search_trains tool if you need to find a train number from a name.
+            8. Use the search_stations tool if you need to find a station code from a name.
+            
+            RESPONSE FORMAT:
+            - Be conversational, professional, and concise.
+            - Use clear formatting with bullet points and sections when presenting data.
+            - Always mention the source of your data (e.g., "Based on live tracking data...").
+            - For multi-language queries, respond in the same language as the user.
+            - Include train numbers in parentheses for clarity.
+            
+            DELAY INVESTIGATION PROTOCOL:
+            When a user asks "Why is my train delayed?":
+            1. First, get the train's live status to see current delay.
+            2. Examine station-by-station progress to find WHERE delay started increasing.
+            3. Identify the exact section (between stations) where maximum delay was added.
+            4. Report findings: delay amount, section, and any patterns you notice.
+            """);
+
+        return sb.toString();
+    }
+
+    private String buildUserPrompt(RailAiRequest request) {
+        StringBuilder sb = new StringBuilder();
+
+        // Add train context if available
+        if (request.trainNumber() != null && !request.trainNumber().trim().isEmpty()) {
+            sb.append(String.format("[Context: User is currently viewing/tracking train number %s]%n%n", 
+                request.trainNumber()));
+        }
+
+        sb.append(request.prompt());
+        return sb.toString();
+    }
+
+    // ==================== Fallback Mode (Rule-Based) ====================
+
+    private RailAiResponse executeFallbackMode(RailAiRequest request) {
         TrainLiveStatusDto liveStatus = null;
         TrainRouteDto route = null;
 
@@ -53,69 +144,11 @@ public class RailAiServiceImpl implements RailAiService {
             try {
                 liveStatus = trainService.getTrainLiveStatus(request.trainNumber());
                 route = trainService.getTrainRoute(request.trainNumber());
-
-                contextBuilder.append(String.format(
-                        "Context (Live Train Data):\n" +
-                        "Train: %s (No. %s)\n" +
-                        "Current status: %s\n" +
-                        "Current live delay: %d minutes late\n" +
-                        "Last known coordinates: Lat %f, Lng %f\n" +
-                        "Last location: %s\n" +
-                        "Next station stop: %s (%s)\n" +
-                        "Route path: from %s to %s. Total distance: %d km.\n",
-                        liveStatus.trainName(), liveStatus.trainNumber(),
-                        liveStatus.runStatus(), liveStatus.delayMinutes(),
-                        liveStatus.latitude(), liveStatus.longitude(),
-                        liveStatus.lastLocationInfo(), liveStatus.nextStationName(), liveStatus.nextStationCode(),
-                        route != null ? route.sourceStation() : "Unknown", route != null ? route.destinationStation() : "Unknown",
-                        route != null ? route.distance() : 0
-                ));
             } catch (Exception e) {
-                logger.warn("Could not retrieve live context for RailAI query on train {}: {}", request.trainNumber(), e.getMessage());
+                logger.warn("Could not retrieve context for fallback: {}", e.getMessage());
             }
         }
 
-        String context = contextBuilder.toString();
-        String systemPrompt = "You are RailAI, a helpful, professional, and context-aware virtual assistant for Indian Railways. " +
-                "Assist passengers by providing clear information. Keep answers polite and concise.";
-
-        // 2. Determine execution pathway: GenAI vs Rule-based fallback
-        if (apiKey != null && !apiKey.trim().isEmpty()) {
-            try {
-                String promptText = String.format("%s\n\n%s\n\nUser Question: %s", systemPrompt, context, request.prompt());
-                
-                // Formulate Gemini API generateContent payload
-                Map<String, Object> textPart = Map.of("text", promptText);
-                Map<String, Object> partsObj = Map.of("parts", List.of(textPart));
-                Map<String, Object> payloadMap = Map.of("contents", List.of(partsObj));
-                String jsonPayload = objectMapper.writeValueAsString(payloadMap);
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<String> entity = new HttpEntity<>(jsonPayload, headers);
-
-                String endpoint = String.format("%s?key=%s", apiUrl, apiKey);
-                logger.info("Submitting context-rich prompt to Gemini GenAI REST endpoint.");
-                
-                String rawResponse = restTemplate.postForObject(endpoint, entity, String.class);
-                JsonNode root = objectMapper.readTree(rawResponse);
-                
-                String generatedText = root.path("candidates")
-                        .get(0)
-                        .path("content")
-                        .path("parts")
-                        .get(0)
-                        .path("text")
-                        .asText();
-
-                return new RailAiResponse(generatedText.trim());
-            } catch (Exception e) {
-                logger.error("Gemini API call failed, reverting to intelligent rules-based parsing: {}", e.getMessage());
-            }
-        }
-
-        // 3. Rules-Based Fallback Engine
-        logger.info("Executing rules-based parsing engine fallback.");
         String reply = executeFallbackRules(request.prompt(), request.trainNumber(), liveStatus, route);
         return new RailAiResponse(reply);
     }
@@ -152,16 +185,16 @@ public class RailAiServiceImpl implements RailAiService {
 
         // Default chatbot response
         String welcome = "Hello! I am RailAI, your Indian Railways virtual assistant. " +
-                "Currently, I am operating in fallback rules-based mode. To enable full GenAI conversational intelligence, please configure the GEMINI_API_KEY environment variable in application.yml.\n\n" +
+                "Currently, I am operating in fallback rules-based mode. To enable full AI-powered intelligence with function calling, please configure the GEMINI_API_KEY environment variable.\n\n" +
                 "For now, I can assist you with:\n" +
                 "• Checking train live delay running status\n" +
                 "• Detailing route stops mapping\n" +
                 "• Configuring customized delay alerts settings";
-        
+
         if (hasLive) {
             welcome += String.format("\n\n(Context: You are currently viewing train No. %s - %s)", trainNumber, liveStatus.trainName());
         }
-        
+
         return welcome;
     }
 }
