@@ -75,24 +75,32 @@ public class RailAiToolExecutor implements GeminiClient.ToolExecutorCallback {
         result.put("last_location_info", status.lastLocationInfo());
         result.put("last_updated_at", status.lastUpdatedAt() != null ? status.lastUpdatedAt().toString() : null);
 
-        // Include station-by-station progress (compact summary)
+        // Include compact station progress — only stations with meaningful data
+        // to keep payload small for Gemini (full list was causing 90KB+ payloads)
         if (status.stations() != null && !status.stations().isEmpty()) {
             List<Map<String, Object>> stationProgress = new ArrayList<>();
-            for (var st : status.stations()) {
-                Map<String, Object> stMap = new LinkedHashMap<>();
-                stMap.put("station_code", st.stationCode());
-                stMap.put("station_name", st.stationName());
-                stMap.put("sequence", st.sequenceNumber());
-                stMap.put("scheduled_arrival", st.scheduledArrival());
-                stMap.put("scheduled_departure", st.scheduledDeparture());
-                stMap.put("actual_arrival", st.actualArrival());
-                stMap.put("actual_departure", st.actualDeparture());
-                stMap.put("delay_minutes", st.delayMinutes());
-                stMap.put("status", st.status());
-                stMap.put("is_halt", st.isHalt());
-                stationProgress.add(stMap);
+            int total = status.stations().size();
+            for (int i = 0; i < total; i++) {
+                var st = status.stations().get(i);
+                boolean isFirst = (i == 0);
+                boolean isLast = (i == total - 1);
+                boolean hasDelay = (st.delayMinutes() != null && st.delayMinutes() > 0);
+                boolean isDepartedOrArrived = "DEPARTED".equals(st.status()) || "ARRIVED".equals(st.status());
+                // Include: first, last, any with delay, departed/arrived stations
+                // Skip upcoming stations with no delay info (they add bulk without value)
+                if (isFirst || isLast || hasDelay || isDepartedOrArrived) {
+                    Map<String, Object> stMap = new LinkedHashMap<>();
+                    stMap.put("station", st.stationCode() + " - " + st.stationName());
+                    stMap.put("seq", st.sequenceNumber());
+                    if (st.scheduledArrival() != null) stMap.put("sched_arr", st.scheduledArrival());
+                    if (st.actualArrival() != null) stMap.put("actual_arr", st.actualArrival());
+                    if (st.delayMinutes() != null) stMap.put("delay_min", st.delayMinutes());
+                    stMap.put("status", st.status());
+                    stationProgress.add(stMap);
+                }
             }
-            result.put("station_progress", stationProgress);
+            result.put("station_count", total);
+            result.put("key_stations", stationProgress);
         }
 
         return result;
@@ -116,18 +124,19 @@ public class RailAiToolExecutor implements GeminiClient.ToolExecutorCallback {
         if (route.stations() != null) {
             List<Map<String, Object>> stations = new ArrayList<>();
             for (RouteStationDto st : route.stations()) {
-                Map<String, Object> stMap = new LinkedHashMap<>();
-                stMap.put("station_code", st.stationCode());
-                stMap.put("station_name", st.stationName());
-                stMap.put("sequence", st.sequenceNumber());
-                stMap.put("arrival", formatTime(st.arrivalTime()));
-                stMap.put("departure", formatTime(st.departureTime()));
-                stMap.put("halt_minutes", st.haltMinutes());
-                stMap.put("stop_type", st.stopType());
-                stMap.put("distance_km", st.distance());
-                stations.add(stMap);
+                // Only include stopping stations to keep payload compact
+                if (st.isHalt() == null || st.isHalt()) {
+                    Map<String, Object> stMap = new LinkedHashMap<>();
+                    stMap.put("station", st.stationCode() + " - " + st.stationName());
+                    stMap.put("seq", st.sequenceNumber());
+                    stMap.put("arr", formatTime(st.arrivalTime()));
+                    stMap.put("dep", formatTime(st.departureTime()));
+                    if (st.haltMinutes() != null && st.haltMinutes() > 0) stMap.put("halt", st.haltMinutes());
+                    if (st.distance() != null) stMap.put("dist_km", st.distance());
+                    stations.add(stMap);
+                }
             }
-            result.put("stations", stations);
+            result.put("stopping_stations", stations);
         }
 
         return result;

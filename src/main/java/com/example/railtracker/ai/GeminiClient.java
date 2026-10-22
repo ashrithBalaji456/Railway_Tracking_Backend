@@ -249,14 +249,23 @@ public class GeminiClient {
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(payloadJson)
                     .retrieve()
+                    .onStatus(status -> status.is4xxClientError(), response ->
+                        response.bodyToMono(String.class)
+                            .map(body -> new GeminiException("Gemini API 4xx error: " + body))
+                    )
                     .bodyToMono(String.class)
-                    .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
-                            .maxBackoff(Duration.ofSeconds(10))
+                    .retryWhen(Retry.backoff(2, Duration.ofSeconds(2))
+                            .maxBackoff(Duration.ofSeconds(15))
                             .filter(throwable -> {
-                                logger.warn("Gemini API call failed, retrying: {}", throwable.getMessage());
+                                // Only retry on 5xx/network errors, not 4xx client errors
+                                if (throwable instanceof GeminiException) {
+                                    return false; // Don't retry client errors
+                                }
+                                logger.warn("Gemini API call failed, retrying: {}", 
+                                    throwable.getMessage() != null ? throwable.getMessage() : throwable.getClass().getSimpleName());
                                 return true;
                             }))
-                    .block(Duration.ofSeconds(60));
+                    .block(Duration.ofSeconds(90));
 
             if (rawResponse == null) {
                 throw new GeminiException("Gemini API returned null response");
