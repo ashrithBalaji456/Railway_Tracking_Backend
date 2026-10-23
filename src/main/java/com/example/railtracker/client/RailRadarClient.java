@@ -157,6 +157,30 @@ public class RailRadarClient {
         }
         return trains;
     }
+
+    /**
+     * Normalize journey date to YYYYMMDD format (what RailRadar expects).
+     * Accepts: YYYY-MM-DD, YYYYMMDD, DD-MM-YYYY
+     */
+    private String normalizeDateParam(String date) {
+        if (date == null || date.isBlank()) return date;
+        String cleaned = date.trim();
+        // Already YYYYMMDD (8 digits, no dashes)
+        if (cleaned.matches("\\d{8}")) return cleaned;
+        // YYYY-MM-DD -> YYYYMMDD
+        if (cleaned.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            return cleaned.replace("-", "");
+        }
+        // DD-MM-YYYY -> YYYYMMDD
+        if (cleaned.matches("\\d{2}-\\d{2}-\\d{4}")) {
+            String[] parts = cleaned.split("-");
+            return parts[2] + parts[1] + parts[0];
+        }
+        // Fallback: return as-is
+        logger.warn("Unrecognized date format: '{}', passing as-is", cleaned);
+        return cleaned;
+    }
+
     public RailRadarTrain getTrainDetails(String trainNumber) {
         return getTrainDetails(trainNumber, null);
     }
@@ -164,8 +188,10 @@ public class RailRadarClient {
     public RailRadarTrain getTrainDetails(String trainNumber, String journeyDate) {
         String path = "/trains/" + trainNumber;
         if (journeyDate != null && !journeyDate.isBlank()) {
-            path += "?journeyDate=" + journeyDate;
+            String normalizedDate = normalizeDateParam(journeyDate);
+            path += "?journeyDate=" + normalizedDate;
         }
+        logger.info("RailRadar train details request: GET {}", path);
         JsonNode responseNode = executeGet(path);
         logger.debug("RailRadar train details response for {} on {}: {}", trainNumber, journeyDate, responseNode);
         JsonNode dataNode = dataNode(responseNode);
@@ -181,8 +207,10 @@ public class RailRadarClient {
     public RailRadarTrainRoute getTrainRoute(String trainNumber, String journeyDate) {
         String path = "/trains/" + trainNumber + "/route?format=geojson&stops=true";
         if (journeyDate != null && !journeyDate.isBlank()) {
-            path += "&journeyDate=" + journeyDate;
+            String normalizedDate = normalizeDateParam(journeyDate);
+            path += "&journeyDate=" + normalizedDate;
         }
+        logger.info("RailRadar route request: GET {}", path);
         JsonNode responseNode = executeGet(path);
         logger.debug("RailRadar route response for {} on date {}: {}", trainNumber, journeyDate, responseNode);
         JsonNode dataNode = dataNode(responseNode);
@@ -217,10 +245,13 @@ public class RailRadarClient {
     public RailRadarTrainLiveStatus getTrainLiveStatus(String trainNumber, String journeyDate) {
         String path = "/trains/" + trainNumber + "/live";
         if (journeyDate != null && !journeyDate.isBlank()) {
-            path += "?journeyDate=" + journeyDate;
+            String normalizedDate = normalizeDateParam(journeyDate);
+            path += "?journeyDate=" + normalizedDate;
         }
+        logger.info("RailRadar live status request: GET {}", path);
         JsonNode responseNode = executeGet(path);
-        logger.debug("RailRadar live response for {} on date {}: {}", trainNumber, journeyDate, responseNode);
+        logger.info("RailRadar live response for {} on date {}: status={}", trainNumber, journeyDate,
+                responseNode != null && responseNode.has("status") ? responseNode.get("status") : "unknown");
         JsonNode dataNode = dataNode(responseNode);
         JsonNode liveStatusNode = null;
         if (dataNode != null) {
