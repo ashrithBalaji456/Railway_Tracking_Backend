@@ -102,6 +102,21 @@ public class TrainServiceImpl implements TrainService {
             if (!containsMatches.isEmpty()) {
                 return containsMatches.stream().limit(5).map(this::mapToDto).collect(Collectors.toList());
             }
+
+            // If a specific 5-digit train number was entered and not found locally, query external provider and auto-seed
+            if (cleanQuery.length() == 5) {
+                try {
+                    logger.info("Train {} not found locally during search. Fetching from external provider...", cleanQuery);
+                    TrainDto extTrain = railwayDataProvider.getTrainDetails(cleanQuery);
+                    if (extTrain != null && extTrain.trainNumber() != null) {
+                        saveTrainIfMissing(extTrain);
+                        return List.of(extTrain);
+                    }
+                } catch (Exception e) {
+                    logger.debug("External lookup for train {} returned no result: {}", cleanQuery, e.getMessage());
+                }
+            }
+
             return List.of();
         } else {
             // Train Name search: suggest by train name (prefix matches prioritized, then contains)
@@ -118,6 +133,21 @@ public class TrainServiceImpl implements TrainService {
             if (!localTrains.isEmpty()) {
                 return localTrains.stream().limit(10).map(this::mapToDto).collect(Collectors.toList());
             }
+
+            // If not found locally by name, query external provider and auto-seed returned trains
+            try {
+                logger.info("Train name '{}' not found locally. Searching external provider...", cleanQuery);
+                List<TrainDto> extMatches = railwayDataProvider.searchTrains(cleanQuery);
+                if (extMatches != null && !extMatches.isEmpty()) {
+                    for (TrainDto t : extMatches) {
+                        saveTrainIfMissing(t);
+                    }
+                    return extMatches.stream().limit(5).collect(Collectors.toList());
+                }
+            } catch (Exception e) {
+                logger.debug("External train search for '{}' failed: {}", cleanQuery, e.getMessage());
+            }
+
             return List.of();
         }
     }
