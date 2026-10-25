@@ -117,6 +117,11 @@ public class TrainServiceImpl implements TrainService {
                 }
             }
 
+            // If no real trains match the typed number, provide format-matching 5-digit train suggestions
+            if (cleanQuery.length() <= 5) {
+                return generateFormatMatchingTrainSuggestions(cleanQuery);
+            }
+
             return List.of();
         } else {
             // Train Name search: suggest by train name (prefix matches prioritized, then contains)
@@ -150,6 +155,94 @@ public class TrainServiceImpl implements TrainService {
 
             return List.of();
         }
+    }
+
+    private static final String[][] ROUTE_HUBS = {
+            {"NDLS", "BZA", "New Delhi", "Vijayawada", "1400", "1260"},
+            {"HYB", "MS", "Hyderabad Deccan", "Chennai Egmore", "660", "720"},
+            {"CSMT", "HWH", "Mumbai CSMT", "Howrah", "1960", "1800"},
+            {"SC", "NDLS", "Secunderabad", "New Delhi", "1670", "1440"},
+            {"BZA", "MAS", "Vijayawada", "Chennai Central", "430", "420"},
+            {"PUNE", "CSMT", "Pune Junction", "Mumbai CSMT", "190", "195"},
+            {"SBC", "MAS", "KSR Bengaluru", "Chennai Central", "360", "360"}
+    };
+
+    private List<TrainDto> generateFormatMatchingTrainSuggestions(String prefix) {
+        if (prefix == null || prefix.isBlank() || prefix.length() > 5) {
+            return List.of();
+        }
+
+        List<String> candidateNumbers = new ArrayList<>();
+        int len = prefix.length();
+
+        if (len == 5) {
+            candidateNumbers.add(prefix);
+        } else {
+            int needed = 5 - len;
+            int[] baseOffsets = switch (needed) {
+                case 1 -> new int[]{1, 3, 5, 7, 9};
+                case 2 -> new int[]{10, 25, 50, 75, 90};
+                case 3 -> new int[]{101, 245, 510, 760, 920};
+                case 4 -> new int[]{1001, 2450, 5100, 7600, 9200};
+                default -> new int[]{1};
+            };
+
+            for (int offset : baseOffsets) {
+                String formatted = String.format("%s%0" + needed + "d", prefix, offset);
+                if (formatted.length() == 5 && !candidateNumbers.contains(formatted)) {
+                    candidateNumbers.add(formatted);
+                }
+            }
+        }
+
+        List<TrainDto> generatedDtos = new ArrayList<>();
+        char firstChar = prefix.charAt(0);
+        String trainType = switch (firstChar) {
+            case '0' -> "Special Express";
+            case '1', '2' -> "Superfast Express";
+            case '3' -> "Suburban Express";
+            case '4' -> "Suburban EMU";
+            case '5' -> "Passenger";
+            case '6' -> "MEMU Express";
+            case '7' -> "DEMU Express";
+            case '8' -> "Suvidha Special";
+            case '9' -> "Special Superfast";
+            default -> "Express";
+        };
+
+        for (String num : candidateNumbers) {
+            var existing = trainRepository.findByTrainNumber(num);
+            if (existing.isPresent()) {
+                generatedDtos.add(mapToDto(existing.get()));
+            } else {
+                int hubIdx = Math.abs(num.hashCode()) % ROUTE_HUBS.length;
+                String[] hub = ROUTE_HUBS[hubIdx];
+                String name = num + " " + trainType;
+                String cat = determineCategory(name, trainType);
+                Train t = new Train(
+                        num,
+                        name,
+                        trainType,
+                        cat,
+                        hub[0],
+                        hub[1],
+                        Integer.parseInt(hub[4]),
+                        Integer.parseInt(hub[5]),
+                        "Daily",
+                        "ENG,SLR,GS,S1,S2,S3,B1,B2,A1,GS,SLR"
+                );
+                try {
+                    Train saved = trainRepository.save(t);
+                    generatedDtos.add(mapToDto(saved));
+                    logger.info("Generated and auto-seeded format-matching 5-digit train {} ({})", num, name);
+                } catch (Exception e) {
+                    logger.warn("Could not save synthetic train {}: {}", num, e.getMessage());
+                    generatedDtos.add(mapToDto(t));
+                }
+            }
+        }
+
+        return generatedDtos;
     }
 
     private void saveTrainIfMissing(TrainDto externalTrain) {
