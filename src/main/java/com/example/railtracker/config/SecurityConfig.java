@@ -91,12 +91,17 @@ public class SecurityConfig {
         }
         origins.add("http://localhost:5173");
         origins.add("http://127.0.0.1:5173");
+        origins.add("https://localhost");
+        origins.add("capacitor://localhost");
+        origins.add("http://localhost");
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedOriginPatterns(List.of(
             "http://localhost:*",
+            "https://localhost:*",
             "http://127.0.0.1:*",
             "https://*.onrender.com",
-            "https://*.vercel.app"
+            "https://*.vercel.app",
+            "capacitor://*"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
