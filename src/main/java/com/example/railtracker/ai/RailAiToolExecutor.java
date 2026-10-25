@@ -62,6 +62,12 @@ public class RailAiToolExecutor implements GeminiClient.ToolExecutorCallback {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("train_number", status.trainNumber());
         result.put("train_name", status.trainName());
+        boolean isSpecial = isSpecialTrain(status.trainNumber(), status.trainName(), null);
+        result.put("is_special_train", isSpecial);
+        if (isSpecial) {
+            result.put("train_priority", "LOW (Special Train)");
+            result.put("priority_explanation", "This is an Indian Railways Special train (starts with 0 or marked Special). Special trains have very low operational track priority compared to regular scheduled express/superfast/Rajdhani trains. Rail traffic controllers frequently hold special trains in loop lines to allow regular scheduled trains to pass/overtake, which causes delays to accumulate gradually along the route.");
+        }
         result.put("run_status", status.runStatus());
         result.put("delay_minutes", status.delayMinutes());
         result.put("current_station_code", status.currentStationCode());
@@ -114,6 +120,12 @@ public class RailAiToolExecutor implements GeminiClient.ToolExecutorCallback {
         result.put("train_number", route.trainNumber());
         result.put("train_name", route.trainName());
         result.put("train_type", route.trainType());
+        boolean isSpecial = isSpecialTrain(route.trainNumber(), route.trainName(), route.trainType());
+        result.put("is_special_train", isSpecial);
+        if (isSpecial) {
+            result.put("train_priority", "LOW (Special Train)");
+            result.put("priority_note", "Special train with lower operational track priority compared to regular scheduled trains.");
+        }
         result.put("source_station", route.sourceStation());
         result.put("destination_station", route.destinationStation());
         result.put("total_distance_km", route.distance());
@@ -316,5 +328,32 @@ public class RailAiToolExecutor implements GeminiClient.ToolExecutorCallback {
 
     private String formatTime(LocalTime time) {
         return time != null ? time.format(TIME_FMT) : null;
+    }
+
+    /**
+     * Determines whether a train is an Indian Railways Special train.
+     * Special trains (numbered starting with 0, or named/typed Special/SPL/TOD)
+     * are assigned lower operational priority, leading to gradual delay accumulation.
+     */
+    public static boolean isSpecialTrain(String trainNumber, String trainName, String trainType) {
+        if (trainNumber != null && !trainNumber.isBlank()) {
+            String num = trainNumber.trim();
+            if (num.startsWith("0")) {
+                return true;
+            }
+        }
+        if (trainName != null && !trainName.isBlank()) {
+            String upper = trainName.toUpperCase();
+            if (upper.contains("SPECIAL") || upper.contains(" SPL") || upper.contains("SPL ") || upper.contains("TOD") || upper.contains("SUVIDHA") || upper.contains("CLONE")) {
+                return true;
+            }
+        }
+        if (trainType != null && !trainType.isBlank()) {
+            String upper = trainType.toUpperCase();
+            if (upper.contains("SPECIAL") || upper.contains("SPL")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

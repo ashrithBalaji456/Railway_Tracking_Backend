@@ -111,11 +111,17 @@ public class RailAiServiceImpl implements RailAiService {
             - Include train numbers in parentheses for clarity.
             
             DELAY INVESTIGATION PROTOCOL:
-            When a user asks "Why is my train delayed?":
-            1. First, get the train's live status to see current delay.
-            2. Examine station-by-station progress to find WHERE delay started increasing.
-            3. Identify the exact section (between stations) where maximum delay was added.
-            4. Report findings: delay amount, section, and any patterns you notice.
+            When a user asks "Why is my train delayed?" or inquires about train delay/lateness:
+            1. First, get the train's live status to see current delay and station-by-station progress.
+            2. Check if the train is a SPECIAL TRAIN:
+               - A train is a Special Train if its 5-digit train number starts with '0' (e.g. 04109) or if its name/type contains "Special", "SPL", "TOD" (Train on Demand), "Holiday Special", or "Festival Special".
+               - CRITICAL INDIAN RAILWAYS OPERATIONAL PRIORITY: Special trains are assigned VERY LOW track and operational priority compared to regular scheduled trains (Rajdhani, Shatabdi, Vande Bharat, Superfast, and regular Mail/Express trains).
+               - Rail traffic and section controllers routinely hold special trains on loop lines, sidings, or outer signals to give way to higher-priority regular express trains and passenger schedules.
+               - Because of this low track priority, delays on special trains almost always accumulate gradually and progressively as the journey advances across busy sections and junctions.
+               - ALWAYS explicitly state this operational reality to the user whenever analyzing delays for a Special train (e.g., explain clearly: "As this is a Special train (No. 0XXXX), its operational priority is very low compared to regular scheduled express trains. Rail controllers frequently hold special trains in loop lines to allow regular express trains to overtake, which causes delays to accumulate gradually along the route.").
+            3. Examine station-by-station progress to find WHERE delay started increasing.
+            4. Identify the exact sections (between stations) where maximum delay was added.
+            5. Report findings: current delay, the special train low-priority explanation (if applicable), the section-by-section breakdown where delays built up, and overall summary.
             """);
 
         return sb.toString();
@@ -159,10 +165,14 @@ public class RailAiServiceImpl implements RailAiService {
 
         if (cleaned.contains("delay") || cleaned.contains("late") || cleaned.contains("status")) {
             if (hasLive) {
+                boolean isSpecial = RailAiToolExecutor.isSpecialTrain(liveStatus.trainNumber(), liveStatus.trainName(), null);
+                String specialNote = isSpecial
+                    ? "\n\n⚠️ Special Train Notice: As Train No. " + liveStatus.trainNumber() + " is a Special train, its operational track priority is very low compared to regular scheduled express trains. Section controllers frequently hold special trains on loop lines to let scheduled trains overtake, which causes delays to accumulate gradually along the route."
+                    : "";
                 return String.format(
-                        "Based on live telemetry, the %s (No. %s) is currently running. Its status is '%s' and it is delayed by %d minutes. The last recorded location was: %s.",
+                        "Based on live telemetry, the %s (No. %s) is currently running. Its status is '%s' and it is delayed by %d minutes. The last recorded location was: %s.%s",
                         liveStatus.trainName(), liveStatus.trainNumber(), liveStatus.runStatus(),
-                        liveStatus.delayMinutes(), liveStatus.lastLocationInfo()
+                        liveStatus.delayMinutes(), liveStatus.lastLocationInfo(), specialNote
                 );
             }
             return "To check delay status, please provide a valid train number or view a train details page first.";
