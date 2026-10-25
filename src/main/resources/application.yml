@@ -1,3 +1,6 @@
+server:
+  port: ${PORT:8080}
+
 spring:
   application:
     name: railtracker
@@ -6,12 +9,11 @@ spring:
     url: ${DATABASE_URL:jdbc:h2:mem:railtrack_db;DB_CLOSE_DELAY=-1}
     username: ${DATABASE_USERNAME:sa}
     password: ${DATABASE_PASSWORD:}
-    driver-class-name: org.h2.Driver
+    driver-class-name: ${DATABASE_DRIVER:}
 
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${HIBERNATE_DDL_AUTO:update}
     properties:
       hibernate:
         show_sql: false
@@ -25,6 +27,7 @@ spring:
       password: ${REDIS_PASSWORD:}
 
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
   jwt:
     secret: ${JWT_SECRET:d2FudC10by10cmFjay10cmFpbnMtc2VjdXJlLWtleS0yNTYtYml0LXZhbHVlLXRvLWJlLXJlcGxhY2VkLWluLXByb2R1Y3Rpb24=} # default base64 secret for local testing
     expiration-ms: 86400000 # 24 hours
@@ -62,6 +65,3 @@ gemini:
   api:
     url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent}
     key: ${GEMINI_API_KEY:}
-
-
-
