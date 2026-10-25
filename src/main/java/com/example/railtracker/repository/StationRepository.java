@@ -47,5 +47,8 @@ public interface StationRepository extends JpaRepository<Station, Long> {
            "OR LOWER(COALESCE(s.district, '')) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(COALESCE(s.city, '')) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Station> searchStations(@Param("query") String query);
+
+    @Query("SELECT s.stationCode FROM Station s")
+    List<String> findAllStationCodes();
 }
 

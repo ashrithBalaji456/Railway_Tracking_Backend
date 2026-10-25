@@ -23,4 +23,7 @@ public interface TrainRepository extends JpaRepository<Train, Long> {
 
     @Query("SELECT t FROM Train t WHERE t.trainNumber LIKE %:query% OR LOWER(t.trainName) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Train> searchTrains(@Param("query") String query);
+
+    @Query("SELECT t.trainNumber FROM Train t")
+    List<String> findAllTrainNumbers();
 }

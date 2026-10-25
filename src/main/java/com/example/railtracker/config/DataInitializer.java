@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.context.annotation.Profile;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.InputStream;
 import java.time.LocalTime;
@@ -30,16 +32,19 @@ public class DataInitializer implements CommandLineRunner {
     private final TrainRepository trainRepository;
     private final TrainStationRepository trainStationRepository;
     private final ObjectMapper objectMapper;
+    private final TransactionTemplate transactionTemplate;
 
     public DataInitializer(
             StationRepository stationRepository,
             TrainRepository trainRepository,
             TrainStationRepository trainStationRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            PlatformTransactionManager transactionManager) {
         this.stationRepository = stationRepository;
         this.trainRepository = trainRepository;
         this.trainStationRepository = trainStationRepository;
         this.objectMapper = objectMapper;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     private static record StationSeedRecord(
@@ -90,7 +95,6 @@ public class DataInitializer implements CommandLineRunner {
         seedSampleTrains();
     }
 
-    @Transactional
     public void seedStations() {
         long currentCount = stationRepository.count();
         if (currentCount >= 8000) {
@@ -106,12 +110,20 @@ public class DataInitializer implements CommandLineRunner {
             }
 
             List<StationSeedRecord> records = objectMapper.readValue(is, new TypeReference<List<StationSeedRecord>>() {});
-            List<Station> stationsToSave = new ArrayList<>();
+            Set<String> existingCodes = new HashSet<>(stationRepository.findAllStationCodes());
+
+            List<Station> chunk = new ArrayList<>(250);
+            int totalNew = 0;
 
             for (StationSeedRecord r : records) {
                 if (r.stationCode() == null || r.stationCode().isBlank()) continue;
 
                 String code = r.stationCode().trim().toUpperCase();
+                if (existingCodes.contains(code)) {
+                    continue;
+                }
+                existingCodes.add(code);
+
                 double[] coords = KNOWN_COORDINATES.get(code);
                 Double lat = coords != null ? coords[0] : null;
                 Double lon = coords != null ? coords[1] : null;
@@ -130,11 +142,30 @@ public class DataInitializer implements CommandLineRunner {
                         lat,
                         lon
                 );
-                stationsToSave.add(st);
+                chunk.add(st);
+
+                if (chunk.size() >= 250) {
+                    List<Station> batchToSave = new ArrayList<>(chunk);
+                    transactionTemplate.executeWithoutResult(status -> {
+                        stationRepository.saveAll(batchToSave);
+                    });
+                    totalNew += batchToSave.size();
+                    chunk.clear();
+                    logger.info("Seeded batch of {} stations (total seeded: {})", batchToSave.size(), totalNew);
+                }
             }
 
-            stationRepository.saveAll(stationsToSave);
-            logger.info("Successfully seeded {} Indian Railway stations into database!", stationsToSave.size());
+            if (!chunk.isEmpty()) {
+                List<Station> batchToSave = new ArrayList<>(chunk);
+                transactionTemplate.executeWithoutResult(status -> {
+                    stationRepository.saveAll(batchToSave);
+                });
+                totalNew += batchToSave.size();
+                chunk.clear();
+                logger.info("Seeded final batch of {} stations (total seeded: {})", batchToSave.size(), totalNew);
+            }
+
+            logger.info("Successfully seeded {} Indian Railway stations into database!", totalNew);
         } catch (Exception e) {
             logger.error("Failed to seed stations from stations_data.json", e);
         }
@@ -154,7 +185,6 @@ public class DataInitializer implements CommandLineRunner {
             Boolean active
     ) {}
 
-    @Transactional
     public void seedTrains() {
         long currentCount = trainRepository.count();
         if (currentCount >= 8000) {
@@ -162,7 +192,7 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        logger.info("Seeding Indian Railway trains into database from trains_data.json...");
+        logger.info("Seeding Indian Railway trains into database from trains_data.json in batches...");
         try (InputStream is = getClass().getResourceAsStream("/trains_data.json")) {
             if (is == null) {
                 logger.error("trains_data.json not found in classpath!");
@@ -170,10 +200,10 @@ public class DataInitializer implements CommandLineRunner {
             }
 
             List<TrainSeedRecord> records = objectMapper.readValue(is, new TypeReference<List<TrainSeedRecord>>() {});
-            Set<String> existingNumbers = trainRepository.findAll().stream()
-                    .map(Train::getTrainNumber)
-                    .collect(Collectors.toSet());
-            List<Train> trainsToSave = new ArrayList<>();
+            Set<String> existingNumbers = new HashSet<>(trainRepository.findAllTrainNumbers());
+
+            List<Train> chunk = new ArrayList<>(250);
+            int totalNew = 0;
 
             for (TrainSeedRecord r : records) {
                 if (r.trainNumber() == null || r.trainNumber().isBlank()) continue;
@@ -199,13 +229,30 @@ public class DataInitializer implements CommandLineRunner {
                 if (r.active() != null) {
                     t.setActive(r.active());
                 }
-                trainsToSave.add(t);
+                chunk.add(t);
+
+                if (chunk.size() >= 250) {
+                    List<Train> batchToSave = new ArrayList<>(chunk);
+                    transactionTemplate.executeWithoutResult(status -> {
+                        trainRepository.saveAll(batchToSave);
+                    });
+                    totalNew += batchToSave.size();
+                    chunk.clear();
+                    logger.info("Seeded batch of {} trains (total seeded: {})", batchToSave.size(), totalNew);
+                }
             }
 
-            if (!trainsToSave.isEmpty()) {
-                trainRepository.saveAll(trainsToSave);
-                logger.info("Successfully seeded {} Indian Railway trains into database!", trainsToSave.size());
+            if (!chunk.isEmpty()) {
+                List<Train> batchToSave = new ArrayList<>(chunk);
+                transactionTemplate.executeWithoutResult(status -> {
+                    trainRepository.saveAll(batchToSave);
+                });
+                totalNew += batchToSave.size();
+                chunk.clear();
+                logger.info("Seeded final batch of {} trains (total seeded: {})", batchToSave.size(), totalNew);
             }
+
+            logger.info("Successfully finished seeding {} Indian Railway trains into database!", totalNew);
         } catch (Exception e) {
             logger.error("Failed to seed trains from trains_data.json", e);
         }
