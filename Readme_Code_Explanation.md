@@ -2124,7 +2124,12 @@ This section documents the integration of RailRadar API endpoints extending the 
 
 * **Response Schema & Dual-Naming Compatibility:** Returns `distanceKm`, `sourceStation`, `destinationStation`, and `classFares` (with compatibility accessor `fares()`), containing `classCode`, `className`, `baseFare`, and `totalFare`.
 
-* **Distance-Accurate Slab Estimation:** If upstream fare data returns empty or generic defaults, `RailRadarClient` and `RailRadarDataProvider` dynamically estimate standard Indian Railways distance slab rates across classes (2S, SL, 3A, 2A, 1A) calculated from the station pair's actual track distance and rounded to the nearest ₹5, ensuring that short-distance trips and long-distance journeys receive accurate, distinct fare breakdowns.
+* **Official Telescopic Distance Slab Estimation:** Replaced rudimentary linear formulas with official Indian Railways telescopic distance slabs across 2S, SL, CC, 3E, 3A, 2A, and 1A classes:
+  * Decreasing marginal cost across distance slabs (1–50 km, 51–150 km, 151–300 km, 301–600 km, >600 km).
+  * AC Chair Car (CC) accurately calibrated as a seated AC coach (base ~₹340 at 240 km + ₹40 RF + ₹45 SF + 5% GST = ₹445), eliminating previous over-pricing vs 3A/3E.
+  * Second Sitting (2S) calibrated to ₹100 base at 240 km (+ ₹15 RF + ₹15 SF = ₹130).
+  * AC 3-Tier Economy (3E) calibrated to ₹455 base at 240 km (+ ₹40 RF + ₹45 SF + 5% GST = ₹565).
+  * Full rounding to the nearest multiple of ₹5.
 
 * **Caching:** Cached in Redis key `train:fare` (TTL: 24 hours).
 
