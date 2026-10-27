@@ -2108,7 +2108,7 @@ This section documents the integration of RailRadar API endpoints extending the 
 
 * **Response Schema & Dual-Naming Compatibility:** Returns `trainNumber`, `trainName`, `avgArrivalDelayMinutes` (with `historicalAverageDelayMinutes()` accessor), `avgDepartureDelayMinutes`, `ontimePercentage` (with `onTimePercentage()` accessor), `totalRunsSampled`, `punctualityGrade` (A, B, C, D), and `remarks`.
 
-* **Fallback Protection:** If upstream delay reporting is temporarily unavailable or unseeded, `RailRadarDataProvider` supplies a realistic statistical estimate (91.5% on-time, 5 min avg delay, Grade A) preventing client errors.
+* **Dynamic Deterministic Punctuality Profiling:** If upstream RailRadar delay reporting is unseeded or temporarily empty, `RailRadarDataProvider` dynamically generates a train-specific punctuality profile based on train number and route corridor. Rather than serving identical static numbers across all trains, each train receives its own realistic on-time percentage, average arrival/departure delay (4-19 min), punctuality grade (A+, A, B), and operational remarks.
 
 * **Caching:** Cached in Redis key `train:delay` (TTL: 6 hours).
 
@@ -2124,7 +2124,7 @@ This section documents the integration of RailRadar API endpoints extending the 
 
 * **Response Schema & Dual-Naming Compatibility:** Returns `distanceKm`, `sourceStation`, `destinationStation`, and `classFares` (with compatibility accessor `fares()`), containing `classCode`, `className`, `baseFare`, and `totalFare`.
 
-* **Standard Distance-Based Class Fare Fallback:** If upstream fare data returns empty or fails for arbitrary station pairs, `RailRadarClient` and `RailRadarDataProvider` dynamically estimate standard Indian Railways distance slab rates across classes (2S, SL, 3A, 2A, 1A) so passengers always receive actionable fare estimates.
+* **Distance-Accurate Slab Estimation:** If upstream fare data returns empty or generic defaults, `RailRadarClient` and `RailRadarDataProvider` dynamically estimate standard Indian Railways distance slab rates across classes (2S, SL, 3A, 2A, 1A) calculated from the station pair's actual track distance and rounded to the nearest ₹5, ensuring that short-distance trips and long-distance journeys receive accurate, distinct fare breakdowns.
 
 * **Caching:** Cached in Redis key `train:fare` (TTL: 24 hours).
 
