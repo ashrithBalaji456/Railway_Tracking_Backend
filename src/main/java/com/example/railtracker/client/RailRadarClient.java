@@ -826,6 +826,20 @@ public class RailRadarClient {
         JsonNode nextHalt = dataNode.get("nextHalt");
         String currentCode = text(current, "stationCode", "code", "currentStationCode");
         JsonNode currentStop = findRouteStop(route, currentCode);
+        if (currentCode == null && current != null) {
+            String cName = text(current, "stationName", "name");
+            if (cName != null && route != null && route.isArray()) {
+                for (JsonNode stop : route) {
+                    RailRadarStationInfo sInfo = stationInfo(stop);
+                    String sName = sInfo != null && sInfo.name() != null ? sInfo.name() : text(stop, "stationName", "name");
+                    if (sName != null && (sName.equalsIgnoreCase(cName) || cName.toLowerCase().contains(sName.toLowerCase()) || sName.toLowerCase().contains(cName.toLowerCase()))) {
+                        currentCode = sInfo != null && sInfo.code() != null ? sInfo.code() : text(stop, "stationCode", "code");
+                        currentStop = stop;
+                        break;
+                    }
+                }
+            }
+        }
         List<RailRadarLiveStationStatus> stations = new ArrayList<>();
         List<String> skippedStations = new ArrayList<>();
         JsonNode skippedNode = dataNode.get("skippedStations");
@@ -892,6 +906,53 @@ public class RailRadarClient {
             nextCode = "-";
             nextName = "Reached Destination";
             runStatus = "reached";
+        } else {
+            // Next halt must NEVER be a cancelled or skipped station!
+            boolean nextIsSkipped = (nextCode != null && skippedStations.contains(nextCode)) ||
+                                    (nextName != null && skippedStations.contains(nextName));
+            if (nextIsSkipped || nextCode == null || nextCode.isBlank() || "-".equals(nextCode)) {
+                if (route != null && route.isArray()) {
+                    int searchSeq = currentSequence != null ? currentSequence : 0;
+                    for (JsonNode stop : route) {
+                        int seq = integer(stop, "sequence") != null ? integer(stop, "sequence") : 0;
+                        if (seq > searchSeq) {
+                            RailRadarStationInfo sInfo = stationInfo(stop);
+                            String sCode = sInfo != null && sInfo.code() != null ? sInfo.code() : text(stop, "stationCode", "code");
+                            String sName = sInfo != null && sInfo.name() != null ? sInfo.name() : text(stop, "stationName", "name");
+                            boolean isHalt = Boolean.TRUE.equals(bool(stop, "isHalt"));
+                            String sStatus = text(stop, "status");
+                            boolean isSkipped = sCode != null && skippedStations.contains(sCode);
+                            boolean isStopCancelled = sStatus != null && (sStatus.toLowerCase().contains("cancel") || sStatus.toLowerCase().contains("skip"));
+                            if (isHalt && !isSkipped && !isStopCancelled) {
+                                nextCode = sCode;
+                                nextName = sName;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (currentCode == null && route != null && route.isArray() && !skippedStations.isEmpty()) {
+            JsonNode firstStop = route.get(0);
+            RailRadarStationInfo fInfo = stationInfo(firstStop);
+            String fCode = fInfo != null && fInfo.code() != null ? fInfo.code() : text(firstStop, "stationCode", "code");
+            if (fCode != null && skippedStations.contains(fCode)) {
+                // Scheduled origin is cancelled: find new active origin
+                for (JsonNode stop : route) {
+                    RailRadarStationInfo sInfo = stationInfo(stop);
+                    String sCode = sInfo != null && sInfo.code() != null ? sInfo.code() : text(stop, "stationCode", "code");
+                    String sStatus = text(stop, "status");
+                    boolean isSkipped = sCode != null && skippedStations.contains(sCode);
+                    boolean isStopCancelled = sStatus != null && (sStatus.toLowerCase().contains("cancel") || sStatus.toLowerCase().contains("skip"));
+                    if (!isSkipped && !isStopCancelled) {
+                        currentCode = sCode;
+                        currentStop = stop;
+                        break;
+                    }
+                }
+            }
         }
         
         String locInfo = locationInfo(currentCode, stationName(currentStop, text(current, "stationName", "name")), text(current, "status"), text(previousHalt, "stationName"), text(nextHalt, "stationName"));
