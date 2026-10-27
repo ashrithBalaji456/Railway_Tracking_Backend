@@ -433,13 +433,33 @@ cp .env.example .env     # then edit values
 
 ### Endpoint reference
 
-<!-- TODO: fill from Swagger UI once you confirm real routes -->
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/…` | ❌ | Register / login *(fill in)* |
-| `GET` | `/…` | ✅ | Live train status *(fill in)* |
-| `POST` | `/…` | ✅ | RailAI chat *(fill in)* |
+| Module | Method | Path | Auth | Description |
+|---|---|---|---|---|
+| **Auth** | `POST` | `/api/v1/auth/register` | ❌ | User registration with username, email, password |
+| **Auth** | `POST` | `/api/v1/auth/login` | ❌ | User login returning JWT Bearer token |
+| **Auth** | `GET` | `/api/v1/auth/me` | ✅ | Current authenticated user profile |
+| **Trains** | `GET` | `/api/v1/trains` | ❌ | Search trains by name or number |
+| **Trains** | `GET` | `/api/v1/trains/{trainNumber}` | ❌ | Full train schedule & metadata |
+| **Trains** | `GET` | `/api/v1/trains/{trainNumber}/live` | ❌ | Real-time GPS location, run status & delay |
+| **Trains** | `GET` | `/api/v1/trains/{trainNumber}/route` | ❌ | Station-by-station route schedule |
+| **Trains** | `GET` | `/api/v1/trains/{trainNumber}/delay` | ❌ | Historical delay analysis & punctuality grade |
+| **Trains** | `GET` | `/api/v1/trains/{trainNumber}/fare` | ❌ | Class fare breakdown (1A, 2A, 3A, SL, etc.) |
+| **Trains** | `GET` | `/api/v1/trains/between` | ❌ | Direct and alternative trains between station pair |
+| **Stations** | `GET` | `/api/v1/stations` | ❌ | Station search & autocomplete |
+| **Stations** | `GET` | `/api/v1/stations/{code}` | ❌ | Station metadata, platform & junction details |
+| **Stations** | `GET` | `/api/v1/stations/{code}/trains` | ❌ | Station departure board trains |
+| **Stations** | `GET` | `/api/v1/stations/{code}/live` | ❌ | Real-time station live board (2-8 hours ahead) |
+| **Disruptions** | `GET` | `/api/v1/disruptions/exceptions` | ❌ | Active disruptions (cancelled, diverted, rescheduled) |
+| **Disruptions** | `GET` | `/api/v1/disruptions/summary` | ❌ | Network disruption counts & category metrics |
+| **Journey** | `GET` | `/api/v1/journey/plan` | ❌ | Direct & connecting multi-leg journey solver |
+| **Journey** | `POST` | `/api/v1/journey/overlay` | ❌ | Historical delay overlay for journey legs |
+| **RailAI** | `POST` | `/api/v1/ai/chat` | ❌ | Intelligent railway assistant powered by Gemini |
+| **Bookmarks** | `GET` | `/api/v1/favorites` | ✅ | User saved favorite trains and stations |
+| **Bookmarks** | `POST` | `/api/v1/favorites` | ✅ | Add new bookmark |
+| **Bookmarks** | `DELETE` | `/api/v1/favorites/{id}` | ✅ | Remove bookmark |
+| **Alerts** | `GET` | `/api/v1/alerts` | ✅ | User tracking alerts |
+| **History** | `GET` | `/api/v1/history` | ✅ | Cloud-synced user search history |
+| **System** | `GET` | `/actuator/health` | ❌ | Spring Boot Actuator health check |
 
 ---
 

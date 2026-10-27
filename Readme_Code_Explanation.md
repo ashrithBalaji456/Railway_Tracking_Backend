@@ -80,6 +80,13 @@ This guide is specifically designed for developers, students, or system administ
     - 13.11. HealthController.java
 14. [Data Transfer Objects (DTOs) & Contracts](#14-data-transfer-objects-dtos--contracts)
 15. [End-to-End Workflow Execution Walkthrough](#15-end-to-end-workflow-execution-walkthrough)
+16. [RailRadar API Integrations: Disruption Management, Punctuality & Fares](#16-railradar-api-integrations-disruption-management-punctuality--fares)
+    - 16.1. Train Disruptions Hub, Schedule Exceptions & Neon DB Auto-Injection
+    - 16.2. Live Train Disruption Awareness & Station Cancellation Telemetry
+    - 16.3. Average Delay & Punctuality Analysis
+    - 16.4. Ticket Fare Breakdown
+    - 16.5. Trains Between Stations (Alternative Trains Finder)
+    - 16.6. Multi-Leg Delay Overlay
 
 ---
 
@@ -1012,18 +1019,29 @@ This document covers every single component, file, design decision, annotation, 
 
 This section documents the integration of RailRadar API endpoints extending the application with disruption handling, performance analytics, fare calculations, and multi-leg journey delay intelligence.
 
-### 16.1. Train Disruptions Hub & Schedule Exceptions
+### 16.1. Train Disruptions Hub, Schedule Exceptions & Neon DB Auto-Injection
 * **Controller:** `TrainDisruptionController.java` (`/api/v1/disruptions`)
 * **Service:** `TrainDisruptionService.java` & `TrainDisruptionServiceImpl.java`
 * **Client Method:** `RailRadarClient.getTrainExceptions(String type)` & `getTrainExceptionsSummary()`
 * **Endpoints:**
   * `GET /api/v1/disruptions/exceptions?type={ALL|CANCELLED|DIVERTED|RESCHEDULED}`: Fetches active railway exceptions, cancellation notices, affected stations, and detour routes.
   * `GET /api/v1/disruptions/summary`: Returns aggregate counts across all disruption categories (`total`, `cancelled`, `diverted`, `rescheduled`, `partiallyCancelled`).
-* **Caching:** Cached in Redis key `train:exceptions` (TTL: 30 minutes) and `train:exceptions:summary` (TTL: 30 minutes) to respect API quota limits.
+* **Neon PostgreSQL Auto-Injection:**
+  * When exceptions are fetched from RailRadar, each disrupted train is checked against the local Neon PostgreSQL database using `trainRepository.findByTrainNumber(dto.trainNumber())`.
+  * If the train exists locally, it enriches the exception DTO with official schedule, route distance, duration, and running days.
+  * If the train does **not** exist in Neon DB, the service automatically instantiates a new `Train` entity and calls `trainRepository.save(newTrain)`, persisting it seamlessly into PostgreSQL so it can be queried, tracked, and bookmarked immediately.
+* **Resilient In-Memory Disruption Handling & Quota Protection:**
+  * All 199 active Indian Railways disruptions are retrieved in a single upstream call to `/trains/exceptions` and cached in Redis under `train:exceptions`.
+  * Filtering by disruption type (`CANCELLED`, `DIVERTED`, `RESCHEDULED`) is performed in-memory, avoiding upstream HTTP 400 Bad Request rejections on uppercase query parameters and strictly protecting the 100 requests/month quota.
+  * If `/trains/exceptions/summary` returns empty or zero metrics, `getExceptionsSummary()` dynamically computes accurate category metrics from the 199 loaded exceptions so summary cards never display empty dashes.
 
-### 16.2. Live Train Disruption Awareness
+### 16.2. Live Train Disruption Awareness & Station Cancellation Telemetry
 * **DTO:** Enhanced `TrainLiveStatusDto.java` with 5 disruption fields: `isCancelled`, `isDiverted`, `isRescheduled`, `disruptionMessage`, and `skippedStations`.
 * **Provider:** `RailRadarDataProvider.java` passes parsed telemetry status attributes into `TrainLiveStatusDto` with backward compatibility for existing controller unit tests.
+* **Route-Level Cancellation & Skipped Station Detection:**
+  * In `RailRadarClient.mapLiveStatus()`, the system scans every stop in the train's active route array.
+  * If any station stop has `status` containing "cancel" or "skip", or boolean flags `isCancelled` / `isSkipped` set to true, its station code is automatically collected into `skippedStations`.
+  * If intermediate halts are skipped, `isCancelled` is flagged as `true` and `disruptionMessage` is enriched with: `"Train cancelled / skipped at X station(s): [CODE1, CODE2]"`, enabling real-time timeline visualization on the frontend.
 
 ### 16.3. Average Delay & Punctuality Analysis
 * **Controller:** `TrainController.java` (`GET /api/v1/trains/{trainNumber}/delay`)
