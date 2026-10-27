@@ -2132,6 +2132,9 @@ This section documents the integration of RailRadar API endpoints extending the 
   * Sleeper Class (SL) calibrated to official Indian Railways telescopic distance slabs (Rs 385 base + Rs 30 SF + Rs 20 RF = Rs 435 for 709.7 km on Superfast), matching IRCTC Godavari SF Exp.
   * AC 3-Tier Economy (3E) calibrated to ₹455 base at 240 km (+ ₹40 RF + ₹45 SF + 5% GST = ₹565).
   * Amrit Bharat Express integration applying 1.15x base tariff for GN and SL rakes.
+  * Heritage Mountain Toy Trains (Kalka-Shimla, Darjeeling, Nilgiri, Matheran, Kangra Valley) with FC, EV, and 2S scenic hill railway tariffs.
+  * Ultra-Luxury Heritage Trains (Maharajas' Express, Palace on Wheels, Golden Chariot, Deccan Odyssey) with Deluxe, Junior Suite, and Presidential Suite cruise packages.
+  * Bharat Gaurav Spiritual & Pilgrimage Circuits (Ramayana Yatra, Jyotirlinga, Buddhist Circuit, Dakshin Yatra) with all-inclusive round-trip package pricing (hotels, veg meals, VIP darshan).
   * Full rounding to the nearest multiple of ₹5.
 
 * **Structural Integrity & Robust Fallback:** Eliminated extraneous closing brace syntax in RailRadarDataProvider.java, preserving compile-time and runtime integrity of @Override public JourneyOverlayDTO getJourneyOverlay(...) and getTrainFare(...). Clean fallback to telescopic estimation when upstream external services are unresponsive without returning corrupted hash distances.
