@@ -825,7 +825,7 @@ public class RailRadarClient {
                 boolean stopCancelled = Boolean.TRUE.equals(bool(stop, "isCancelled", "is_cancelled", "cancelled"));
                 boolean stopSkipped = Boolean.TRUE.equals(bool(stop, "isSkipped", "is_skipped", "skipped"));
                 RailRadarStationInfo sInfo = stationInfo(stop);
-                String stopCode = sInfo != null && sInfo.stationCode() != null ? sInfo.stationCode() : text(stop, "stationCode", "code");
+                String stopCode = sInfo != null && sInfo.code() != null ? sInfo.code() : text(stop, "stationCode", "code");
 
                 if (stopCode != null && (stopCancelled || stopSkipped || (stopStatus != null && (stopStatus.toLowerCase().contains("cancel") || stopStatus.toLowerCase().contains("skip"))))) {
                     if (!skippedStations.contains(stopCode)) {
