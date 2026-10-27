@@ -647,7 +647,6 @@ public class RailRadarDataProvider implements RailwayDataProvider {
             logger.warn("RailRadar fare unavailable for train {} from {} to {}.", trainNumber, source, destination, e);
             return null;
         }
-        }
     }
 
     @Override
