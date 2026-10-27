@@ -605,6 +605,27 @@ public class TrainServiceImpl implements TrainService {
                 train.getCoachPosition()
         );
     }
+
+    @Override
+    @Cacheable(value = "train:delay", key = "#trainNumber")
+    public TrainDelayReportDTO getTrainDelayReport(String trainNumber) {
+        logger.debug("Retrieving delay report for train: {}", trainNumber);
+        return railwayDataProvider.getTrainDelayReport(trainNumber);
+    }
+
+    @Override
+    @Cacheable(value = "train:fare", key = "#trainNumber + '_' + #source + '_' + #destination")
+    public TrainFareDTO getTrainFare(String trainNumber, String source, String destination) {
+        logger.debug("Retrieving fare for train: {} from {} to {}", trainNumber, source, destination);
+        return railwayDataProvider.getTrainFare(trainNumber, source, destination);
+    }
+
+    @Override
+    @Cacheable(value = "trains:between", key = "#from + '_' + #to + '_' + (#date != null ? #date : 'today')")
+    public List<TrainBetweenStationsDto> getTrainsBetween(String from, String to, String date) {
+        logger.debug("Retrieving trains between {} and {} on date {}", from, to, date);
+        return railwayDataProvider.getTrainsBetweenStations(from, to, date);
+    }
 }
 
 

@@ -1,6 +1,7 @@
 package com.example.railtracker.service.impl;
 
 import com.example.railtracker.dto.JourneyOptionDto;
+import com.example.railtracker.dto.JourneyOverlayDTO;
 import com.example.railtracker.dto.TrainBetweenStationsDto;
 import com.example.railtracker.dto.StationBoardTrainDto;
 import com.example.railtracker.dto.TrainRouteDto;
@@ -12,6 +13,7 @@ import com.example.railtracker.client.RailwayDataProvider;
 import com.example.railtracker.service.JourneyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalTime;
@@ -294,5 +296,12 @@ public class JourneyServiceImpl implements JourneyService {
         }
         
         return durationSecs / 60;
+    }
+
+    @Override
+    @Cacheable(value = "journey:overlay", key = "#requestBody.hashCode()")
+    public JourneyOverlayDTO getJourneyOverlay(Object requestBody) {
+        logger.debug("Retrieving journey delay overlay");
+        return railwayDataProvider.getJourneyOverlay(requestBody);
     }
 }

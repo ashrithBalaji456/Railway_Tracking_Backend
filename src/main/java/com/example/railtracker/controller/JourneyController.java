@@ -2,6 +2,7 @@ package com.example.railtracker.controller;
 
 import com.example.railtracker.dto.ApiResponse;
 import com.example.railtracker.dto.JourneyOptionDto;
+import com.example.railtracker.dto.JourneyOverlayDTO;
 import com.example.railtracker.service.JourneyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,5 +25,11 @@ public class JourneyController {
             @RequestParam(required = false) String date) {
         List<JourneyOptionDto> plan = journeyService.planJourney(source, destination, date);
         return ResponseEntity.ok(ApiResponse.success(plan));
+    }
+
+    @PostMapping("/overlay")
+    public ResponseEntity<ApiResponse<JourneyOverlayDTO>> getJourneyOverlay(@RequestBody Object requestBody) {
+        JourneyOverlayDTO overlay = journeyService.getJourneyOverlay(requestBody);
+        return ResponseEntity.ok(ApiResponse.success("Journey delay overlay retrieved successfully", overlay));
     }
 }

@@ -63,6 +63,16 @@ public class CacheConfig implements CachingConfigurer {
         // Route cache - medium TTL (1 hour)
         cacheConfigurations.put("train:route", defaultCacheConfig.entryTtl(Duration.ofHours(1)));
 
+        // Disruption & Exception caches (30 minutes TTL to protect monthly quota)
+        cacheConfigurations.put("train:exceptions", defaultCacheConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("train:exceptions:summary", defaultCacheConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Performance & Pricing caches (6h - 24h TTL)
+        cacheConfigurations.put("train:delay", defaultCacheConfig.entryTtl(Duration.ofHours(6)));
+        cacheConfigurations.put("train:fare", defaultCacheConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("trains:between", defaultCacheConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigurations.put("journey:overlay", defaultCacheConfig.entryTtl(Duration.ofMinutes(15)));
+
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultCacheConfig)
                 .withInitialCacheConfigurations(cacheConfigurations)

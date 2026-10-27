@@ -466,7 +466,12 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                     l.routeProgress(),
                     l.lastLocationInfo(),
                     parseDateTime(l.lastUpdatedAt()),
-                    stations
+                    stations,
+                    l.isCancelled(),
+                    l.isDiverted(),
+                    l.isRescheduled(),
+                    l.disruptionMessage(),
+                    l.skippedStations()
             );
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -514,7 +519,12 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                     l.routeProgress(),
                     l.lastLocationInfo(),
                     parseDateTime(l.lastUpdatedAt()),
-                    stations
+                    stations,
+                    l.isCancelled(),
+                    l.isDiverted(),
+                    l.isRescheduled(),
+                    l.disruptionMessage(),
+                    l.skippedStations()
             );
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -611,4 +621,33 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public TrainDelayReportDTO getTrainDelayReport(String trainNumber) {
+        try {
+            return client.getTrainDelayReport(trainNumber);
+        } catch (Exception e) {
+            logger.warn("RailRadar delay report unavailable for train {}.", trainNumber, e);
+            throw new ResourceNotFoundException("Delay report unavailable for train " + trainNumber);
+        }
+    }
+
+    @Override
+    public TrainFareDTO getTrainFare(String trainNumber, String source, String destination) {
+        try {
+            return client.getTrainFare(trainNumber, source, destination);
+        } catch (Exception e) {
+            logger.warn("RailRadar fare unavailable for train {} from {} to {}.", trainNumber, source, destination, e);
+            throw new ResourceNotFoundException("Fare details unavailable for train " + trainNumber);
+        }
+    }
+
+    @Override
+    public JourneyOverlayDTO getJourneyOverlay(Object requestBody) {
+        try {
+            return client.getJourneyOverlay(requestBody);
+        } catch (Exception e) {
+            logger.warn("RailRadar journey delay overlay unavailable.", e);
+            throw new ResourceNotFoundException("Journey delay overlay unavailable");
+        }
+    }
 }

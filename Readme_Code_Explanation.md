@@ -1004,3 +1004,50 @@ sequenceDiagram
 This document covers every single component, file, design decision, annotation, and flow of the **RailTrack India Backend**.
 
 </div>
+
+
+---
+
+## 16. RailRadar API Integrations: Disruption Management, Punctuality & Fares
+
+This section documents the integration of RailRadar API endpoints extending the application with disruption handling, performance analytics, fare calculations, and multi-leg journey delay intelligence.
+
+### 16.1. Train Disruptions Hub & Schedule Exceptions
+* **Controller:** `TrainDisruptionController.java` (`/api/v1/disruptions`)
+* **Service:** `TrainDisruptionService.java` & `TrainDisruptionServiceImpl.java`
+* **Client Method:** `RailRadarClient.getTrainExceptions(String type)` & `getTrainExceptionsSummary()`
+* **Endpoints:**
+  * `GET /api/v1/disruptions/exceptions?type={ALL|CANCELLED|DIVERTED|RESCHEDULED}`: Fetches active railway exceptions, cancellation notices, affected stations, and detour routes.
+  * `GET /api/v1/disruptions/summary`: Returns aggregate counts across all disruption categories (`total`, `cancelled`, `diverted`, `rescheduled`, `partiallyCancelled`).
+* **Caching:** Cached in Redis key `train:exceptions` (TTL: 30 minutes) and `train:exceptions:summary` (TTL: 30 minutes) to respect API quota limits.
+
+### 16.2. Live Train Disruption Awareness
+* **DTO:** Enhanced `TrainLiveStatusDto.java` with 5 disruption fields: `isCancelled`, `isDiverted`, `isRescheduled`, `disruptionMessage`, and `skippedStations`.
+* **Provider:** `RailRadarDataProvider.java` passes parsed telemetry status attributes into `TrainLiveStatusDto` with backward compatibility for existing controller unit tests.
+
+### 16.3. Average Delay & Punctuality Analysis
+* **Controller:** `TrainController.java` (`GET /api/v1/trains/{trainNumber}/delay`)
+* **Service:** `TrainService.java` & `TrainServiceImpl.java` (`getTrainDelayReport`)
+* **DTO:** `TrainDelayReportDTO.java`
+* **Response Schema:** Returns `historicalAverageDelayMinutes`, `onTimePercentage`, `punctualityGrade` (A, B, C, D), `totalRunsAnalyzed`, and `delayDistribution`.
+* **Caching:** Cached in Redis key `train:delay` (TTL: 6 hours).
+
+### 16.4. Ticket Fare Breakdown
+* **Controller:** `TrainController.java` (`GET /api/v1/trains/{trainNumber}/fare?source={src}&destination={dest}`)
+* **Service:** `TrainService.java` & `TrainServiceImpl.java` (`getTrainFare`)
+* **DTO:** `TrainFareDTO.java`
+* **Response Schema:** Returns distance in km, source, destination, and a list of `ClassFare` entries (class code, class name, base fare, total fare).
+* **Caching:** Cached in Redis key `train:fare` (TTL: 24 hours).
+
+### 16.5. Trains Between Stations (Alternative Trains Finder)
+* **Controller:** `TrainController.java` (`GET /api/v1/trains/between?from={from}&to={to}&date={date}`)
+* **Service:** `TrainService.java` & `TrainServiceImpl.java` (`getTrainsBetween`)
+* **DTO:** `TrainBetweenStationsDto.java`
+* **Caching:** Cached in Redis key `trains:between` (TTL: 1 hour).
+
+### 16.6. Multi-Leg Delay Overlay
+* **Controller:** `JourneyController.java` (`POST /api/v1/journey/overlay`)
+* **Service:** `JourneyService.java` & `JourneyServiceImpl.java` (`getJourneyOverlay`)
+* **Client Method:** `RailRadarClient.getJourneyOverlay(Object requestBody)` via Java SE `HttpClient` POST.
+* **DTO:** `JourneyOverlayDTO.java` (`List<LegDelay>`)
+* **Caching:** Cached in Redis key `journey:overlay` (TTL: 15 minutes).

@@ -1,8 +1,6 @@
 package com.example.railtracker.service;
 
-import com.example.railtracker.dto.TrainDto;
-import com.example.railtracker.dto.TrainLiveStatusDto;
-import com.example.railtracker.dto.TrainRouteDto;
+import com.example.railtracker.dto.*;
 import java.util.List;
 
 public interface TrainService {
@@ -13,4 +11,7 @@ public interface TrainService {
     TrainRouteDto getTrainRoute(String trainNumber, String journeyDate);
     TrainLiveStatusDto getTrainLiveStatus(String trainNumber);
     TrainLiveStatusDto getTrainLiveStatus(String trainNumber, String journeyDate);
+    TrainDelayReportDTO getTrainDelayReport(String trainNumber);
+    TrainFareDTO getTrainFare(String trainNumber, String source, String destination);
+    List<TrainBetweenStationsDto> getTrainsBetween(String from, String to, String date);
 }

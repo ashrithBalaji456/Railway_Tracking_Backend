@@ -1,5 +1,6 @@
 package com.example.railtracker.dto;
 
+import java.io.Serializable;
 import java.time.LocalTime;
 
 public record TrainBetweenStationsDto(
@@ -14,4 +15,4 @@ public record TrainBetweenStationsDto(
     String runningDays,
     Integer fromSequence,
     Integer toSequence
-) {}
+) implements Serializable {}

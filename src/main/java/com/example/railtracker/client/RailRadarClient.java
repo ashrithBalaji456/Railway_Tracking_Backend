@@ -23,6 +23,11 @@ import java.util.ArrayList;
 import com.example.railtracker.dto.LiveStationBoardResponse;
 import com.example.railtracker.dto.StationPassType;
 import com.example.railtracker.dto.StationTrainLiveStatus;
+import com.example.railtracker.dto.TrainExceptionDTO;
+import com.example.railtracker.dto.TrainExceptionSummaryDTO;
+import com.example.railtracker.dto.TrainDelayReportDTO;
+import com.example.railtracker.dto.TrainFareDTO;
+import com.example.railtracker.dto.JourneyOverlayDTO;
 
 @Component
 public class RailRadarClient {
@@ -76,6 +81,43 @@ public class RailRadarClient {
             java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             
+            if (statusCode == 200) {
+                return this.objectMapper.readTree(response.body());
+            } else if (statusCode == 404) {
+                throw new ResourceNotFoundException("Resource not found on external server");
+            } else if (statusCode == 400) {
+                throw new BadRequestException("Bad request sent to external server");
+            } else if (statusCode == 429) {
+                throw new ApiException("Live railway data is temporarily rate-limited. Please try again later.");
+            } else if (statusCode >= 500) {
+                throw new ApiException("External railway provider is temporarily unavailable.");
+            } else {
+                throw new ApiException("External railway client error: Status " + statusCode);
+            }
+        } catch (ApiException | ResourceNotFoundException | BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ApiException("External railway client error", e);
+        }
+    }
+
+    public JsonNode executePost(String path, Object body) {
+        try {
+            java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+                    .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+                    .build();
+            String jsonPayload = this.objectMapper.writeValueAsString(body);
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(baseUrl + path))
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+            java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+            int statusCode = response.statusCode();
+
             if (statusCode == 200) {
                 return this.objectMapper.readTree(response.body());
             } else if (statusCode == 404) {
@@ -511,6 +553,173 @@ public class RailRadarClient {
         return list;
     }
 
+    public List<TrainExceptionDTO> getTrainExceptions(String type) {
+        String queryParam = (type == null || type.isBlank()) ? "all" : type.trim();
+        String path = "/trains/exceptions?type=" + encode(queryParam);
+        logger.info("RailRadar exceptions request: GET {}", path);
+        JsonNode responseNode = executeGet(path);
+        return mapTrainExceptionsResponse(responseNode);
+    }
+
+    private List<TrainExceptionDTO> mapTrainExceptionsResponse(JsonNode responseNode) {
+        JsonNode data = dataNode(responseNode);
+        if (data == null || data.isNull()) {
+            return List.of();
+        }
+        JsonNode trainsNode = data.has("trains") ? data.get("trains") : (data.isArray() ? data : null);
+        if (trainsNode == null || !trainsNode.isArray()) {
+            return List.of();
+        }
+        List<TrainExceptionDTO> list = new ArrayList<>();
+        for (JsonNode item : trainsNode) {
+            String trainNumber = text(item, "trainNumber", "train_number", "number");
+            String trainName = text(item, "trainName", "train_name", "name");
+            String trainType = text(item, "trainType", "train_type", "type");
+            String startDate = text(item, "startDate", "start_date", "date");
+
+            JsonNode srcNode = item.get("sourceStation");
+            String srcCode = srcNode != null && srcNode.isObject() ? text(srcNode, "code") : text(item, "sourceStationCode", "sourceStation", "source");
+            String srcName = srcNode != null && srcNode.isObject() ? text(srcNode, "name") : text(item, "sourceStationName", "sourceName");
+
+            JsonNode dstNode = item.get("destinationStation");
+            String dstCode = dstNode != null && dstNode.isObject() ? text(dstNode, "code") : text(item, "destinationStationCode", "destinationStation", "destination");
+            String dstName = dstNode != null && dstNode.isObject() ? text(dstNode, "name") : text(item, "destinationStationName", "destinationName");
+
+            String status = text(item, "status");
+            String primaryType = text(item, "primaryType", "primary_type", "type");
+            String message = text(item, "message");
+            String lastUpdatedAt = text(item, "lastUpdatedAt", "last_updated_at", "updatedAt");
+
+            List<TrainExceptionDTO.ExceptionDetail> details = new ArrayList<>();
+            JsonNode excArray = item.get("exceptions");
+            if (excArray != null && excArray.isArray()) {
+                for (JsonNode exc : excArray) {
+                    details.add(new TrainExceptionDTO.ExceptionDetail(
+                        text(exc, "type"),
+                        text(exc, "message")
+                    ));
+                }
+            }
+
+            list.add(new TrainExceptionDTO(
+                trainNumber,
+                trainName,
+                trainType,
+                startDate,
+                srcCode,
+                srcName,
+                dstCode,
+                dstName,
+                status,
+                primaryType,
+                message,
+                details,
+                lastUpdatedAt
+            ));
+        }
+        return list;
+    }
+
+    public TrainExceptionSummaryDTO getTrainExceptionsSummary() {
+        String path = "/trains/exceptions/summary";
+        logger.info("RailRadar exceptions summary request: GET {}", path);
+        JsonNode responseNode = executeGet(path);
+        JsonNode data = dataNode(responseNode);
+        if (data == null || data.isNull()) {
+            return new TrainExceptionSummaryDTO(0, 0, 0, 0, 0, 0, 0, null);
+        }
+        return new TrainExceptionSummaryDTO(
+            integer(data, "total"),
+            integer(data, "cancelled"),
+            firstInteger(data, "partiallyCancelled", "partially_cancelled"),
+            firstInteger(data, "partialSource", "partial_source"),
+            firstInteger(data, "partialDestination", "partial_destination"),
+            integer(data, "diverted"),
+            integer(data, "rescheduled"),
+            text(data, "updatedAt", "updated_at")
+        );
+    }
+
+    public TrainDelayReportDTO getTrainDelayReport(String trainNumber) {
+        String path = "/trains/" + trainNumber + "/delay";
+        logger.info("RailRadar train delay request: GET {}", path);
+        JsonNode responseNode = executeGet(path);
+        JsonNode data = dataNode(responseNode);
+        if (data == null || data.isNull()) {
+            return new TrainDelayReportDTO(trainNumber, null, 0, 0, 100.0, 0, "A", "Normal operations");
+        }
+        return new TrainDelayReportDTO(
+            text(data, "trainNumber", "number") != null ? text(data, "trainNumber", "number") : trainNumber,
+            text(data, "trainName", "name"),
+            firstInteger(data, "avgArrivalDelayMinutes", "avgDelayMinutes", "arrivalDelayMinutes", "arrivalDelay"),
+            firstInteger(data, "avgDepartureDelayMinutes", "departureDelayMinutes", "departureDelay"),
+            data.has("ontimePercentage") ? data.get("ontimePercentage").asDouble() : (data.has("ontime_percentage") ? data.get("ontime_percentage").asDouble() : 85.0),
+            firstInteger(data, "totalRunsSampled", "samples", "runsSampled"),
+            text(data, "punctualityGrade", "grade") != null ? text(data, "punctualityGrade", "grade") : "A",
+            text(data, "remarks", "summary")
+        );
+    }
+
+    public TrainFareDTO getTrainFare(String trainNumber, String source, String destination) {
+        String path = "/trains/" + trainNumber + "/fare";
+        if (source != null && !source.isBlank() && destination != null && !destination.isBlank()) {
+            path += "?source=" + encode(source) + "&destination=" + encode(destination);
+        }
+        logger.info("RailRadar train fare request: GET {}", path);
+        JsonNode responseNode = executeGet(path);
+        JsonNode data = dataNode(responseNode);
+        if (data == null || data.isNull()) {
+            return new TrainFareDTO(trainNumber, null, source, destination, null, List.of());
+        }
+        List<TrainFareDTO.ClassFare> fares = new ArrayList<>();
+        JsonNode faresNode = data.has("fares") ? data.get("fares") : (data.has("classes") ? data.get("classes") : null);
+        if (faresNode != null && faresNode.isArray()) {
+            for (JsonNode f : faresNode) {
+                fares.add(new TrainFareDTO.ClassFare(
+                    text(f, "classCode", "code", "class"),
+                    text(f, "className", "name"),
+                    firstInteger(f, "baseFare", "base_fare"),
+                    firstInteger(f, "totalFare", "total_fare", "fare")
+                ));
+            }
+        }
+        return new TrainFareDTO(
+            text(data, "trainNumber", "number") != null ? text(data, "trainNumber", "number") : trainNumber,
+            text(data, "trainName", "name"),
+            text(data, "source", "fromStation") != null ? text(data, "source", "fromStation") : source,
+            text(data, "destination", "toStation") != null ? text(data, "destination", "toStation") : destination,
+            firstInteger(data, "distance", "distanceKm"),
+            fares
+        );
+    }
+
+    public JourneyOverlayDTO getJourneyOverlay(Object requestBody) {
+        String path = "/journeys/overlay";
+        logger.info("RailRadar journey overlay request: POST {}", path);
+        JsonNode responseNode = executePost(path, requestBody);
+        JsonNode data = dataNode(responseNode);
+        if (data == null || data.isNull()) {
+            return new JourneyOverlayDTO(List.of());
+        }
+        List<JourneyOverlayDTO.LegDelay> delays = new ArrayList<>();
+        JsonNode delaysNode = data.has("delays") ? data.get("delays") : (data.isArray() ? data : null);
+        if (delaysNode != null && delaysNode.isArray()) {
+            for (JsonNode d : delaysNode) {
+                delays.add(new JourneyOverlayDTO.LegDelay(
+                    text(d, "train", "trainNumber"),
+                    text(d, "station", "stationCode"),
+                    integer(d, "dayOfWeek"),
+                    firstInteger(d, "arrivalDelayMinutes", "arrivalDelay"),
+                    firstInteger(d, "departureDelayMinutes", "departureDelay"),
+                    integer(d, "samples"),
+                    integer(d, "maxDelayMinutes"),
+                    integer(d, "ontimeCount")
+                ));
+            }
+        }
+        return new JourneyOverlayDTO(delays);
+    }
+
     private String encode(String value) {
         return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
@@ -602,6 +811,27 @@ public class RailRadarClient {
             locInfo = "Reached Destination";
         }
 
+        Boolean isCancelled = bool(dataNode, "isCancelled", "is_cancelled");
+        Boolean isDiverted = bool(dataNode, "isDiverted", "is_diverted");
+        Boolean isRescheduled = bool(dataNode, "isRescheduled", "is_rescheduled");
+        String disruptionMessage = text(dataNode, "disruptionMessage", "disruption_message", "statusNote", "notice");
+        if (runStatus != null) {
+            String lower = runStatus.toLowerCase();
+            if (lower.contains("cancel")) isCancelled = true;
+            if (lower.contains("divert")) isDiverted = true;
+            if (lower.contains("reschedul")) isRescheduled = true;
+        }
+        List<String> skippedStations = new ArrayList<>();
+        JsonNode skippedNode = dataNode.get("skippedStations");
+        if (skippedNode == null) skippedNode = dataNode.get("skipped_stations");
+        if (skippedNode != null && skippedNode.isArray()) {
+            for (JsonNode sn : skippedNode) {
+                if (sn.isTextual()) skippedStations.add(sn.asText());
+                else if (sn.has("stationCode")) skippedStations.add(sn.get("stationCode").asText());
+                else if (sn.has("code")) skippedStations.add(sn.get("code").asText());
+            }
+        }
+
         return new RailRadarTrainLiveStatus(
                 text(dataNode, "trainNumber", "number") != null ? text(dataNode, "trainNumber", "number") : requestedTrainNumber,
                 text(dataNode, "trainName", "name"),
@@ -618,7 +848,12 @@ public class RailRadarClient {
                 progress,
                 locInfo,
                 text(dataNode, "lastUpdatedAt"),
-                stations
+                stations,
+                isCancelled,
+                isDiverted,
+                isRescheduled,
+                disruptionMessage,
+                skippedStations
         );
     }
 
@@ -717,10 +952,13 @@ public class RailRadarClient {
         return null;
     }
 
-    private Boolean bool(JsonNode node, String name) {
+    private Boolean bool(JsonNode node, String... names) {
         if (node == null || node.isNull()) return null;
-        JsonNode value = node.get(name);
-        return value == null || value.isNull() ? null : value.asBoolean();
+        for (String name : names) {
+            JsonNode value = node.get(name);
+            if (value != null && !value.isNull()) return value.asBoolean();
+        }
+        return null;
     }
     private <T> T unpackResponse(JsonNode responseNode, Class<T> targetClass) {
         if (responseNode == null) return null;
@@ -858,7 +1096,12 @@ public class RailRadarClient {
             @JsonAlias({"route_progress"}) Double routeProgress,
             @JsonAlias({"last_location_info"}) String lastLocationInfo,
             @JsonAlias({"last_updated_at"}) String lastUpdatedAt,
-            List<RailRadarLiveStationStatus> stations
+            List<RailRadarLiveStationStatus> stations,
+            @JsonAlias({"is_cancelled", "isCancelled"}) Boolean isCancelled,
+            @JsonAlias({"is_diverted", "isDiverted"}) Boolean isDiverted,
+            @JsonAlias({"is_rescheduled", "isRescheduled"}) Boolean isRescheduled,
+            @JsonAlias({"disruption_message", "disruptionMessage"}) String disruptionMessage,
+            @JsonAlias({"skipped_stations", "skippedStations"}) List<String> skippedStations
     ) {}
 
     public record RailRadarStationBoardTrain(

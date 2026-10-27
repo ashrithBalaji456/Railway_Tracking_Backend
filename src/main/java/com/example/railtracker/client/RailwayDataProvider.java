@@ -27,5 +27,11 @@ public interface RailwayDataProvider {
     LiveStationBoardResponse getLiveStationBoardDetails(String stationCode, int hours);
     
     List<TrainBetweenStationsDto> getTrainsBetweenStations(String fromStationCode, String toStationCode, String date);
+
+    TrainDelayReportDTO getTrainDelayReport(String trainNumber);
+
+    TrainFareDTO getTrainFare(String trainNumber, String source, String destination);
+
+    JourneyOverlayDTO getJourneyOverlay(Object requestBody);
 }
 
