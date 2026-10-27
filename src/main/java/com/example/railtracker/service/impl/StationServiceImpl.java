@@ -4,6 +4,7 @@ import com.example.railtracker.client.RailwayDataProvider;
 import com.example.railtracker.dto.LiveStationBoardResponse;
 import com.example.railtracker.dto.StationBoardTrainDto;
 import com.example.railtracker.dto.StationDto;
+import com.example.railtracker.dto.StationPassType;
 import com.example.railtracker.entity.Station;
 import com.example.railtracker.exception.ResourceNotFoundException;
 import com.example.railtracker.repository.StationRepository;
