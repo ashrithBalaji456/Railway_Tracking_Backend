@@ -11,6 +11,10 @@ public record TrainFareDTO(
     Integer distanceKm,
     List<ClassFare> classFares
 ) implements Serializable {
+    public List<ClassFare> fares() {
+        return classFares;
+    }
+
     public record ClassFare(
         String classCode,
         String className,

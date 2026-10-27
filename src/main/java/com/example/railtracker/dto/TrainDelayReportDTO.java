@@ -11,5 +11,13 @@ public record TrainDelayReportDTO(
     Integer totalRunsSampled,
     String punctualityGrade,
     String remarks
-) implements Serializable {}
+) implements Serializable {
+    public Double onTimePercentage() {
+        return ontimePercentage;
+    }
+
+    public Integer historicalAverageDelayMinutes() {
+        return avgArrivalDelayMinutes;
+    }
+}
 
