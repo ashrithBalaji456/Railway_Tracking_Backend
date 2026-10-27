@@ -2090,7 +2090,7 @@ This section documents the integration of RailRadar API endpoints extending the 
 
     * When upstream `nextHalt` falls on a cancelled or skipped station (e.g. Chennai Egmore on a partially cancelled service), the engine automatically scans forward along the route to locate the **first valid, non-cancelled halt station** (e.g. Sullurupeta `SPE`), preventing dead or cancelled stops from being advertised as upcoming halts.
 
-    * When the scheduled origin station (e.g. Tambaram) is cancelled, the engine identifies the **new active starting terminal** (e.g. Chennai Beach `MSB`) from live location metadata and route stops, preventing trains from being falsely shown as departing from cancelled origins.
+    * When the scheduled origin station (e.g. Tambaram) is cancelled, the engine identifies the **new active starting terminal** (e.g. Chennai Beach `MSB`) from live location metadata and route stops, preventing trains from being falsely shown as departing from cancelled origins. If the upstream provider returns the cancelled station code as `currentStationCode`, the engine validates against `skippedStations`, discards the dead station code, maps the train's actual coordinates/location name (e.g. `"Chennai Beach"`), and updates `currentSequence` to the new origin sequence (18) so all downstream halt calculations advance past cancelled stations.
 
 * **Destination Reached & Completed Run Determination:**
 
