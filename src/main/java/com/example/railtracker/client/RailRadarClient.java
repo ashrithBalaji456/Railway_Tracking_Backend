@@ -589,6 +589,9 @@ public class RailRadarClient {
             String primaryType = text(item, "primaryType", "primary_type", "type");
             String message = text(item, "message");
             String lastUpdatedAt = text(item, "lastUpdatedAt", "last_updated_at", "updatedAt");
+            String runningDays = text(item, "runningDays", "running_days", "days");
+            Integer distance = firstInteger(item, "distance", "distanceKm");
+            Integer duration = firstInteger(item, "duration", "durationMinutes");
 
             List<TrainExceptionDTO.ExceptionDetail> details = new ArrayList<>();
             JsonNode excArray = item.get("exceptions");
@@ -614,7 +617,10 @@ public class RailRadarClient {
                 primaryType,
                 message,
                 details,
-                lastUpdatedAt
+                lastUpdatedAt,
+                runningDays,
+                distance,
+                duration
             ));
         }
         return list;
