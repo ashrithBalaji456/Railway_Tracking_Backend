@@ -274,11 +274,17 @@ public class TrainServiceImpl implements TrainService {
                     train.setCoachPosition(externalTrain.coachPosition());
                     changed = true;
                 }
-                if ((train.getSourceStation() == null || train.getSourceStation().isBlank()) && externalTrain.sourceStation() != null) {
+                if (externalTrain.sourceStation() != null && !externalTrain.sourceStation().isBlank()
+                        && !externalTrain.sourceStation().equalsIgnoreCase(train.getSourceStation())) {
+                    logger.info("Auto-updating source station for train {}: '{}' -> '{}'",
+                            train.getTrainNumber(), train.getSourceStation(), externalTrain.sourceStation());
                     train.setSourceStation(externalTrain.sourceStation());
                     changed = true;
                 }
-                if ((train.getDestinationStation() == null || train.getDestinationStation().isBlank()) && externalTrain.destinationStation() != null) {
+                if (externalTrain.destinationStation() != null && !externalTrain.destinationStation().isBlank()
+                        && !externalTrain.destinationStation().equalsIgnoreCase(train.getDestinationStation())) {
+                    logger.info("Auto-updating destination station for train {}: '{}' -> '{}'",
+                            train.getTrainNumber(), train.getDestinationStation(), externalTrain.destinationStation());
                     train.setDestinationStation(externalTrain.destinationStation());
                     changed = true;
                 }
@@ -295,7 +301,8 @@ public class TrainServiceImpl implements TrainService {
         if (routeDto == null || routeDto.trainNumber() == null || routeDto.trainNumber().isBlank()) return;
         try {
             String num = routeDto.trainNumber().trim();
-            if (!trainRepository.existsByTrainNumber(num)) {
+            var existingOpt = trainRepository.findByTrainNumber(num);
+            if (existingOpt.isEmpty()) {
                 String name = routeDto.trainName() != null ? routeDto.trainName().trim() : "Express";
                 String type = routeDto.trainType() != null ? routeDto.trainType().trim() : "Express";
                 Train train = new Train(
@@ -312,6 +319,26 @@ public class TrainServiceImpl implements TrainService {
                 );
                 trainRepository.save(train);
                 logger.info("Auto-populated new train {} ({}) locally from route schedule", num, name);
+            } else {
+                Train train = existingOpt.get();
+                boolean changed = false;
+                if (routeDto.sourceStation() != null && !routeDto.sourceStation().isBlank()
+                        && !routeDto.sourceStation().equalsIgnoreCase(train.getSourceStation())) {
+                    logger.info("Auto-updating source station for train {} from route: '{}' -> '{}'",
+                            num, train.getSourceStation(), routeDto.sourceStation());
+                    train.setSourceStation(routeDto.sourceStation());
+                    changed = true;
+                }
+                if (routeDto.destinationStation() != null && !routeDto.destinationStation().isBlank()
+                        && !routeDto.destinationStation().equalsIgnoreCase(train.getDestinationStation())) {
+                    logger.info("Auto-updating destination station for train {} from route: '{}' -> '{}'",
+                            num, train.getDestinationStation(), routeDto.destinationStation());
+                    train.setDestinationStation(routeDto.destinationStation());
+                    changed = true;
+                }
+                if (changed) {
+                    trainRepository.save(train);
+                }
             }
         } catch (Exception e) {
             logger.warn("Failed to auto-populate train from route: {}", e.getMessage());

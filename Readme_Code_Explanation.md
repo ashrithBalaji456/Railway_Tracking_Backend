@@ -767,6 +767,13 @@ File path: `src/main/java/com/example/railtracker/service/impl/TrainServiceImpl.
 * **`searchTrains(String query)`:**
   1. Cleans input string and performs substring search across both train names and train numbers.
   2. Generates format-matching suggestions for unmatched numeric inputs to ensure high usability on mobile keyboards.
+* **`saveTrainIfMissing` & Self-Healing Auto-Update Engine:**
+  * When live data or route schedules are fetched from RailRadar, the backend compares the returned `sourceStation` and `destinationStation` against existing database values.
+  * If the database contains outdated historical routes (e.g. `Balharshah` instead of modern `Sirpur Kaghaznagar` for Bhagyanagar Express), the backend **automatically updates** the PostgreSQL entity and logs the transition:
+    ```
+    Auto-updating source station for train 17234: 'Balharshah' -> 'Sirpur Kaghaznagar'
+    ```
+  * Ensures zero manual database maintenance; the system dynamically adapts to official Indian Railways route revisions.
 
 ---
 
@@ -775,9 +782,11 @@ File path: `src/main/java/com/example/railtracker/service/impl/StationServiceImp
 * **`searchStations(String query)`:**
   1. Queries `StationRepository.searchStations(query)` for partial code (e.g. `NDL`) or name (e.g. `Delhi`).
   2. Returns a list of `StationDto` containing latitude and longitude.
-* **`getStationTrains(String stationCode)`:**
-  1. Looks up the station by code.
-  2. Queries all trains that have a halt in `TrainStation` matching this station code.
+* **`getStationTrains(String stationCode)` & Station Board Discovery:**
+  1. Calls `RailwayDataProvider.getStationBoard(stationCode, true)`.
+  2. For every train on the timetable board, executes `saveTrainIfMissing(t)`:
+     - If the train is not in PostgreSQL, it auto-seeds it immediately into the database.
+     - If the train already exists, it verifies whether the source and destination match live RailRadar data and updates them automatically if revisions are detected.
 * **`getLiveStationBoard(String stationCode, Integer hours)`:**
   1. Calls `RailwayDataProvider.getLiveStationBoard(stationCode, hours)`.
   2. Returns incoming, passing, and departing trains within the requested time window (2, 4, or 8 hours) with expected platform numbers and delay status.

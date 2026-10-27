@@ -312,7 +312,8 @@ public class StationServiceImpl implements StationService {
         if (t == null || t.trainNumber() == null || t.trainNumber().isBlank()) return;
         try {
             String num = t.trainNumber().trim();
-            if (!trainRepository.existsByTrainNumber(num)) {
+            var existingOpt = trainRepository.findByTrainNumber(num);
+            if (existingOpt.isEmpty()) {
                 String name = t.trainName() != null ? t.trainName().trim() : "Express";
                 String type = t.trainType() != null ? t.trainType().trim() : "Express";
                 String cat = determineCategory(name, type);
@@ -329,6 +330,26 @@ public class StationServiceImpl implements StationService {
                 );
                 trainRepository.save(train);
                 logger.info("Auto-populated new train {} ({}) from station board into database", num, name);
+            } else {
+                Train train = existingOpt.get();
+                boolean changed = false;
+                if (t.sourceStation() != null && !t.sourceStation().isBlank()
+                        && !t.sourceStation().trim().equalsIgnoreCase(train.getSourceStation())) {
+                    logger.info("Auto-updating source station for train {} from station board: '{}' -> '{}'",
+                            num, train.getSourceStation(), t.sourceStation().trim());
+                    train.setSourceStation(t.sourceStation().trim());
+                    changed = true;
+                }
+                if (t.destinationStation() != null && !t.destinationStation().isBlank()
+                        && !t.destinationStation().trim().equalsIgnoreCase(train.getDestinationStation())) {
+                    logger.info("Auto-updating destination station for train {} from station board: '{}' -> '{}'",
+                            num, train.getDestinationStation(), t.destinationStation().trim());
+                    train.setDestinationStation(t.destinationStation().trim());
+                    changed = true;
+                }
+                if (changed) {
+                    trainRepository.save(train);
+                }
             }
         } catch (Exception e) {
             logger.warn("Failed to auto-populate train {}: {}", t.trainNumber(), e.getMessage());
@@ -339,12 +360,13 @@ public class StationServiceImpl implements StationService {
         if (t == null || t.trainNumber() == null || t.trainNumber().isBlank()) return;
         try {
             String num = t.trainNumber().trim();
-            if (!trainRepository.existsByTrainNumber(num)) {
+            String src = t.source() != null && t.source().name() != null ? t.source().name().trim() : (t.source() != null ? t.source().code() : "");
+            String dest = t.destination() != null && t.destination().name() != null ? t.destination().name().trim() : (t.destination() != null ? t.destination().code() : "");
+            var existingOpt = trainRepository.findByTrainNumber(num);
+            if (existingOpt.isEmpty()) {
                 String name = t.trainName() != null ? t.trainName().trim() : "Express";
                 String type = t.trainType() != null ? t.trainType().trim() : "Express";
                 String cat = determineCategory(name, type);
-                String src = t.source() != null && t.source().name() != null ? t.source().name() : (t.source() != null ? t.source().code() : "");
-                String dest = t.destination() != null && t.destination().name() != null ? t.destination().name() : (t.destination() != null ? t.destination().code() : "");
                 Train train = new Train(
                         num,
                         name,
@@ -358,6 +380,24 @@ public class StationServiceImpl implements StationService {
                 );
                 trainRepository.save(train);
                 logger.info("Auto-populated new train {} ({}) from live station board into database", num, name);
+            } else {
+                Train train = existingOpt.get();
+                boolean changed = false;
+                if (!src.isBlank() && !src.equalsIgnoreCase(train.getSourceStation())) {
+                    logger.info("Auto-updating source station for train {} from live board: '{}' -> '{}'",
+                            num, train.getSourceStation(), src);
+                    train.setSourceStation(src);
+                    changed = true;
+                }
+                if (!dest.isBlank() && !dest.equalsIgnoreCase(train.getDestinationStation())) {
+                    logger.info("Auto-updating destination station for train {} from live board: '{}' -> '{}'",
+                            num, train.getDestinationStation(), dest);
+                    train.setDestinationStation(dest);
+                    changed = true;
+                }
+                if (changed) {
+                    trainRepository.save(train);
+                }
             }
         } catch (Exception e) {
             logger.warn("Failed to auto-populate train {}: {}", t.trainNumber(), e.getMessage());
