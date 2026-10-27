@@ -28,10 +28,10 @@ public class TrainDisruptionServiceImpl implements TrainDisruptionService {
     }
 
     @Override
-    @Cacheable(value = "train:exceptions", key = "#type != null ? #type : 'ALL'")
+    @Cacheable(value = "train:exceptions", key = "#type != null && !#type.equalsIgnoreCase('ALL') ? #type : 'ALL'")
     public List<TrainExceptionDTO> getExceptions(String type) {
         logger.debug("Retrieving train exceptions for type: {}", type);
-        List<TrainExceptionDTO> rawList = railRadarClient.getTrainExceptions(type);
+        List<TrainExceptionDTO> rawList = railRadarClient.getTrainExceptions(null);
         if (rawList == null || rawList.isEmpty()) {
             return List.of();
         }
@@ -129,6 +129,20 @@ public class TrainDisruptionServiceImpl implements TrainDisruptionService {
             }
         }
 
+        if (type != null && !type.isBlank() && !type.equalsIgnoreCase("ALL")) {
+            String norm = type.trim().toUpperCase();
+            return enrichedList.stream()
+                    .filter(dto -> {
+                        String t = (dto.primaryType() != null ? dto.primaryType() : dto.status() != null ? dto.status() : "").toUpperCase();
+                        String m = (dto.message() != null ? dto.message() : "").toUpperCase();
+                        if (norm.contains("CANCEL")) return t.contains("CANCEL") || m.contains("CANCEL");
+                        if (norm.contains("DIVERT")) return t.contains("DIVERT") || m.contains("DIVERT");
+                        if (norm.contains("RESCHED")) return t.contains("RESCHED") || m.contains("RESCHED");
+                        return t.contains(norm) || m.contains(norm);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
         return enrichedList;
     }
 
@@ -136,7 +150,47 @@ public class TrainDisruptionServiceImpl implements TrainDisruptionService {
     @Cacheable(value = "train:exceptions:summary")
     public TrainExceptionSummaryDTO getExceptionsSummary() {
         logger.debug("Retrieving train exceptions summary");
-        return railRadarClient.getTrainExceptionsSummary();
+        try {
+            TrainExceptionSummaryDTO summary = railRadarClient.getTrainExceptionsSummary();
+            if (summary != null && (summary.total() > 0 || summary.cancelled() > 0)) {
+                return summary;
+            }
+        } catch (Exception e) {
+            logger.warn("Could not retrieve summary directly from RailRadar: {}", e.getMessage());
+        }
+
+        List<TrainExceptionDTO> all = getExceptions("ALL");
+        int total = all.size();
+        int cancelled = 0;
+        int diverted = 0;
+        int rescheduled = 0;
+        int partiallyCancelled = 0;
+
+        for (TrainExceptionDTO dto : all) {
+            String t = (dto.primaryType() != null ? dto.primaryType() : dto.status() != null ? dto.status() : "").toUpperCase();
+            String m = (dto.message() != null ? dto.message() : "").toUpperCase();
+            if (t.contains("CANCEL") || m.contains("CANCEL")) {
+                cancelled++;
+                if (t.contains("PARTIAL") || m.contains("PARTIAL")) {
+                    partiallyCancelled++;
+                }
+            } else if (t.contains("DIVERT") || m.contains("DIVERT")) {
+                diverted++;
+            } else if (t.contains("RESCHED") || m.contains("RESCHED")) {
+                rescheduled++;
+            }
+        }
+
+        return new TrainExceptionSummaryDTO(
+                total,
+                cancelled,
+                partiallyCancelled,
+                0,
+                0,
+                diverted,
+                rescheduled,
+                java.time.Instant.now().toString()
+        );
     }
 }
 

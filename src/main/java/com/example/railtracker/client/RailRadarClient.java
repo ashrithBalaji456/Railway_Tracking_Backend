@@ -554,11 +554,16 @@ public class RailRadarClient {
     }
 
     public List<TrainExceptionDTO> getTrainExceptions(String type) {
-        String queryParam = (type == null || type.isBlank()) ? "all" : type.trim();
-        String path = "/trains/exceptions?type=" + encode(queryParam);
+        String path = "/trains/exceptions";
         logger.info("RailRadar exceptions request: GET {}", path);
-        JsonNode responseNode = executeGet(path);
-        return mapTrainExceptionsResponse(responseNode);
+        try {
+            JsonNode responseNode = executeGet(path);
+            return mapTrainExceptionsResponse(responseNode);
+        } catch (BadRequestException e) {
+            logger.warn("RailRadar returned 400 for path {}, attempting clean /trains/exceptions fallback: {}", path, e.getMessage());
+            JsonNode fallbackNode = executeGet("/trains/exceptions");
+            return mapTrainExceptionsResponse(fallbackNode);
+        }
     }
 
     private List<TrainExceptionDTO> mapTrainExceptionsResponse(JsonNode responseNode) {
@@ -604,6 +609,22 @@ public class RailRadarClient {
                 }
             }
 
+            if ((primaryType == null || primaryType.isBlank()) && !details.isEmpty() && details.get(0).type() != null) {
+                primaryType = details.get(0).type();
+            }
+            if (primaryType == null || primaryType.isBlank()) {
+                String fullText = ((status != null ? status : "") + " " + (message != null ? message : "")).toUpperCase();
+                if (fullText.contains("CANCEL")) {
+                    primaryType = "CANCELLED";
+                } else if (fullText.contains("DIVERT")) {
+                    primaryType = "DIVERTED";
+                } else if (fullText.contains("RESCHED")) {
+                    primaryType = "RESCHEDULED";
+                } else {
+                    primaryType = status != null && !status.isBlank() ? status : "DISRUPTED";
+                }
+            }
+
             list.add(new TrainExceptionDTO(
                 trainNumber,
                 trainName,
@@ -629,21 +650,26 @@ public class RailRadarClient {
     public TrainExceptionSummaryDTO getTrainExceptionsSummary() {
         String path = "/trains/exceptions/summary";
         logger.info("RailRadar exceptions summary request: GET {}", path);
-        JsonNode responseNode = executeGet(path);
-        JsonNode data = dataNode(responseNode);
-        if (data == null || data.isNull()) {
+        try {
+            JsonNode responseNode = executeGet(path);
+            JsonNode data = dataNode(responseNode);
+            if (data == null || data.isNull()) {
+                return new TrainExceptionSummaryDTO(0, 0, 0, 0, 0, 0, 0, null);
+            }
+            return new TrainExceptionSummaryDTO(
+                integer(data, "total"),
+                integer(data, "cancelled"),
+                firstInteger(data, "partiallyCancelled", "partially_cancelled"),
+                firstInteger(data, "partialSource", "partial_source"),
+                firstInteger(data, "partialDestination", "partial_destination"),
+                integer(data, "diverted"),
+                integer(data, "rescheduled"),
+                text(data, "updatedAt", "updated_at")
+            );
+        } catch (Exception e) {
+            logger.warn("RailRadar exceptions summary call failed: {}", e.getMessage());
             return new TrainExceptionSummaryDTO(0, 0, 0, 0, 0, 0, 0, null);
         }
-        return new TrainExceptionSummaryDTO(
-            integer(data, "total"),
-            integer(data, "cancelled"),
-            firstInteger(data, "partiallyCancelled", "partially_cancelled"),
-            firstInteger(data, "partialSource", "partial_source"),
-            firstInteger(data, "partialDestination", "partial_destination"),
-            integer(data, "diverted"),
-            integer(data, "rescheduled"),
-            text(data, "updatedAt", "updated_at")
-        );
     }
 
     public TrainDelayReportDTO getTrainDelayReport(String trainNumber) {
@@ -782,17 +808,40 @@ public class RailRadarClient {
         String currentCode = text(current, "stationCode", "code", "currentStationCode");
         JsonNode currentStop = findRouteStop(route, currentCode);
         List<RailRadarLiveStationStatus> stations = new ArrayList<>();
+        List<String> skippedStations = new ArrayList<>();
+        JsonNode skippedNode = dataNode.get("skippedStations");
+        if (skippedNode == null) skippedNode = dataNode.get("skipped_stations");
+        if (skippedNode != null && skippedNode.isArray()) {
+            for (JsonNode sn : skippedNode) {
+                if (sn.isTextual()) skippedStations.add(sn.asText());
+                else if (sn.has("stationCode")) skippedStations.add(sn.get("stationCode").asText());
+                else if (sn.has("code")) skippedStations.add(sn.get("code").asText());
+            }
+        }
+
         if (route != null && route.isArray()) {
             for (JsonNode stop : route) {
+                String stopStatus = text(stop, "status");
+                boolean stopCancelled = Boolean.TRUE.equals(bool(stop, "isCancelled", "is_cancelled", "cancelled"));
+                boolean stopSkipped = Boolean.TRUE.equals(bool(stop, "isSkipped", "is_skipped", "skipped"));
+                RailRadarStationInfo sInfo = stationInfo(stop);
+                String stopCode = sInfo != null && sInfo.stationCode() != null ? sInfo.stationCode() : text(stop, "stationCode", "code");
+
+                if (stopCode != null && (stopCancelled || stopSkipped || (stopStatus != null && (stopStatus.toLowerCase().contains("cancel") || stopStatus.toLowerCase().contains("skip"))))) {
+                    if (!skippedStations.contains(stopCode)) {
+                        skippedStations.add(stopCode);
+                    }
+                }
+
                 stations.add(new RailRadarLiveStationStatus(
-                        stationInfo(stop),
+                        sInfo,
                         integer(stop, "sequence"),
                         text(stop, "scheduledArrival"),
                         text(stop, "scheduledDeparture"),
                         text(stop, "actualArrival"),
                         text(stop, "actualDeparture"),
                         firstInteger(stop, "delayMinutes", "delayDeparture", "delayArrival"),
-                        text(stop, "status"),
+                        stopStatus,
                         bool(stop, "isHalt")
                 ));
             }
@@ -827,14 +876,14 @@ public class RailRadarClient {
             if (lower.contains("divert")) isDiverted = true;
             if (lower.contains("reschedul")) isRescheduled = true;
         }
-        List<String> skippedStations = new ArrayList<>();
-        JsonNode skippedNode = dataNode.get("skippedStations");
-        if (skippedNode == null) skippedNode = dataNode.get("skipped_stations");
-        if (skippedNode != null && skippedNode.isArray()) {
-            for (JsonNode sn : skippedNode) {
-                if (sn.isTextual()) skippedStations.add(sn.asText());
-                else if (sn.has("stationCode")) skippedStations.add(sn.get("stationCode").asText());
-                else if (sn.has("code")) skippedStations.add(sn.get("code").asText());
+        if (!skippedStations.isEmpty()) {
+            if (isCancelled == null || !isCancelled) {
+                if (isDiverted == null || !isDiverted) {
+                    isCancelled = true;
+                }
+            }
+            if (disruptionMessage == null || disruptionMessage.isBlank()) {
+                disruptionMessage = "Train cancelled / skipped at " + skippedStations.size() + " station(s): " + String.join(", ", skippedStations);
             }
         }
 
