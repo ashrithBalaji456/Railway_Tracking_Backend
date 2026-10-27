@@ -2124,12 +2124,15 @@ This section documents the integration of RailRadar API endpoints extending the 
 
 * **Response Schema & Dual-Naming Compatibility:** Returns `distanceKm`, `sourceStation`, `destinationStation`, and `classFares` (with compatibility accessor `fares()`), containing `classCode`, `className`, `baseFare`, and `totalFare`.
 
-* **Official Telescopic Distance Slab Estimation:** Replaced rudimentary linear formulas with official Indian Railways telescopic distance slabs across 2S, SL, CC, 3E, 3A, 2A, and 1A classes:
+* **Official Telescopic Distance Slab Estimation & UTS Integration:** Replaced rudimentary linear formulas with official Indian Railways and UTS telescopic distance slabs across GN, 2S, SL, CC, 3E, 3A, 2A, and 1A classes:
   * Decreasing marginal cost across distance slabs (1–50 km, 51–150 km, 151–300 km, 301–600 km, >600 km).
+  * General Unreserved (GN) calibrated to official UTS app slabs: Ordinary/MEMU fares (Rs 55 for 236 km), Mail/Express (Rs 95), and Superfast Unreserved (Rs 95 base + Rs 15 SF = Rs 110).
   * AC Chair Car (CC) accurately calibrated as a seated AC coach (base ~₹340 at 240 km + ₹40 RF + ₹45 SF + 5% GST = ₹445), eliminating previous over-pricing vs 3A/3E.
   * Second Sitting (2S) calibrated to ₹100 base at 240 km (+ ₹15 RF + ₹15 SF = ₹130).
   * AC 3-Tier Economy (3E) calibrated to ₹455 base at 240 km (+ ₹40 RF + ₹45 SF + 5% GST = ₹565).
   * Full rounding to the nearest multiple of ₹5.
+
+* **Structural Integrity & Robust Fallback:** Eliminated extraneous closing brace syntax in RailRadarDataProvider.java, preserving compile-time and runtime integrity of @Override public JourneyOverlayDTO getJourneyOverlay(...) and getTrainFare(...). Clean fallback to telescopic estimation when upstream external services are unresponsive without returning corrupted hash distances.
 
 * **Caching:** Cached in Redis key `train:fare` (TTL: 24 hours).
 
