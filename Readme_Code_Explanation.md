@@ -702,6 +702,9 @@ File path: `src/main/java/com/example/railtracker/client/RailRadarClient.java`
 * **Resilience & Fallback:**
   * Checks Redis cache first. If a live response was cached within the last 60 seconds, returns the cached version instantly, bypassing the external network call.
   * If the external API times out or exhausts its quota, it queries the local PostgreSQL database to calculate scheduled positions based on current time as a graceful fallback.
+* **Origin & Terminus Halt Normalization:**
+  * When mapping raw JSON payloads from `/stations/{code}/trains` and `/stations/{code}/live`, `mapStationBoardTrain` and `mapLiveStationBoard` pass `currentStationCode`.
+  * If the train's source or destination equals `currentStationCode`, `isHalt` is normalized to `true` and `passType` is set to `STOPPING`, compensating for upstream API anomalies that omit `isHalt` when arrival time is absent for originating services.
 
 ---
 
@@ -787,9 +790,13 @@ File path: `src/main/java/com/example/railtracker/service/impl/StationServiceImp
   2. For every train on the timetable board, executes `saveTrainIfMissing(t)`:
      - If the train is not in PostgreSQL, it auto-seeds it immediately into the database.
      - If the train already exists, it verifies whether the source and destination match live RailRadar data and updates them automatically if revisions are detected.
-* **`getLiveStationBoard(String stationCode, Integer hours)`:**
-  1. Calls `RailwayDataProvider.getLiveStationBoard(stationCode, hours)`.
-  2. Returns incoming, passing, and departing trains within the requested time window (2, 4, or 8 hours) with expected platform numbers and delay status.
+  3. **Origin & Destination Halt Guarantee (`ensureOriginDestHalts`):**
+     - Ensures domain correctness: Any train starting from or terminating at `stationCode` (e.g. Pune origin trains 01445, 01447) is strictly treated as a stopping halt (`isHalt = true`, `stopType = STOPPING`). This prevents originating trains with no arrival time from erroneously being tagged as pass-through/non-stop.
+* **`getLiveStationBoard(String stationCode, Integer hours)` & `getLiveStationBoardDetails`:**
+  1. Calls `RailwayDataProvider.getLiveStationBoardDetails(stationCode, hours)`.
+  2. Enriches source and destination station full names using local station lookup.
+  3. Ensures originating and terminating trains have `passType = StationPassType.STOPPING` so that the live board correctly displays boarding passengers with `🟢 STOPS HERE` and expected departure times instead of pass-through badges.
+  4. Returns incoming, passing, and departing trains within the requested time window (2, 4, 6, or 8 hours) with expected platform numbers and delay status.
 
 ---
 

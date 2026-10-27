@@ -273,22 +273,22 @@ public class RailRadarClient {
         }
         JsonNode responseNode = executeGet(path);
         logger.info("Java SE HttpClient raw station board response for '{}' (includeIntermediate={}): {}", stationCode, includeIntermediate, responseNode);
-        return mapStationBoardResponse(responseNode);
+        return mapStationBoardResponse(responseNode, stationCode);
     }
 
     public List<RailRadarStationBoardTrain> getStationLiveBoard(String stationCode, int hoursAhead) {
         JsonNode responseNode = executeGet("/stations/" + stationCode + "/live?includeIntermediate=true");
-        return mapStationBoardResponse(responseNode);
+        return mapStationBoardResponse(responseNode, stationCode);
     }
 
     public LiveStationBoardResponse getLiveStationBoardDetails(String stationCode, int hours) {
         String path = "/stations/" + stationCode + "/live?hours=" + hours + "&includeIntermediate=true";
         JsonNode responseNode = executeGet(path);
         logger.info("RailRadar live station board response for '{}' (hours={}): {}", stationCode, hours, responseNode);
-        return mapLiveStationBoard(responseNode, hours);
+        return mapLiveStationBoard(responseNode, hours, stationCode);
     }
 
-    private LiveStationBoardResponse mapLiveStationBoard(JsonNode responseNode, int hours) {
+    private LiveStationBoardResponse mapLiveStationBoard(JsonNode responseNode, int hours, String currentStationCode) {
         JsonNode dataNode = dataNode(responseNode);
         if (dataNode == null || dataNode.isNull()) {
             throw new ResourceNotFoundException("Live station board details not found");
@@ -330,6 +330,12 @@ public class RailRadarClient {
 
                 Boolean isHaltVal = bool(stop, "isHalt");
                 boolean isHalt = isHaltVal != null ? isHaltVal : true;
+                if (currentStationCode != null && (
+                        currentStationCode.equalsIgnoreCase(sourceCode) ||
+                        currentStationCode.equalsIgnoreCase(destCode)
+                )) {
+                    isHalt = true;
+                }
                 StationPassType passType = isHalt ? StationPassType.STOPPING : StationPassType.PASS_THROUGH;
 
                 String scheduledArrival = text(stop, "arrival");
@@ -392,7 +398,7 @@ public class RailRadarClient {
         }
     }
 
-    private List<RailRadarStationBoardTrain> mapStationBoardResponse(JsonNode responseNode) {
+    private List<RailRadarStationBoardTrain> mapStationBoardResponse(JsonNode responseNode, String currentStationCode) {
         JsonNode dataNode = dataNode(responseNode);
         if (dataNode == null || dataNode.isNull()) return List.of();
         JsonNode trainsNode = dataNode;
@@ -405,12 +411,12 @@ public class RailRadarClient {
 
         List<RailRadarStationBoardTrain> trains = new ArrayList<>();
         for (JsonNode item : trainsNode) {
-            trains.add(mapStationBoardTrain(item));
+            trains.add(mapStationBoardTrain(item, currentStationCode));
         }
         return trains;
     }
 
-    private RailRadarStationBoardTrain mapStationBoardTrain(JsonNode item) {
+    private RailRadarStationBoardTrain mapStationBoardTrain(JsonNode item, String currentStationCode) {
         JsonNode train = item != null && item.has("train") ? item.get("train") : item;
         JsonNode stop = item != null && item.has("stop") ? item.get("stop") : item;
         JsonNode live = item != null && item.has("live") ? item.get("live") : item;
@@ -423,6 +429,15 @@ public class RailRadarClient {
             isHalt = stopType.equalsIgnoreCase("halt") || stopType.equalsIgnoreCase("stopping") || stopType.equalsIgnoreCase("stop");
         }
 
+        String sourceStation = stationCode(source, firstText(train, item, "sourceStation", "source"));
+        String destinationStation = stationCode(destination, firstText(train, item, "destinationStation", "destination"));
+        if (currentStationCode != null && (
+                currentStationCode.equalsIgnoreCase(sourceStation) ||
+                currentStationCode.equalsIgnoreCase(destinationStation)
+        )) {
+            isHalt = true;
+        }
+
         Integer arrivalDay = firstInteger(stop, "arrivalDay", "dayOffset", "arrivalDayOffset", "day");
         if (arrivalDay == null) arrivalDay = firstInteger(item, "arrivalDay", "dayOffset", "arrivalDayOffset", "day");
         if (arrivalDay == null) arrivalDay = 0;
@@ -432,8 +447,8 @@ public class RailRadarClient {
                 firstText(train, item, "trainName", "name", "train_name"),
                 firstText(train, item, "trainType", "type", "train_type", "category"),
                 runningDays(train),
-                stationCode(source, firstText(train, item, "sourceStation", "source")),
-                stationCode(destination, firstText(train, item, "destinationStation", "destination")),
+                sourceStation,
+                destinationStation,
                 timeText(stop, "scheduledArrival", "arrival", "arrivalTime"),
                 timeText(stop, "scheduledDeparture", "departure", "departureTime"),
                 timeText(live, "actualArrival", "liveArrival", "expectedArrival"),

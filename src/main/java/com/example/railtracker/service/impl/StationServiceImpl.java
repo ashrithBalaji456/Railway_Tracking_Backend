@@ -124,6 +124,9 @@ public class StationServiceImpl implements StationService {
 
         List<StationBoardTrainDto> allTrains = railwayDataProvider.getStationBoard(stationCode, true);
         if (allTrains != null) {
+            allTrains = allTrains.stream()
+                    .map(t -> ensureOriginDestHalts(t, stationCode))
+                    .collect(Collectors.toList());
             for (StationBoardTrainDto t : allTrains) {
                 saveTrainIfMissing(t);
             }
@@ -156,6 +159,9 @@ public class StationServiceImpl implements StationService {
 
         List<StationBoardTrainDto> liveBoard = railwayDataProvider.getStationLiveBoard(stationCode, hoursAhead, type);
         if (liveBoard != null) {
+            liveBoard = liveBoard.stream()
+                    .map(t -> ensureOriginDestHalts(t, stationCode))
+                    .collect(Collectors.toList());
             for (StationBoardTrainDto t : liveBoard) {
                 saveTrainIfMissing(t);
             }
@@ -196,6 +202,9 @@ public class StationServiceImpl implements StationService {
                     String destName = stationRepository.findByStationCode(destCode)
                             .map(com.example.railtracker.entity.Station::getStationName)
                             .orElse(destCode);
+
+                    boolean isOriginOrDest = stationCode.equalsIgnoreCase(srcCode) || stationCode.equalsIgnoreCase(destCode);
+                    StationPassType resolvedPassType = isOriginOrDest ? StationPassType.STOPPING : t.passType();
                             
                     return new LiveStationBoardResponse.LiveStationBoardTrain(
                             t.trainNumber(),
@@ -203,7 +212,7 @@ public class StationServiceImpl implements StationService {
                             t.trainType(),
                             new LiveStationBoardResponse.StationCodeName(srcCode, srcName),
                             new LiveStationBoardResponse.StationCodeName(destCode, destName),
-                            t.passType(),
+                            resolvedPassType,
                             t.scheduledArrival(),
                             t.scheduledDeparture(),
                             t.expectedArrival(),
@@ -262,6 +271,34 @@ public class StationServiceImpl implements StationService {
         }
         String sch = t.scheduledArrival() != null ? t.scheduledArrival() : t.scheduledDeparture();
         return sch;
+    }
+
+    private StationBoardTrainDto ensureOriginDestHalts(StationBoardTrainDto t, String stationCode) {
+        if (t == null) return null;
+        boolean isOriginOrDest = stationCode != null && (
+                stationCode.equalsIgnoreCase(t.sourceStation()) ||
+                stationCode.equalsIgnoreCase(t.destinationStation())
+        );
+        if (isOriginOrDest && !t.isHalt()) {
+            return new StationBoardTrainDto(
+                    t.trainNumber(),
+                    t.trainName(),
+                    t.trainType(),
+                    t.runningDays(),
+                    t.sourceStation(),
+                    t.destinationStation(),
+                    t.scheduledArrival(),
+                    t.scheduledDeparture(),
+                    t.actualArrival(),
+                    t.actualDeparture(),
+                    t.delayMinutes(),
+                    "STOPPING",
+                    true,
+                    t.currentStatus(),
+                    t.arrivalDay()
+            );
+        }
+        return t;
     }
 
     private List<StationBoardTrainDto> enrichArrivalDays(List<StationBoardTrainDto> trains, String stationCode) {
