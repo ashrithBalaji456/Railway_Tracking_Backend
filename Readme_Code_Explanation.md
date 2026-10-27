@@ -2129,7 +2129,9 @@ This section documents the integration of RailRadar API endpoints extending the 
   * General Unreserved (GN) calibrated to official UTS app slabs: Ordinary/MEMU fares (Rs 55 for 236 km), Mail/Express (Rs 95), and Superfast Unreserved (Rs 95 base + Rs 15 SF = Rs 110).
   * AC Chair Car (CC) accurately calibrated as a seated AC coach (base ~₹340 at 240 km + ₹40 RF + ₹45 SF + 5% GST = ₹445), eliminating previous over-pricing vs 3A/3E.
   * Second Sitting (2S) calibrated to ₹100 base at 240 km (+ ₹15 RF + ₹15 SF = ₹130).
+  * Sleeper Class (SL) calibrated to official Indian Railways telescopic distance slabs (Rs 385 base + Rs 30 SF + Rs 20 RF = Rs 435 for 709.7 km on Superfast), matching IRCTC Godavari SF Exp.
   * AC 3-Tier Economy (3E) calibrated to ₹455 base at 240 km (+ ₹40 RF + ₹45 SF + 5% GST = ₹565).
+  * Amrit Bharat Express integration applying 1.15x base tariff for GN and SL rakes.
   * Full rounding to the nearest multiple of ₹5.
 
 * **Structural Integrity & Robust Fallback:** Eliminated extraneous closing brace syntax in RailRadarDataProvider.java, preserving compile-time and runtime integrity of @Override public JourneyOverlayDTO getJourneyOverlay(...) and getTrainFare(...). Clean fallback to telescopic estimation when upstream external services are unresponsive without returning corrupted hash distances.
