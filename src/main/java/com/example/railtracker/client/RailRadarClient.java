@@ -701,9 +701,7 @@ public class RailRadarClient {
         JsonNode responseNode = executeGet(path);
         JsonNode data = dataNode(responseNode);
         if (data == null || data.isNull()) {
-            int hash = Math.abs((trainNumber + "_" + source + "_" + destination).hashCode());
-            int dist = 180 + (hash % 680); // Realistic distance between 180 and 860 km
-            return new TrainFareDTO(trainNumber, null, source, destination, dist, calculateDistanceBasedFares(dist));
+            return null;
         }
         List<TrainFareDTO.ClassFare> fares = new ArrayList<>();
         JsonNode faresNode = data.has("fares") ? data.get("fares") 

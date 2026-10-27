@@ -644,42 +644,9 @@ public class RailRadarDataProvider implements RailwayDataProvider {
         try {
             return client.getTrainFare(trainNumber, source, destination);
         } catch (Exception e) {
-            logger.warn("RailRadar fare unavailable for train {} from {} to {}. Generating distance-accurate telescopic estimate.", trainNumber, source, destination, e);
-            int hash = Math.abs((trainNumber + "_" + source + "_" + destination).hashCode());
-            int dist = 200 + (hash % 650); // Realistic distance between 200 and 850 km
-            int d = Math.max(10, dist);
-
-            int b2S = d <= 50 ? 35 : (d <= 150 ? (int) Math.round(35 + (d - 50) * 0.35) : (d <= 300 ? (int) Math.round(70 + (d - 150) * 0.333) : (d <= 600 ? (int) Math.round(120 + (d - 300) * 0.28) : (int) Math.round(204 + (d - 600) * 0.22))));
-            int tot2S = (int) Math.round((b2S + 15 + 15) / 5.0) * 5;
-
-            int bSL = d <= 100 ? 125 : (d <= 300 ? (int) Math.round(125 + (d - 100) * 0.18) : (d <= 600 ? (int) Math.round(161 + (d - 300) * 0.35) : (int) Math.round(266 + (d - 600) * 0.30)));
-            int totSL = (int) Math.round((bSL + 20 + 30) / 5.0) * 5;
-
-            int bCC = d <= 100 ? 215 : (d <= 300 ? (int) Math.round(215 + (d - 100) * 0.893) : (d <= 600 ? (int) Math.round(394 + (d - 300) * 0.78) : (int) Math.round(628 + (d - 600) * 0.65)));
-            int totCC = (int) Math.round(((bCC + 40 + 45) * 1.05) / 5.0) * 5;
-
-            int b3E = d <= 100 ? 305 : (d <= 300 ? (int) Math.round(305 + (d - 100) * 1.071) : (d <= 600 ? (int) Math.round(519 + (d - 300) * 0.95) : (int) Math.round(804 + (d - 600) * 0.82)));
-            int tot3E = (int) Math.round(((b3E + 40 + 45) * 1.05) / 5.0) * 5;
-
-            int b3A = d <= 100 ? 335 : (d <= 300 ? (int) Math.round(335 + (d - 100) * 1.18) : (d <= 600 ? (int) Math.round(571 + (d - 300) * 1.05) : (int) Math.round(886 + (d - 600) * 0.90)));
-            int tot3A = (int) Math.round(((b3A + 40 + 45) * 1.05) / 5.0) * 5;
-
-            int b2A = d <= 100 ? 490 : (d <= 300 ? (int) Math.round(490 + (d - 100) * 1.714) : (d <= 600 ? (int) Math.round(833 + (d - 300) * 1.50) : (int) Math.round(1283 + (d - 600) * 1.30)));
-            int tot2A = (int) Math.round(((b2A + 50 + 45) * 1.05) / 5.0) * 5;
-
-            int b1A = d <= 100 ? 820 : (d <= 300 ? (int) Math.round(820 + (d - 100) * 2.893) : (d <= 600 ? (int) Math.round(1399 + (d - 300) * 2.50) : (int) Math.round(2149 + (d - 600) * 2.10)));
-            int tot1A = (int) Math.round(((b1A + 60 + 75) * 1.05) / 5.0) * 5;
-
-            List<TrainFareDTO.ClassFare> fares = List.of(
-                new TrainFareDTO.ClassFare("2S", "Second Sitting", b2S, tot2S),
-                new TrainFareDTO.ClassFare("SL", "Sleeper Class", bSL, totSL),
-                new TrainFareDTO.ClassFare("CC", "AC Chair Car", bCC, totCC),
-                new TrainFareDTO.ClassFare("3E", "AC 3 Economy", b3E, tot3E),
-                new TrainFareDTO.ClassFare("3A", "AC 3 Tier", b3A, tot3A),
-                new TrainFareDTO.ClassFare("2A", "AC 2 Tier", b2A, tot2A),
-                new TrainFareDTO.ClassFare("1A", "AC First Class", b1A, tot1A)
-            );
-            return new TrainFareDTO(trainNumber, "Train " + trainNumber, source, destination, dist, fares);
+            logger.warn("RailRadar fare unavailable for train {} from {} to {}.", trainNumber, source, destination, e);
+            return null;
+        }
         }
     }
 
