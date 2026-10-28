@@ -303,46 +303,61 @@ public class StationServiceImpl implements StationService {
     }
 
     private List<StationBoardTrainDto> enrichArrivalDays(List<StationBoardTrainDto> trains, String stationCode) {
+        if (trains == null) return List.of();
         try {
             List<TrainStation> savedStations = trainStationRepository.findByStationCodeWithDetails(stationCode);
-            if (savedStations == null || savedStations.isEmpty()) {
-                return trains;
-            }
-            Map<String, Integer> arrivalDayMap = savedStations.stream()
-                    .collect(Collectors.toMap(
+            Map<String, Integer> arrivalDayMap = (savedStations != null && !savedStations.isEmpty())
+                    ? savedStations.stream().collect(Collectors.toMap(
                             ts -> ts.getTrain().getTrainNumber(),
                             ts -> ts.getArrivalDay(),
                             (existing, replacement) -> existing
-                    ));
+                    ))
+                    : Map.of();
 
             return trains.stream()
                     .map(t -> {
                         Integer dbArrivalDay = arrivalDayMap.get(t.trainNumber());
-                        if (dbArrivalDay != null && !dbArrivalDay.equals(t.arrivalDay())) {
-                            return new StationBoardTrainDto(
-                                    t.trainNumber(),
-                                    t.trainName(),
-                                    t.trainType(),
-                                    t.runningDays(),
-                                    t.sourceStation(),
-                                    t.destinationStation(),
-                                    t.scheduledArrival(),
-                                    t.scheduledDeparture(),
-                                    t.actualArrival(),
-                                    t.actualDeparture(),
-                                    t.delayMinutes(),
-                                    t.stopType(),
-                                    t.isHalt(),
-                                    t.currentStatus(),
-                                    dbArrivalDay
-                            );
-                        }
-                        return t;
+                        Integer finalArrivalDay = (dbArrivalDay != null) ? dbArrivalDay : t.arrivalDay();
+                        return new StationBoardTrainDto(
+                                t.trainNumber(),
+                                t.trainName(),
+                                t.trainType(),
+                                t.runningDays(),
+                                resolveStationName(t.sourceStation()),
+                                resolveStationName(t.destinationStation()),
+                                t.scheduledArrival(),
+                                t.scheduledDeparture(),
+                                t.actualArrival(),
+                                t.actualDeparture(),
+                                t.delayMinutes(),
+                                t.stopType(),
+                                t.isHalt(),
+                                t.currentStatus(),
+                                finalArrivalDay
+                        );
                     })
                     .collect(Collectors.toList());
         } catch (Exception e) {
             logger.warn("Failed to enrich arrival days from database for station: {}", stationCode, e);
-            return trains;
+            return trains.stream()
+                    .map(t -> new StationBoardTrainDto(
+                            t.trainNumber(),
+                            t.trainName(),
+                            t.trainType(),
+                            t.runningDays(),
+                            resolveStationName(t.sourceStation()),
+                            resolveStationName(t.destinationStation()),
+                            t.scheduledArrival(),
+                            t.scheduledDeparture(),
+                            t.actualArrival(),
+                            t.actualDeparture(),
+                            t.delayMinutes(),
+                            t.stopType(),
+                            t.isHalt(),
+                            t.currentStatus(),
+                            t.arrivalDay()
+                    ))
+                    .collect(Collectors.toList());
         }
     }
 
@@ -371,6 +386,21 @@ public class StationServiceImpl implements StationService {
             } else {
                 Train train = existingOpt.get();
                 boolean changed = false;
+
+                if (t.trainName() != null && !t.trainName().isBlank()
+                        && !t.trainName().trim().equalsIgnoreCase(train.getTrainName())) {
+                    logger.info("Auto-updating train name for {} from station board: '{}' -> '{}'",
+                            num, train.getTrainName(), t.trainName().trim());
+                    train.setTrainName(t.trainName().trim());
+                    changed = true;
+                }
+                if (t.trainType() != null && !t.trainType().isBlank()
+                        && !t.trainType().trim().equalsIgnoreCase(train.getTrainType())) {
+                    train.setTrainType(t.trainType().trim());
+                    train.setCategory(determineCategory(train.getTrainName(), train.getTrainType()));
+                    changed = true;
+                }
+
                 if (t.sourceStation() != null && !t.sourceStation().isBlank()
                         && !t.sourceStation().trim().equalsIgnoreCase(train.getSourceStation())) {
                     logger.info("Auto-updating source station for train {} from station board: '{}' -> '{}'",
@@ -392,6 +422,54 @@ public class StationServiceImpl implements StationService {
         } catch (Exception e) {
             logger.warn("Failed to auto-populate train {}: {}", t.trainNumber(), e.getMessage());
         }
+    }
+
+    private String resolveStationName(String codeOrName) {
+        if (codeOrName == null || codeOrName.isBlank()) {
+            return codeOrName;
+        }
+        String clean = codeOrName.trim();
+        if (clean.matches("^[A-Za-z0-9]{1,6}$")) {
+            return stationRepository.findByStationCode(clean.toUpperCase())
+                    .map(s -> formatStationDisplayName(s.getStationName(), s.getStationCode()))
+                    .orElse(clean);
+        }
+        return clean;
+    }
+
+    private String formatStationDisplayName(String rawName, String code) {
+        if (rawName == null || rawName.isBlank()) return code;
+        String titleCased = toTitleCase(rawName.trim());
+        if (titleCased.toUpperCase().endsWith("(" + code.toUpperCase() + ")")) {
+            return titleCased;
+        }
+        return titleCased + " (" + code.toUpperCase() + ")";
+    }
+
+    private String toTitleCase(String text) {
+        if (text == null || text.isBlank()) return text;
+        String[] words = text.split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            if (word.isEmpty()) continue;
+            if (word.equalsIgnoreCase("JN") || word.equalsIgnoreCase("JN.")) {
+                sb.append("Jn");
+            } else if (word.equalsIgnoreCase("CANTT") || word.equalsIgnoreCase("CANTT.")) {
+                sb.append("Cantt");
+            } else if (word.equalsIgnoreCase("SF") || word.equalsIgnoreCase("EXP")) {
+                sb.append(word.toUpperCase());
+            } else {
+                sb.append(Character.toUpperCase(word.charAt(0)));
+                if (word.length() > 1) {
+                    sb.append(word.substring(1).toLowerCase());
+                }
+            }
+            if (i < words.length - 1) {
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
     }
 
     private void saveTrainIfMissing(LiveStationBoardResponse.LiveStationBoardTrain t) {

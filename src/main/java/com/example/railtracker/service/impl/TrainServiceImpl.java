@@ -53,7 +53,24 @@ public class TrainServiceImpl implements TrainService {
         boolean isNumeric = cleanQuery.matches("\\d+");
 
         if (isNumeric) {
-            // Train Number search: suggest 5 trains matching format/prefix (e.g. 12, 20, 22, 01, 14...)
+            // Train Number search:
+            // When query is a 5-digit number, cross-check with live RailRadar provider first to heal stale/incorrect DB info
+            if (cleanQuery.matches("\\d{5}")) {
+                try {
+                    TrainDto liveTrain = railwayDataProvider.getTrainDetails(cleanQuery);
+                    if (liveTrain != null && liveTrain.trainNumber() != null && !liveTrain.trainNumber().isBlank()) {
+                        saveTrainIfMissing(liveTrain);
+                        Train updated = trainRepository.findByTrainNumber(cleanQuery).orElse(null);
+                        if (updated != null) {
+                            return List.of(mapToDto(updated));
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("Live RailRadar cross-check for train {} during search skipped: {}", cleanQuery, e.getMessage());
+                }
+            }
+
+            // Suggest 5 trains matching format/prefix (e.g. 12, 20, 22, 01, 14...)
             List<Train> prefixMatches = trainRepository.findByTrainNumberStartingWith(cleanQuery);
             if (!prefixMatches.isEmpty()) {
                 // If user entered a full 5-digit number, return exact match
@@ -270,6 +287,22 @@ public class TrainServiceImpl implements TrainService {
             } else {
                 Train train = existingOpt.get();
                 boolean changed = false;
+
+                // Auto-sync train name and type with RailRadar to auto-heal stale/incorrect local data
+                if (externalTrain.trainName() != null && !externalTrain.trainName().isBlank()
+                        && !externalTrain.trainName().trim().equalsIgnoreCase(train.getTrainName())) {
+                    logger.info("Auto-updating train name for {}: '{}' -> '{}'",
+                            train.getTrainNumber(), train.getTrainName(), externalTrain.trainName().trim());
+                    train.setTrainName(externalTrain.trainName().trim());
+                    changed = true;
+                }
+                if (externalTrain.trainType() != null && !externalTrain.trainType().isBlank()
+                        && !externalTrain.trainType().trim().equalsIgnoreCase(train.getTrainType())) {
+                    train.setTrainType(externalTrain.trainType().trim());
+                    train.setCategory(determineCategory(train.getTrainName(), train.getTrainType()));
+                    changed = true;
+                }
+
                 if (externalTrain.coachPosition() != null && !externalTrain.coachPosition().equals(train.getCoachPosition())) {
                     train.setCoachPosition(externalTrain.coachPosition());
                     changed = true;
@@ -286,6 +319,19 @@ public class TrainServiceImpl implements TrainService {
                     logger.info("Auto-updating destination station for train {}: '{}' -> '{}'",
                             train.getTrainNumber(), train.getDestinationStation(), externalTrain.destinationStation());
                     train.setDestinationStation(externalTrain.destinationStation());
+                    changed = true;
+                }
+                if (externalTrain.distance() != null && !externalTrain.distance().equals(train.getDistance())) {
+                    train.setDistance(externalTrain.distance());
+                    changed = true;
+                }
+                if (externalTrain.duration() != null && !externalTrain.duration().equals(train.getDuration())) {
+                    train.setDuration(externalTrain.duration());
+                    changed = true;
+                }
+                if (externalTrain.runningDays() != null && !externalTrain.runningDays().isBlank()
+                        && !externalTrain.runningDays().equalsIgnoreCase(train.getRunningDays())) {
+                    train.setRunningDays(externalTrain.runningDays());
                     changed = true;
                 }
                 if (changed) {
@@ -322,6 +368,22 @@ public class TrainServiceImpl implements TrainService {
             } else {
                 Train train = existingOpt.get();
                 boolean changed = false;
+
+                // Auto-sync train name and type with RailRadar route schedule
+                if (routeDto.trainName() != null && !routeDto.trainName().isBlank()
+                        && !routeDto.trainName().trim().equalsIgnoreCase(train.getTrainName())) {
+                    logger.info("Auto-updating train name for {} from route: '{}' -> '{}'",
+                            num, train.getTrainName(), routeDto.trainName().trim());
+                    train.setTrainName(routeDto.trainName().trim());
+                    changed = true;
+                }
+                if (routeDto.trainType() != null && !routeDto.trainType().isBlank()
+                        && !routeDto.trainType().trim().equalsIgnoreCase(train.getTrainType())) {
+                    train.setTrainType(routeDto.trainType().trim());
+                    train.setCategory(determineCategory(train.getTrainName(), train.getTrainType()));
+                    changed = true;
+                }
+
                 if (routeDto.sourceStation() != null && !routeDto.sourceStation().isBlank()
                         && !routeDto.sourceStation().equalsIgnoreCase(train.getSourceStation())) {
                     logger.info("Auto-updating source station for train {} from route: '{}' -> '{}'",
@@ -334,6 +396,18 @@ public class TrainServiceImpl implements TrainService {
                     logger.info("Auto-updating destination station for train {} from route: '{}' -> '{}'",
                             num, train.getDestinationStation(), routeDto.destinationStation());
                     train.setDestinationStation(routeDto.destinationStation());
+                    changed = true;
+                }
+                if (routeDto.distance() != null && !routeDto.distance().equals(train.getDistance())) {
+                    train.setDistance(routeDto.distance());
+                    changed = true;
+                }
+                if (routeDto.duration() != null && !routeDto.duration().equals(train.getDuration())) {
+                    train.setDuration(routeDto.duration());
+                    changed = true;
+                }
+                if (routeDto.coachPosition() != null && !routeDto.coachPosition().equals(train.getCoachPosition())) {
+                    train.setCoachPosition(routeDto.coachPosition());
                     changed = true;
                 }
                 if (changed) {
@@ -402,6 +476,16 @@ public class TrainServiceImpl implements TrainService {
     @Cacheable(value = "train:details", key = "#trainNumber")
     public TrainDto getTrainDetails(String trainNumber) {
         logger.debug("Retrieving details for train: {}", trainNumber);
+        // Verify with live RailRadar provider to heal any outdated train names or routes
+        try {
+            TrainDto ext = railwayDataProvider.getTrainDetails(trainNumber);
+            if (ext != null && ext.trainNumber() != null && !ext.trainNumber().isBlank()) {
+                saveTrainIfMissing(ext);
+            }
+        } catch (Exception e) {
+            logger.debug("Live RailRadar check for {} skipped: {}", trainNumber, e.getMessage());
+        }
+
         return trainRepository.findByTrainNumber(trainNumber)
                 .map(this::mapToDto)
                 .orElseGet(() -> {
@@ -596,14 +680,63 @@ public class TrainServiceImpl implements TrainService {
                 train.getTrainName(),
                 train.getTrainType(),
                 train.getCategory(),
-                train.getSourceStation(),
-                train.getDestinationStation(),
+                resolveStationName(train.getSourceStation()),
+                resolveStationName(train.getDestinationStation()),
                 train.getDistance(),
                 train.getDuration(),
                 train.getRunningDays(),
                 train.getActive(),
                 train.getCoachPosition()
         );
+    }
+
+    private String resolveStationName(String codeOrName) {
+        if (codeOrName == null || codeOrName.isBlank()) {
+            return codeOrName;
+        }
+        String clean = codeOrName.trim();
+        // If it's a 1-6 letter station code like SC, R, COA, LPI, NDLS, MAS, BZA
+        if (clean.matches("^[A-Za-z0-9]{1,6}$")) {
+            return stationRepository.findByStationCode(clean.toUpperCase())
+                    .map(s -> formatStationDisplayName(s.getStationName(), s.getStationCode()))
+                    .orElse(clean);
+        }
+        return clean;
+    }
+
+    private String formatStationDisplayName(String rawName, String code) {
+        if (rawName == null || rawName.isBlank()) return code;
+        String titleCased = toTitleCase(rawName.trim());
+        if (titleCased.toUpperCase().endsWith("(" + code.toUpperCase() + ")")) {
+            return titleCased;
+        }
+        return titleCased + " (" + code.toUpperCase() + ")";
+    }
+
+    private String toTitleCase(String text) {
+        if (text == null || text.isBlank()) return text;
+        String[] words = text.split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            if (word.isEmpty()) continue;
+            if (word.equalsIgnoreCase("JN") || word.equalsIgnoreCase("JN.")) {
+                sb.append("Jn");
+            } else if (word.equalsIgnoreCase("CANTT") || word.equalsIgnoreCase("CANTT.")) {
+                sb.append("Cantt");
+            } else if (word.equalsIgnoreCase("SF") || word.equalsIgnoreCase("EXP")) {
+                sb.append(word.toUpperCase());
+            } else {
+                sb.append(Character.toUpperCase(word.charAt(0)));
+                if (word.length() > 1) {
+                    sb.append(word.substring(1).toLowerCase());
+                }
+            }
+            if (i < words.length - 1) {
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
     }
 
     @Override

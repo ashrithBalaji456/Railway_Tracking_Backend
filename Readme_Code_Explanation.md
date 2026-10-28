@@ -2167,3 +2167,19 @@ This section documents the integration of RailRadar API endpoints extending the 
 
 * **Caching:** Cached in Redis key `journey:overlay` (TTL: 15 minutes).
 
+
+
+### 16.7. Live RailRadar Database Cross-Check, Auto-Healing & Station Name Resolution
+
+* **Service:** `TrainServiceImpl.java` & `StationServiceImpl.java`
+
+* **Automatic DB Auto-Healing:**
+  - Whenever a 5-digit train number (e.g., `12771`) is searched or queried via `searchTrains` / `getTrainDetails`, the backend proactively cross-checks against live RailRadar upstream data.
+  - If the database contains outdated, truncated, or obsolete train titles (e.g. `12771 Secunderabad - Nagpur Superfast Express`), `saveTrainIfMissing` immediately detects discrepancy with RailRadar (e.g. `12771 Raipur SF Express`), auto-heals `trainName`, `trainType`, `category`, and route endpoints in the PostgreSQL database, and delivers verified, synchronized data.
+
+* **Human-Readable Station Name Resolution:**
+  - `TrainServiceImpl.mapToDto` and `StationServiceImpl.enrichArrivalDays` dynamically inspect `sourceStation` and `destinationStation`.
+  - When raw 2-5 letter station codes are detected (`SC`, `R`, `COA`, `LPI`), the service resolves them against `stationRepository.findByStationCode(code)` into full formatted names, e.g., `Secunderabad Jn (SC)`, `Raipur Jn (R)`, `Kakinada Port (COA)`, and `Lingampalli (LPI)`.
+  - Prevents confusing cryptic codes from appearing across train search results and station timetables.
+
+
