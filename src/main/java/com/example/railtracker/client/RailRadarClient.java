@@ -751,58 +751,55 @@ public class RailRadarClient {
         int tot2S = (int) Math.round((b2S + 15 + 15) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("2S", "Second Sitting", b2S, tot2S));
 
-        // SL (Sleeper Class)
+        // SL (Sleeper Class - Min Chargeable Distance: 200 km)
         int bSL;
-        if (d <= 100) bSL = 125;
-        else if (d <= 300) bSL = (int) Math.round(125 + (d - 100) * 0.18);
-        else if (d <= 600) bSL = (int) Math.round(161 + (d - 300) * 0.35);
-        else bSL = (int) Math.round(266 + (d - 600) * 0.30);
+        if (d <= 200) bSL = 150;
+        else if (d <= 300) bSL = (int) Math.round(150 + (d - 200) * 0.385);
+        else if (d <= 600) bSL = (int) Math.round(188 + (d - 300) * 0.50);
+        else bSL = (int) Math.round(338 + (d - 600) * 0.42);
         int totSL = (int) Math.round((bSL + 20 + 30) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("SL", "Sleeper Class", bSL, totSL));
 
-        // CC (AC Chair Car)
+        // CC (AC Chair Car - Min Chargeable Distance: 150 km)
         int bCC;
-        if (d <= 100) bCC = 215;
-        else if (d <= 300) bCC = (int) Math.round(215 + (d - 100) * 0.893);
-        else if (d <= 600) bCC = (int) Math.round(394 + (d - 300) * 0.78);
-        else bCC = (int) Math.round(628 + (d - 600) * 0.65);
+        if (d <= 150) bCC = 260;
+        else if (d <= 300) bCC = (int) Math.round(260 + (d - 150) * 0.90);
+        else if (d <= 600) bCC = (int) Math.round(395 + (d - 300) * 0.85);
+        else bCC = (int) Math.round(650 + (d - 600) * 0.75);
         int totCC = (int) Math.round(((bCC + 40 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("CC", "AC Chair Car", bCC, totCC));
 
-        // 3E (AC 3 Tier Economy)
+        // 3E (AC 3 Tier Economy - Min Chargeable Distance: 300 km)
         int b3E;
-        if (d <= 100) b3E = 305;
-        else if (d <= 300) b3E = (int) Math.round(305 + (d - 100) * 1.071);
-        else if (d <= 600) b3E = (int) Math.round(519 + (d - 300) * 0.95);
-        else b3E = (int) Math.round(804 + (d - 600) * 0.82);
+        if (d <= 300) b3E = 425;
+        else if (d <= 600) b3E = (int) Math.round(425 + (d - 300) * 1.22);
+        else b3E = (int) Math.round(791 + (d - 600) * 1.12);
         int tot3E = (int) Math.round(((b3E + 40 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("3E", "AC 3 Economy", b3E, tot3E));
 
-        // 3A (AC 3 Tier)
+        // 3A (AC 3 Tier - Min Chargeable Distance: 300 km)
         int b3A;
-        if (d <= 100) b3A = 335;
-        else if (d <= 300) b3A = (int) Math.round(335 + (d - 100) * 1.18);
-        else if (d <= 600) b3A = (int) Math.round(571 + (d - 300) * 1.05);
-        else b3A = (int) Math.round(886 + (d - 600) * 0.90);
+        if (d <= 300) b3A = 453;
+        else if (d <= 600) b3A = (int) Math.round(453 + (d - 300) * 1.32);
+        else b3A = (int) Math.round(849 + (d - 600) * 1.21);
         int tot3A = (int) Math.round(((b3A + 40 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("3A", "AC 3 Tier", b3A, tot3A));
 
-        // 2A (AC 2 Tier)
+        // 2A (AC 2 Tier - Min Chargeable Distance: 300 km)
         int b2A;
-        if (d <= 100) b2A = 490;
-        else if (d <= 300) b2A = (int) Math.round(490 + (d - 100) * 1.714);
-        else if (d <= 600) b2A = (int) Math.round(833 + (d - 300) * 1.50);
-        else b2A = (int) Math.round(1283 + (d - 600) * 1.30);
+        if (d <= 300) b2A = 638;
+        else if (d <= 600) b2A = (int) Math.round(638 + (d - 300) * 1.95);
+        else b2A = (int) Math.round(1223 + (d - 600) * 1.83);
         int tot2A = (int) Math.round(((b2A + 50 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("2A", "AC 2 Tier", b2A, tot2A));
 
-        // 1A (AC First Class)
+        // 1A (AC First Class - Min Chargeable Distance: 300 km)
         int b1A;
-        if (d <= 100) b1A = 820;
-        else if (d <= 300) b1A = (int) Math.round(820 + (d - 100) * 2.893);
-        else if (d <= 600) b1A = (int) Math.round(1399 + (d - 300) * 2.50);
-        else b1A = (int) Math.round(2149 + (d - 600) * 2.10);
+        if (d <= 300) b1A = 1115;
+        else if (d <= 600) b1A = (int) Math.round(1115 + (d - 300) * 3.10);
+        else b1A = (int) Math.round(2045 + (d - 600) * 3.05);
         int tot1A = (int) Math.round(((b1A + 60 + 75) * 1.05) / 5.0) * 5;
+        fares.add(new TrainFareDTO.ClassFare("1A", "AC First Class", b1A, tot1A));
         fares.add(new TrainFareDTO.ClassFare("1A", "AC First Class", b1A, tot1A));
 
         return fares;
