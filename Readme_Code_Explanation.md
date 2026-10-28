@@ -2183,3 +2183,21 @@ This section documents the integration of RailRadar API endpoints extending the 
   - Prevents confusing cryptic codes from appearing across train search results and station timetables.
 
 
+
+
+### 16.8. Official IRCTC Minimum Chargeable Distance Tariff Calibration
+
+* **Service/Client:** `RailRadarClient.java` (`calculateDistanceBasedFares`)
+
+* **Minimum Chargeable Distance Enforcement:**
+  - Enforced official Indian Railways Passenger Tariff regulations:
+    * **2A, 3A, 3E, 1A:** Minimum chargeable distance is **300 km**.
+    * **CC (AC Chair Car):** Minimum chargeable distance is **150 km**.
+    * **SL (Sleeper Class):** Minimum chargeable distance is **200 km**.
+    * **2S (Second Sitting):** Minimum chargeable distance is **50 km**.
+  - Prevents short journeys under 300 km from calculating incorrect variable rates.
+  - Aligns base floors to exact PRS standards:
+    * **3A:** ₹453 Base + ₹40 Res + ₹45 SF = ₹538 + 5% GST = **₹565** on Superfast.
+    * **3E:** Identical minimum floor of ₹453 under 300 km: **₹565** on Superfast and **₹520** on Express.
+    * **2A:** ₹638 Base + ₹50 Res + ₹45 SF = ₹733 + 5% GST = **₹770** on Superfast.
+    * **SL:** ₹150 Base + ₹20 Res + ₹30 SF = **₹215** at 239 km.
