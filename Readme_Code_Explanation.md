@@ -2185,19 +2185,32 @@ This section documents the integration of RailRadar API endpoints extending the 
 
 
 
-### 16.8. Official IRCTC Minimum Chargeable Distance Tariff Calibration
+### 16.8. Official IRCTC Telescopic Slabs & Long-Distance Tariff Calibration
 
 * **Service/Client:** `RailRadarClient.java` (`calculateDistanceBasedFares`)
 
-* **Minimum Chargeable Distance Enforcement:**
-  - Enforced official Indian Railways Passenger Tariff regulations:
+* **Comprehensive Telescopic Distance Slabs (Short, Medium, and Long-Distance up to 3000+ km):**
+  - **Minimum Chargeable Distance Enforcement:**
     * **2A, 3A, 3E, 1A:** Minimum chargeable distance is **300 km**.
     * **CC (AC Chair Car):** Minimum chargeable distance is **150 km**.
     * **SL (Sleeper Class):** Minimum chargeable distance is **200 km**.
     * **2S (Second Sitting):** Minimum chargeable distance is **50 km**.
-  - Prevents short journeys under 300 km from calculating incorrect variable rates.
-  - Aligns base floors to exact PRS standards:
-    * **3A:** ₹453 Base + ₹40 Res + ₹45 SF = ₹538 + 5% GST = **₹565** on Superfast.
-    * **3E:** Identical minimum floor of ₹453 under 300 km: **₹565** on Superfast and **₹520** on Express.
-    * **2A:** ₹638 Base + ₹50 Res + ₹45 SF = ₹733 + 5% GST = **₹770** on Superfast.
-    * **SL:** ₹150 Base + ₹20 Res + ₹30 SF = **₹215** at 239 km.
+  - **Multi-Tier Telescopic Tapering Slabs ($1\text{--}300\text{ km}$, $301\text{--}600\text{ km}$, $601\text{--}1000\text{ km}$, $1001\text{--}1500\text{ km}$, $> 1500\text{ km}$):**
+    * Incorporates Indian Railways official decreasing per-kilometer tariff structure for journeys beyond 600 km, preventing overestimation on cross-country trunk routes.
+  - **Calibrated Benchmark Results:**
+    * **Short Distance (239.2 km, SC -> MCI, Superfast):**
+      - **SL:** ₹150 Base + ₹20 Res + ₹30 SF = **₹215**
+      - **3A:** ₹453 Base + ₹40 Res + ₹45 SF = ₹538 + 5% GST = **₹565**
+      - **3E:** Identical floor of ₹453 = **₹565** on Superfast, **₹520** on Express
+      - **2A:** ₹638 Base + ₹50 Res + ₹45 SF = ₹733 + 5% GST = **₹770**
+    * **Medium Distance (709.7 km, HYB -> VSKP, Godavari SF Exp):**
+      - **SL:** **₹435**
+      - **3A:** **₹1,120**
+      - **2A:** **₹1,595**
+      - **1A:** **₹2,640**
+    * **Long Distance (1,675.6 km, HYB -> NDLS, Telangana SF Exp):**
+      - **SL:** ₹705 Base + ₹20 Res + ₹30 SF = **₹755** (Matches official IRCTC ₹755)
+      - **3E:** ₹1620 Base + ₹40 Res + ₹45 SF + 5% GST = **₹1,790** (Matches official Sampark Kranti ₹1,790)
+      - **3A:** ₹1734 Base + ₹40 Res + ₹45 SF + 5% GST = **₹1,910** (Matches official IRCTC ₹1,910)
+      - **2A:** ₹2495 Base + ₹50 Res + ₹45 SF + 5% GST = **₹2,720** (Matches official IRCTC ₹2,720)
+      - **1A:** ₹4222 Base + ₹60 Res + ₹75 SF + 5% GST = **₹4,575** (Matches official IRCTC ₹4,575)
