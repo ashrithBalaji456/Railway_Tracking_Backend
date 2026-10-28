@@ -769,11 +769,11 @@ public class RailRadarClient {
         int totCC = (int) Math.round(((bCC + 40 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("CC", "AC Chair Car", bCC, totCC));
 
-        // 3E (AC 3 Tier Economy - Min Chargeable Distance: 300 km)
+        // 3E (AC 3 Tier Economy - Min Chargeable Distance: 300 km, Base: 453 -> Total SF: ₹565, Exp: ₹520)
         int b3E;
-        if (d <= 300) b3E = 425;
-        else if (d <= 600) b3E = (int) Math.round(425 + (d - 300) * 1.22);
-        else b3E = (int) Math.round(791 + (d - 600) * 1.12);
+        if (d <= 300) b3E = 453;
+        else if (d <= 600) b3E = (int) Math.round(453 + (d - 300) * 1.22);
+        else b3E = (int) Math.round(819 + (d - 600) * 1.12);
         int tot3E = (int) Math.round(((b3E + 40 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("3E", "AC 3 Economy", b3E, tot3E));
 
