@@ -2237,3 +2237,16 @@ This section documents the integration of RailRadar API endpoints extending the 
       - $1501\text{--}1675\text{ km}$: $4015 + (d - 1500) \times 1.18$
       - $> 1675\text{ km}$: $4222 + (d - 1675) \times 0.95$
   - Matches official IRCTC pricing on 2473.6 km routes (`04132 SMVB-CNB SPECIAL`): SL ₹825, 3A ₹2,165, 2A ₹3,180.
+
+
+### 16.10. Indian Railways Stories & Blog Engine (`/api/v1/blogs`)
+
+* **Controllers & Services:**
+  - `BlogController.java` (`@RestController @RequestMapping("/api/v1/blogs")`):
+    * `GET /api/v1/blogs`: Retrieves all articles with optional `category` and search `q` filter parameters.
+    * `GET /api/v1/blogs/{slug}`: Retrieves full article content, quick facts, related trains, and structured media sections.
+    * `GET /api/v1/blogs/featured`: Returns hero featured stories.
+    * `GET /api/v1/blogs/categories`: Returns curated categories (`Scenic Routes`, `Train Tech`, `Heritage & History`, `Travel Tips`, `Food & Culture`).
+  - `BlogService.java` & `BlogServiceImpl.java`: In-memory curated article repository with full search and category matching.
+  - `BlogArticleDTO.java`: Clean record DTO with nested records for `QuickFact`, `RelatedTrain`, and `ArticleSection` (types: `paragraph`, `heading`, `image`, `tip`, `trivia`, `quote`).
+  - `SecurityConfig.java`: Permitted public access to `/api/v1/blogs/**`.
