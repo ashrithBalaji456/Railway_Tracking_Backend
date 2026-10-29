@@ -2259,3 +2259,15 @@ This section documents the integration of RailRadar API endpoints extending the 
   - `BlogArticleDTO.java`: Clean record DTO with nested records for `QuickFact`, `RelatedTrain`, and `ArticleSection` (types: `paragraph`, `heading`, `image`, `tip`, `trivia`, `quote`).
   - `SecurityConfig.java`: Permitted public access to `/api/v1/blogs/**`.
   - **Authentic Media Integrity:** Synchronized with verified 960px Wikimedia Commons thumbnails of actual Indian Railways locomotives, trainsets, bridges, and platform delicacies. Compatible with frontend offline journey bookmarks and station explorer gastronomy tabs.
+
+
+### 16.11. Official PNR Status Multi-Channel Verification Architecture
+
+* **Context & Architectural Decision:**
+  - Indian Railways PRS systems (operated by CRIS) do not provide open public REST endpoints for live PNR data and enforce dynamic CAPTCHAs.
+  - To provide zero-cost, legal, and 100% authentic PNR verification without incurring paid third-party OCR API charges or risking IP bans, the application implements **Option B: Multi-Channel Official Verification Gateway**:
+    * Direct official CRIS/IRCTC verification gateways (`indianrail.gov.in` and `irctc.co.in`).
+    * Mobile 1-tap SMS enquiry via Railway Helpline `139` (`sms:139?body=PNR {pnr}`).
+    * Official IRCTC Rail Madad WhatsApp Bot integration (+91 98811 93322).
+    * Integrated PRS routing zone resolver based on starting digit of 10-digit PNR.
+    * Direct bridge to backend train telemetry (`/api/v1/trains/{number}`) once the train number is identified.
