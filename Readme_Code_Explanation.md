@@ -2247,7 +2247,7 @@ This section documents the integration of RailRadar API endpoints extending the 
     * `GET /api/v1/blogs/{slug}`: Retrieves full article content, quick facts, related trains, and structured media sections.
     * `GET /api/v1/blogs/featured`: Returns hero featured stories.
     * `GET /api/v1/blogs/categories`: Returns curated categories (`Scenic Routes`, `Train Tech`, `Heritage & History`, `Travel Tips`, `Food & Culture`).
-  - `BlogService.java` & `BlogServiceImpl.java`: In-memory curated article repository with full search and category matching, containing 8 iconic Indian Railways stories:
+  - `BlogService.java` & `BlogServiceImpl.java`: In-memory curated article repository with full search and category matching, containing **14 iconic Indian Railways stories** with **4 to 5 verified authentic photos per story**:
     1. *The Konkan Railway Odyssey* (Dudhsagar Falls & Western Ghats viaducts)
     2. *Vande Bharat 2.0 & Beyond* (Kavach ATP, 0-100 acceleration, upcoming sleeper coaches)
     3. *The Pamban Sea Bridge* (India's historic 2.06 km Scherzer cantilever lift bridge)
@@ -2256,9 +2256,15 @@ This section documents the integration of RailRadar API endpoints extending the 
     6. *Nilgiri Mountain Railway* (Abt rack-and-pinion cogwheel steam pusher system)
     7. *Mastering the Tatkal Rush* (10:00 AM vs 11:00 AM IRCTC booking windows & Master list)
     8. *Trackside Gastronomy* (Ratlam Sev, Kharagpur Chai, Vijayawada Bajji, e-Catering)
+    9. *Maharajas' Express* (World's Leading Luxury Train, Navratna Presidential Suite, Mayur Mahal)
+    10. *Palace on Wheels* (Sovereign desert cruise across Rajasthan, royal Rajputana saloons)
+    11. *Darjeeling Himalayan Railway* (UNESCO toy train, Batasia Loop, Ghum station at 2,258 m)
+    12. *The Golden Chariot & Deccan Odyssey* (Royal heritage rails of South & West, Hampi, Ajanta-Ellora)
+    13. *1853 to Present: Complete Chronicles of Indian Railways* (16 April 1853 Bori Bunder, Fairy Queen 1855, Project Unigauge, 100% electrification)
+    14. *Matheran Hill Railway* (Asia's automobile-free mountain railway, 281 sharp curves, One-Kiss tunnel)
   - `BlogArticleDTO.java`: Clean record DTO with nested records for `QuickFact`, `RelatedTrain`, and `ArticleSection` (types: `paragraph`, `heading`, `image`, `tip`, `trivia`, `quote`).
   - `SecurityConfig.java`: Permitted public access to `/api/v1/blogs/**`.
-  - **Authentic Media Integrity:** Synchronized with verified 960px Wikimedia Commons thumbnails of actual Indian Railways locomotives, trainsets, bridges, and platform delicacies. Compatible with frontend offline journey bookmarks and station explorer gastronomy tabs.
+  - **Authentic Media Integrity:** Synchronized with verified 960px Wikimedia Commons thumbnails of actual Indian Railways locomotives, trainsets, bridges, and platform delicacies. Every story includes at least 4-5 verified photographs with contextual captions.
 
 
 ### 16.11. Official PNR Status Multi-Channel Verification Architecture
