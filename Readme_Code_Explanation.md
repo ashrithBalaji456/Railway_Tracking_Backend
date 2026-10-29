@@ -2247,6 +2247,14 @@ This section documents the integration of RailRadar API endpoints extending the 
     * `GET /api/v1/blogs/{slug}`: Retrieves full article content, quick facts, related trains, and structured media sections.
     * `GET /api/v1/blogs/featured`: Returns hero featured stories.
     * `GET /api/v1/blogs/categories`: Returns curated categories (`Scenic Routes`, `Train Tech`, `Heritage & History`, `Travel Tips`, `Food & Culture`).
-  - `BlogService.java` & `BlogServiceImpl.java`: In-memory curated article repository with full search and category matching.
+  - `BlogService.java` & `BlogServiceImpl.java`: In-memory curated article repository with full search and category matching, containing 8 iconic Indian Railways stories:
+    1. *The Konkan Railway Odyssey* (Dudhsagar Falls & Western Ghats viaducts)
+    2. *Vande Bharat 2.0 & Beyond* (Kavach ATP, 0-100 acceleration, upcoming sleeper coaches)
+    3. *The Pamban Sea Bridge* (India's historic 2.06 km Scherzer cantilever lift bridge)
+    4. *CSMT Mumbai Living Legend* (UNESCO Victorian Gothic Central Railway terminus)
+    5. *Kalka-Shimla Mountain Railway* (UNESCO narrow gauge toy train, Barog tunnel)
+    6. *Nilgiri Mountain Railway* (Abt rack-and-pinion cogwheel steam pusher system)
+    7. *Mastering the Tatkal Rush* (10:00 AM vs 11:00 AM IRCTC booking windows & Master list)
+    8. *Trackside Gastronomy* (Ratlam Sev, Kharagpur Chai, Vijayawada Bajji, e-Catering)
   - `BlogArticleDTO.java`: Clean record DTO with nested records for `QuickFact`, `RelatedTrain`, and `ArticleSection` (types: `paragraph`, `heading`, `image`, `tip`, `trivia`, `quote`).
   - `SecurityConfig.java`: Permitted public access to `/api/v1/blogs/**`.
