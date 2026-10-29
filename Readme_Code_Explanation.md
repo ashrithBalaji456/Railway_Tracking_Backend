@@ -2277,3 +2277,36 @@ This section documents the integration of RailRadar API endpoints extending the 
     * Official IRCTC Rail Madad WhatsApp Bot integration (+91 98811 93322).
     * Integrated PRS routing zone resolver based on starting digit of 10-digit PNR.
     * Direct bridge to backend train telemetry (`/api/v1/trains/{number}`) once the train number is identified.
+
+
+### 16.12. Passenger Community Travel Tips REST Architecture (`BlogTipDTO`, `BlogController`, `BlogService`)
+
+* **Context & Motivation:**
+  - Railway travelers frequently have hyper-local wisdom regarding which side of the train to sit on for scenic vistas, which platform vendors sell authentic regional snacks, and tricks for Tatkal ticket booking.
+  - To foster a rich railfan community without disrupting existing core tracking and booking flows, a lightweight, high-performance community tips module was implemented.
+
+* **DTO Architecture (`com.example.railtracker.dto.BlogTipDTO`):**
+  - Immutable record with fields:
+    * `id`: Unique identifier (UUID).
+    * `articleSlug`: Story identifier linking tip to the article.
+    * `authorName`: Passenger display name.
+    * `authorHandle`: Social/railfan handle (e.g., `@konkan_railfan`).
+    * `category`: Categorization enum string (`SCENIC_SPOT`, `FOOD_TIP`, `BERTH_ADVICE`, `PHOTOGRAPHY`, `BOOKING_TACTIC`, `GENERAL`).
+    * `tipText`: Passenger's practical advice or experience description.
+    * `photoUrl`: Optional URL to verified journey photograph.
+    * `travelDate`: Month and year of the journey (e.g., "October 2026").
+    * `likesCount`: Community helpfulness counter.
+    * `createdAt`: Timestamp.
+
+* **Service Layer Implementation (`BlogServiceImpl.java`):**
+  - Thread-safe storage using `ConcurrentHashMap<String, List<BlogTipDTO>>` with `CopyOnWriteArrayList`.
+  - Pre-seeded with authentic, realistic traveler wisdom for major editorial stories (Konkan Railway, Vande Bharat, Pamban Bridge, Kalka-Shimla, and Tatkal booking).
+  - Methods:
+    * `List<BlogTipDTO> getTipsForArticle(String slug)`: Returns tips ordered chronologically.
+    * `BlogTipDTO addTip(String slug, BlogTipDTO tipDTO)`: Sanitizes and persists new passenger advice.
+    * `BlogTipDTO likeTip(String slug, String tipId)`: Atomically increments the upvote counter for helpful advice.
+
+* **REST Endpoints (`BlogController.java`):**
+  - `GET /api/v1/blogs/{slug}/tips`: Retrieves community tips for the specified railway story.
+  - `POST /api/v1/blogs/{slug}/tips`: Submits a new passenger travel tip.
+  - `POST /api/v1/blogs/{slug}/tips/{tipId}/like`: Upvotes a tip.

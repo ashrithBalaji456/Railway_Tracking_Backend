@@ -2,6 +2,7 @@ package com.example.railtracker.controller;
 
 import com.example.railtracker.dto.ApiResponse;
 import com.example.railtracker.dto.BlogArticleDTO;
+import com.example.railtracker.dto.BlogTipDTO;
 import com.example.railtracker.service.BlogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,5 +45,32 @@ public class BlogController {
             .map(article -> ResponseEntity.ok(ApiResponse.success("Article retrieved successfully", article)))
             .orElseGet(() -> ResponseEntity.status(404).body(ApiResponse.error("Article not found with slug: " + slug)));
     }
-}
 
+    @GetMapping("/{slug}/tips")
+    public ResponseEntity<ApiResponse<List<BlogTipDTO>>> getArticleTips(@PathVariable String slug) {
+        List<BlogTipDTO> tips = blogService.getTipsForArticle(slug);
+        return ResponseEntity.ok(ApiResponse.success("Passenger tips retrieved successfully", tips));
+    }
+
+    @PostMapping("/{slug}/tips")
+    public ResponseEntity<ApiResponse<BlogTipDTO>> addArticleTip(
+            @PathVariable String slug,
+            @RequestBody BlogTipDTO tipDTO) {
+        if (tipDTO.tipText() == null || tipDTO.tipText().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Tip text cannot be empty"));
+        }
+        BlogTipDTO created = blogService.addTip(slug, tipDTO);
+        return ResponseEntity.ok(ApiResponse.success("Passenger tip shared successfully", created));
+    }
+
+    @PostMapping("/{slug}/tips/{tipId}/like")
+    public ResponseEntity<ApiResponse<BlogTipDTO>> likeArticleTip(
+            @PathVariable String slug,
+            @PathVariable String tipId) {
+        BlogTipDTO updated = blogService.likeTip(slug, tipId);
+        if (updated != null) {
+            return ResponseEntity.ok(ApiResponse.success("Tip upvoted", updated));
+        }
+        return ResponseEntity.status(404).body(ApiResponse.error("Tip not found"));
+    }
+}
