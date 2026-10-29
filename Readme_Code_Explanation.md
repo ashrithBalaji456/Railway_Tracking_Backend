@@ -2214,3 +2214,26 @@ This section documents the integration of RailRadar API endpoints extending the 
       - **3A:** ₹1734 Base + ₹40 Res + ₹45 SF + 5% GST = **₹1,910** (Matches official IRCTC ₹1,910)
       - **2A:** ₹2495 Base + ₹50 Res + ₹45 SF + 5% GST = **₹2,720** (Matches official IRCTC ₹2,720)
       - **1A:** ₹4222 Base + ₹60 Res + ₹75 SF + 5% GST = **₹4,575** (Matches official IRCTC ₹4,575)
+
+
+### 16.9. Special Train vs. Special Fare Classification & Ultra Long-Distance Tapering (> 2000 km)
+
+* **Service/Client:** `RailRadarClient.java` (`calculateDistanceBasedFares`)
+
+* **Ultra Long-Distance Slabs ($> 1675\text{ km}$ and $> 2000\text{ km}$):**
+  - Indian Railways applies deeper rate tapering beyond 1675 km and 2000 km so cross-country passenger tariffs do not grow disproportionately high.
+  - Slabs implemented:
+    - **Sleeper (SL):**
+      - $1501\text{--}1675\text{ km}$: $666 + (d - 1500) \times 0.222$
+      - $1676\text{--}2000\text{ km}$: $705 + (d - 1675) \times 0.110$
+      - $> 2000\text{ km}$: $741 + (d - 2000) \times 0.072$
+    - **AC 3 Tier (3A):**
+      - $1501\text{--}1675\text{ km}$: $1653 + (d - 1500) \times 0.46$
+      - $> 1675\text{ km}$: $1734 + (d - 1675) \times 0.36$
+    - **AC 2 Tier (2A):**
+      - $1501\text{--}1675\text{ km}$: $2405 + (d - 1500) \times 0.51$
+      - $> 1675\text{ km}$: $2495 + (d - 1675) \times 0.60$
+    - **AC First Class (1A):**
+      - $1501\text{--}1675\text{ km}$: $4015 + (d - 1500) \times 1.18$
+      - $> 1675\text{ km}$: $4222 + (d - 1675) \times 0.95$
+  - Matches official IRCTC pricing on 2473.6 km routes (`04132 SMVB-CNB SPECIAL`): SL ₹825, 3A ₹2,165, 2A ₹3,180.

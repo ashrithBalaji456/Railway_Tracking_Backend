@@ -758,7 +758,9 @@ public class RailRadarClient {
         else if (d <= 600) bSL = (int) Math.round(188 + (d - 300) * 0.50);
         else if (d <= 1000) bSL = (int) Math.round(338 + (d - 600) * 0.42);
         else if (d <= 1500) bSL = (int) Math.round(506 + (d - 1000) * 0.32);
-        else bSL = (int) Math.round(666 + (d - 1500) * 0.222);
+        else if (d <= 1675) bSL = (int) Math.round(666 + (d - 1500) * 0.222);
+        else if (d <= 2000) bSL = (int) Math.round(705 + (d - 1675) * 0.110);
+        else bSL = (int) Math.round(741 + (d - 2000) * 0.072);
         int totSL = (int) Math.round((bSL + 20 + 30) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("SL", "Sleeper Class", bSL, totSL));
 
@@ -778,7 +780,8 @@ public class RailRadarClient {
         else if (d <= 600) b3E = (int) Math.round(453 + (d - 300) * 1.22);
         else if (d <= 1000) b3E = (int) Math.round(819 + (d - 600) * 1.05);
         else if (d <= 1500) b3E = (int) Math.round(1239 + (d - 1000) * 0.60);
-        else b3E = (int) Math.round(1539 + (d - 1500) * 0.46);
+        else if (d <= 1675) b3E = (int) Math.round(1539 + (d - 1500) * 0.46);
+        else b3E = (int) Math.round(1620 + (d - 1675) * 0.33);
         int tot3E = (int) Math.round(((b3E + 40 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("3E", "AC 3 Economy", b3E, tot3E));
 
@@ -788,7 +791,8 @@ public class RailRadarClient {
         else if (d <= 600) b3A = (int) Math.round(453 + (d - 300) * 1.32);
         else if (d <= 1000) b3A = (int) Math.round(849 + (d - 600) * 1.21);
         else if (d <= 1500) b3A = (int) Math.round(1333 + (d - 1000) * 0.64);
-        else b3A = (int) Math.round(1653 + (d - 1500) * 0.46);
+        else if (d <= 1675) b3A = (int) Math.round(1653 + (d - 1500) * 0.46);
+        else b3A = (int) Math.round(1734 + (d - 1675) * 0.36);
         int tot3A = (int) Math.round(((b3A + 40 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("3A", "AC 3 Tier", b3A, tot3A));
 
@@ -798,7 +802,8 @@ public class RailRadarClient {
         else if (d <= 600) b2A = (int) Math.round(638 + (d - 300) * 1.95);
         else if (d <= 1000) b2A = (int) Math.round(1223 + (d - 600) * 1.83);
         else if (d <= 1500) b2A = (int) Math.round(1955 + (d - 1000) * 0.90);
-        else b2A = (int) Math.round(2405 + (d - 1500) * 0.51);
+        else if (d <= 1675) b2A = (int) Math.round(2405 + (d - 1500) * 0.51);
+        else b2A = (int) Math.round(2495 + (d - 1675) * 0.60);
         int tot2A = (int) Math.round(((b2A + 50 + 45) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("2A", "AC 2 Tier", b2A, tot2A));
 
@@ -808,7 +813,8 @@ public class RailRadarClient {
         else if (d <= 600) b1A = (int) Math.round(1115 + (d - 300) * 3.10);
         else if (d <= 1000) b1A = (int) Math.round(2045 + (d - 600) * 3.05);
         else if (d <= 1500) b1A = (int) Math.round(3265 + (d - 1000) * 1.50);
-        else b1A = (int) Math.round(4015 + (d - 1500) * 1.18);
+        else if (d <= 1675) b1A = (int) Math.round(4015 + (d - 1500) * 1.18);
+        else b1A = (int) Math.round(4222 + (d - 1675) * 0.95);
         int tot1A = (int) Math.round(((b1A + 60 + 75) * 1.05) / 5.0) * 5;
         fares.add(new TrainFareDTO.ClassFare("1A", "AC First Class", b1A, tot1A));
 
