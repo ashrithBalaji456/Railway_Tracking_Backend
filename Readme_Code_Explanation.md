@@ -2258,3 +2258,4 @@ This section documents the integration of RailRadar API endpoints extending the 
     8. *Trackside Gastronomy* (Ratlam Sev, Kharagpur Chai, Vijayawada Bajji, e-Catering)
   - `BlogArticleDTO.java`: Clean record DTO with nested records for `QuickFact`, `RelatedTrain`, and `ArticleSection` (types: `paragraph`, `heading`, `image`, `tip`, `trivia`, `quote`).
   - `SecurityConfig.java`: Permitted public access to `/api/v1/blogs/**`.
+  - **Authentic Media Integrity:** Synchronized with verified 960px Wikimedia Commons thumbnails of actual Indian Railways locomotives, trainsets, bridges, and platform delicacies. Compatible with frontend offline journey bookmarks and station explorer gastronomy tabs.
