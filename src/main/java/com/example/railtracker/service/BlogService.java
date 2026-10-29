@@ -10,3 +10,4 @@ public interface BlogService {
     List<BlogArticleDTO> getFeaturedArticles();
     List<String> getCategories();
 }
+

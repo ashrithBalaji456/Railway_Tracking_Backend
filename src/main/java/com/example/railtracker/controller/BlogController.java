@@ -45,3 +45,4 @@ public class BlogController {
             .orElseGet(() -> ResponseEntity.status(404).body(ApiResponse.error("Article not found with slug: " + slug)));
     }
 }
+

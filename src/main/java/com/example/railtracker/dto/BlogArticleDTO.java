@@ -42,3 +42,4 @@ public record BlogArticleDTO(
         String altText
     ) implements Serializable {}
 }
+
