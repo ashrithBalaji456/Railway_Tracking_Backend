@@ -484,6 +484,56 @@ public class BlogServiceImpl implements BlogService {
         ));
     }
 
+    
+    @Override
+    public List<BlogArticleDTO> getAllArticles(String category, String query) {
+        return articles.stream()
+                .filter(a -> {
+                    if (category != null && !category.isBlank() && !category.equalsIgnoreCase("All")) {
+                        return a.category().equalsIgnoreCase(category.trim());
+                    }
+                    return true;
+                })
+                .filter(a -> {
+                    if (query != null && !query.isBlank()) {
+                        String q = query.toLowerCase().trim();
+                        return a.title().toLowerCase().contains(q)
+                                || a.subtitle().toLowerCase().contains(q)
+                                || a.tags().stream().anyMatch(t -> t.toLowerCase().contains(q))
+                                || a.category().toLowerCase().contains(q);
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<BlogArticleDTO> getArticleBySlug(String slug) {
+        if (slug == null || slug.isBlank()) {
+            return Optional.empty();
+        }
+        return articles.stream()
+                .filter(a -> a.slug().equalsIgnoreCase(slug.trim()))
+                .findFirst();
+    }
+
+    @Override
+    public List<BlogArticleDTO> getFeaturedArticles() {
+        return articles.stream().filter(a -> Boolean.TRUE.equals(a.featured())).limit(3).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getCategories() {
+        return List.of(
+            "All",
+            "Scenic Routes",
+            "Train Tech",
+            "Heritage & History",
+            "Travel Tips",
+            "Food & Culture"
+        );
+    }
+
     private void initTips() {
         List<BlogTipDTO> konkanTips = new CopyOnWriteArrayList<>();
         konkanTips.add(new BlogTipDTO(UUID.randomUUID().toString(), "konkan-railway-scenic-odyssey", "Rohit Shenoy", "@konkan_railfan", "SCENIC_SPOT", "Sit on the right side of the train when traveling from Mumbai to Goa for unobstructed views of Dudhsagar Falls and coastal river estuaries! Book non-AC 2S or 3E for lower window reflections.", null, "September 2026", 48, LocalDateTime.now().minusDays(5)));
