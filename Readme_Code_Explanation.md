@@ -2369,3 +2369,20 @@ This section documents the integration of RailRadar API endpoints extending the 
     * Mastering Tatkal (`/images/blogs/mastering-irctc-tatkal-booking-rules-{1..5}.jpg`)
     * Trackside Gastronomy (`/images/blogs/iconic-station-food-indian-railways-{1..5}.jpg`)
     * Konkan Railway (`/images/blogs/konkan-railway-scenic-odyssey-{1..5}.jpg`)
+
+
+### 16.17. High-Definition Asset Serving & Comprehensive Editorial Expansion
+
+* **1. 1080p Full HD Image Asset Mirroring (`src/main/resources/static/images/blogs/`):**
+  - Replaced all compressed thumbnails with Full HD 1080p and 2K originals (150 KB to 2 MB per asset), including the high-resolution 2560px exterior and saloon shots of The Golden Chariot, Maharajas' Express, and Vande Bharat.
+  - Mirrored all 70 high-resolution assets into the Spring Boot resource directory, served with native HTTP 1.1 caching headers at `/images/blogs/...`.
+
+* **2. 14 Comprehensive 5-Chapter Story Implementations in `BlogServiceImpl.java`:**
+  - Expanded all 14 blog articles with 5 in-depth, long-form editorial chapters and 5 paired photographic sections per article.
+  - Embedded exact technical civil engineering data: gradient ratios (e.g. 1 in 12.28 Abt rack system on Nilgiri line), bridge specifications (Pamban's 72.5m vertical lift span, Panval viaduct's 64m piers), tunnel lengths (Karbude 6.5km), and rolling stock electrical systems (Vande Bharat 25kV catenary regenerative braking and SIL-4 Kavach TCAS).
+
+* **3. Official Indian Railways Reservation Chart Preparation Timeline Synchronization:**
+  - Standardized official charting guidelines across backend DTOs and API responses:
+    - *First Reservation Chart (Chart 1):* Finalized 10 hours before scheduled departure for trains departing after 2:00 PM or before 5:00 AM; finalized the previous night at 8:00 PM (or 9:00 PM) for trains departing between 5:00 AM and 2:00 PM.
+    - *Second & Final Chart (Chart 2):* Finalized exactly 30 minutes before departure for all trains to allocate cancellations, current counter bookings, and Emergency Quota (EQ) releases.
+
