@@ -2339,3 +2339,11 @@ This section documents the integration of RailRadar API endpoints extending the 
   - Mirrored all 136 local Indian Railways photographs (covering blogs, gastronomy, and station amenities) directly into the Spring Boot resource classpath under `static/images/`.
   - Spring Boot now serves these images with native HTTP cache headers directly at `/images/blogs/...`, `/images/gastronomy/...`, and `/images/amenities/...`.
   - In `BlogServiceImpl.java`, all 14 blog articles and their embedded section figures now return relative local URIs (`/images/blogs/${slug}-${index}.jpg`), completely eliminating third-party CDN rate limiting (HTTP 429), CORS/referer restrictions, and DNS resolution delays.
+
+
+### 16.15. Pan-India 8,500+ Station Metadata Integration & Citizens' Charter Amenities
+
+* **Station Master Classpath Synchronization:**
+  - Aligned the comprehensive 8,542 Indian Railway station master registry (`stations_data.json`) with frontend metadata models.
+  - Standardized official station categorization codes (`NSG-1` through `NSG-6`, `SG-1` through `SG-3`, `HG-1` through `HG-3`) across all 16 Railway Zonal divisions and 32 States & Union Territories.
+  - Enabled synchronized station metadata resolution between Spring Boot microservice controllers and the mobile-first frontend client.
