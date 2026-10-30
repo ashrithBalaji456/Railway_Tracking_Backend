@@ -2331,3 +2331,11 @@ This section documents the integration of RailRadar API endpoints extending the 
     * *The Golden Chariot & Deccan Odyssey* (Platform departure, Swarn Mahal lounge, Pearl saloon, Deccan trainset)
     * *1853 to Present: Complete History* (1853 Bori Bunder terminus, 1855 Fairy Queen steam engine, 1853 Bombay Times timetable, Rewari loco museum)
     * *Matheran Hill Railway* (MHR train at Matheran station, sharp mountain curves, Neral Junction gateway, Pipeline trail)
+
+
+### 16.14. High-Performance Static Image Distribution & Local Asset Bundling
+
+* **Local Static Asset Mirror (`src/main/resources/static/images/`):**
+  - Mirrored all 136 local Indian Railways photographs (covering blogs, gastronomy, and station amenities) directly into the Spring Boot resource classpath under `static/images/`.
+  - Spring Boot now serves these images with native HTTP cache headers directly at `/images/blogs/...`, `/images/gastronomy/...`, and `/images/amenities/...`.
+  - In `BlogServiceImpl.java`, all 14 blog articles and their embedded section figures now return relative local URIs (`/images/blogs/${slug}-${index}.jpg`), completely eliminating third-party CDN rate limiting (HTTP 429), CORS/referer restrictions, and DNS resolution delays.
