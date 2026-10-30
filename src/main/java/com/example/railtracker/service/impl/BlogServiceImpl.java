@@ -312,29 +312,76 @@ public class BlogServiceImpl implements BlogService {
 
     private void initTips() {
         List<BlogTipDTO> sampleTips = new CopyOnWriteArrayList<>();
-        sampleTips.add(new BlogTipDTO(UUID.randomUUID().toString(), "konkan-railway-scenic-odyssey", "Aditya Sharma", "Sit on the right side window seat while traveling south from Mumbai to Goa for breathtaking coastal valley and waterfall views during monsoon!", LocalDateTime.now().minusDays(2).toString(), 28, null));
-        sampleTips.add(new BlogTipDTO(UUID.randomUUID().toString(), "konkan-railway-scenic-odyssey", "Priya Nair", "Ratlam Junction sev and Chiplun jackfruit chips from platform vendors are an absolute must-try!", LocalDateTime.now().minusDays(1).toString(), 19, null));
+        sampleTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "konkan-railway-scenic-odyssey",
+            "Aditya Sharma",
+            "@aditya_rails",
+            "Scenic Spot",
+            "Sit on the right side window seat while traveling south from Mumbai to Goa for breathtaking coastal valley and waterfall views during monsoon!",
+            "/images/blogs/konkan-railway-scenic-odyssey-3.jpg",
+            "2026-09-15",
+            28,
+            LocalDateTime.now().minusDays(2)
+        ));
+        sampleTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "konkan-railway-scenic-odyssey",
+            "Priya Nair",
+            "@priya_travels",
+            "Food & Halts",
+            "Ratlam Junction sev and Chiplun jackfruit chips from platform vendors are an absolute must-try!",
+            "/images/blogs/konkan-railway-scenic-odyssey-4.jpg",
+            "2026-10-02",
+            19,
+            LocalDateTime.now().minusDays(1)
+        ));
         tipsMap.put("konkan-railway-scenic-odyssey", sampleTips);
     }
 
     @Override
     public List<String> getCategories() {
         return articles.stream()
-            .map(BlogArticleDTO::getCategory)
+            .map(BlogArticleDTO::category)
             .filter(c -> c != null && !c.isBlank())
             .distinct()
             .collect(Collectors.toList());
     }
 
     @Override
-    public List<BlogArticleDTO> getAllArticles() {
-        return Collections.unmodifiableList(articles);
+    public List<BlogArticleDTO> getAllArticles(String category, String query) {
+        return articles.stream()
+            .filter(a -> {
+                if (category != null && !category.isBlank() && !category.equalsIgnoreCase("All")) {
+                    return a.category() != null && a.category().equalsIgnoreCase(category);
+                }
+                return true;
+            })
+            .filter(a -> {
+                if (query != null && !query.isBlank()) {
+                    String q = query.toLowerCase().trim();
+                    boolean titleMatch = a.title() != null && a.title().toLowerCase().contains(q);
+                    boolean subMatch = a.subtitle() != null && a.subtitle().toLowerCase().contains(q);
+                    boolean tagMatch = a.tags() != null && a.tags().stream().anyMatch(t -> t.toLowerCase().contains(q));
+                    return titleMatch || subMatch || tagMatch;
+                }
+                return true;
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BlogArticleDTO> getFeaturedArticles() {
+        return articles.stream()
+            .filter(a -> Boolean.TRUE.equals(a.featured()))
+            .collect(Collectors.toList());
     }
 
     @Override
     public Optional<BlogArticleDTO> getArticleBySlug(String slug) {
         return articles.stream()
-            .filter(a -> a.getSlug().equalsIgnoreCase(slug) || a.getId().equalsIgnoreCase(slug))
+            .filter(a -> (a.slug() != null && a.slug().equalsIgnoreCase(slug)) ||
+                         (a.id() != null && a.id().equalsIgnoreCase(slug)))
             .findFirst();
     }
 
@@ -344,18 +391,47 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    public BlogTipDTO addTipToArticle(String slug, BlogTipDTO tip) {
+    public BlogTipDTO addTip(String slug, BlogTipDTO tip) {
         String tipId = UUID.randomUUID().toString();
         BlogTipDTO newTip = new BlogTipDTO(
             tipId,
             slug,
-            tip.getAuthor() != null && !tip.getAuthor().isBlank() ? tip.getAuthor() : "Fellow Traveler",
-            tip.getContent(),
-            LocalDateTime.now().toString(),
+            (tip.authorName() != null && !tip.authorName().isBlank()) ? tip.authorName() : "Fellow Traveler",
+            (tip.authorHandle() != null && !tip.authorHandle().isBlank()) ? tip.authorHandle() : "@rail_passenger",
+            (tip.category() != null && !tip.category().isBlank()) ? tip.category() : "General Tip",
+            tip.tipText(),
+            tip.photoUrl(),
+            (tip.travelDate() != null && !tip.travelDate().isBlank()) ? tip.travelDate() : LocalDateTime.now().toLocalDate().toString(),
             0,
-            tip.getPhotoUrl()
+            LocalDateTime.now()
         );
         tipsMap.computeIfAbsent(slug, k -> new CopyOnWriteArrayList<>()).add(0, newTip);
         return newTip;
+    }
+
+    @Override
+    public BlogTipDTO likeTip(String slug, String tipId) {
+        List<BlogTipDTO> tips = tipsMap.get(slug);
+        if (tips == null) return null;
+        for (int i = 0; i < tips.size(); i++) {
+            BlogTipDTO existing = tips.get(i);
+            if (existing.id().equals(tipId)) {
+                BlogTipDTO updated = new BlogTipDTO(
+                    existing.id(),
+                    existing.articleSlug(),
+                    existing.authorName(),
+                    existing.authorHandle(),
+                    existing.category(),
+                    existing.tipText(),
+                    existing.photoUrl(),
+                    existing.travelDate(),
+                    existing.likesCount() + 1,
+                    existing.createdAt()
+                );
+                tips.set(i, updated);
+                return updated;
+            }
+        }
+        return null;
     }
 }
