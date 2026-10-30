@@ -487,6 +487,47 @@ public class BlogServiceImpl implements BlogService {
         ));
         tipsMap.put("pamban-sea-bridge-rameswaram", pambanTips);
 
+        // CSMT Mumbai Advice
+        List<BlogTipDTO> csmtTips = new CopyOnWriteArrayList<>();
+        csmtTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "csmt-mumbai-unesco-gothic-wonder",
+            "Rohan Kelkar",
+            "@rohan_bombay",
+            "Photography Spot",
+            "Book the official Central Railway heritage walking tour on weekdays at 3 PM to enter the restricted upper galleries and marvel at the grand cantilevered staircase and peacock stained glass!",
+            "/images/blogs/advice-csmt-grand-staircase.jpg",
+            "2026-10-15",
+            48,
+            LocalDateTime.now().minusDays(3)
+        ));
+        csmtTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "csmt-mumbai-unesco-gothic-wonder",
+            "Sneha Kulkarni",
+            "@sneha_foodie",
+            "Food & Halts",
+            "Head straight out of the suburban exit opposite platform 1 to Aram Milk Bar for legendary golden-fried Batata Vada Pav served with spicy garlic chutney and cooling lassi!",
+            "/images/blogs/advice-csmt-aram-vada-pav.jpg",
+            "2026-10-19",
+            56,
+            LocalDateTime.now().minusDays(2)
+        ));
+        csmtTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "csmt-mumbai-unesco-gothic-wonder",
+            "Farhan Merchant",
+            "@farhan_commuter",
+            "General Tip",
+            "Board the fast local train from Platform 4 or 5 during non-peak hours (11:00 AM to 4:00 PM) to comfortably enjoy the cool Arabian sea breeze along the harbor line toward Bandra!",
+            "/images/blogs/advice-csmt-suburban-local.jpg",
+            "2026-10-23",
+            34,
+            LocalDateTime.now().minusDays(1)
+        ));
+        tipsMap.put("csmt-mumbai-unesco-gothic-wonder", csmtTips);
+
+
     }
 
     @Override
