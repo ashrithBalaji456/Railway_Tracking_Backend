@@ -446,6 +446,47 @@ public class BlogServiceImpl implements BlogService {
             LocalDateTime.now().minusDays(1)
         ));
         tipsMap.put("nilgiri-mountain-railway-rack-pinion", nilgiriTips);
+
+        // Pamban Sea Bridge Advice
+        List<BlogTipDTO> pambanTips = new CopyOnWriteArrayList<>();
+        pambanTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "pamban-sea-bridge-rameswaram",
+            "R. Senthil Kumar",
+            "@senthil_marine",
+            "Scenic Spot",
+            "Reserve left-side window seats when traveling toward Rameswaram Island to watch local fishing boats navigate beneath the open Scherzer lift span amidst turquoise sea waves!",
+            "/images/blogs/advice-pamban-ocean-window.jpg",
+            "2026-10-16",
+            54,
+            LocalDateTime.now().minusDays(3)
+        ));
+        pambanTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "pamban-sea-bridge-rameswaram",
+            "Meenakshi Sundaram",
+            "@meenakshi_travels",
+            "Food & Halts",
+            "At Mandapam and Rameswaram junction stalls, don't miss the freshly steamed hot idli-vada with piping hot sambar, coconut chutney, and cooling nannari sarbath!",
+            "/images/blogs/advice-pamban-station-snacks.jpg",
+            "2026-10-20",
+            37,
+            LocalDateTime.now().minusDays(2)
+        ));
+        pambanTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "pamban-sea-bridge-rameswaram",
+            "Capt. Harish Nair",
+            "@harish_voyages",
+            "Photography Spot",
+            "Catch the legendary Boat Mail Express during the 5:30 PM golden hour when the train slows to 15 km/h, offering an unforgettable ocean sunset reflecting across the Palk Strait!",
+            "/images/blogs/advice-pamban-sunset-crossing.jpg",
+            "2026-10-24",
+            49,
+            LocalDateTime.now().minusDays(1)
+        ));
+        tipsMap.put("pamban-sea-bridge-rameswaram", pambanTips);
+
     }
 
     @Override
