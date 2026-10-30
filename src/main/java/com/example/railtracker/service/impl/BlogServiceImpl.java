@@ -39,9 +39,9 @@ public class BlogServiceImpl implements BlogService {
             sections.add(new BlogArticleDTO.ArticleSection("heading", "2. Titans of Civil Engineering: 91 Tunnels & 2,000 Bridges", "The Konkan line represents a monumental triumph of geotechnical engineering. To maintain an operational broad-gauge gradient capable of handling high-speed passenger expresses and heavy freight, engineers carved 91 tunnels totaling 84 kilometers. The jewel among them is the Karbude Tunnel near Ratnagiri, stretching 6.5 kilometers in darkness—India's longest operational railway tunnel until the opening of the Pir Panjal rail passage in Kashmir.\n\nEqually spectacular is the Panval River Viaduct near Ratnagiri. Soaring 64 meters (210 feet) above the river valley on hollow slip-formed octagonal piers, it was Asia's tallest viaduct when built. Over 2,000 bridges, including 179 major river spans over broad tidal estuaries like the Sharavathi, Zuari, and Mandovi, carry tracks across waters that widen drastically during monsoons.", null, null, null));
             sections.add(new BlogArticleDTO.ArticleSection("image", null, null, "/images/blogs/konkan-railway-scenic-odyssey-2.jpg", "Panval River Viaduct soaring 64 meters over the verdant valleys of Maharashtra's Ratnagiri district.", "Konkan Railway Viaduct and Valley Scenery"));
             sections.add(new BlogArticleDTO.ArticleSection("heading", "3. The Monsoon Spectacle & Thunderous Dudhsagar Falls", "While the Konkan Railway operates year-round, its true transcendental majesty unlocks between June and October. Southwest monsoons transform the Sahyadri mountains into an emerald wonderland enveloped in swirling mist, while thousands of seasonal waterfalls erupt along sheer cliff cuttings alongside the track.\n\nThe undisputed crown jewel of the Western Ghats rail journey is the passage through Dudhsagar Falls ('Sea of Milk'). As your train approaches the border of Goa and Karnataka on the Braganza Ghat section, the locomotive emerges from a rock-cut tunnel directly onto a stone viaduct spanning the middle tier of a 310-meter four-tiered cascade. White froth thunders past the carriage windows, spraying passengers with cool mountain mist in one of the world's most dramatic railway spectacles.", null, null, null));
-            sections.add(new BlogArticleDTO.ArticleSection("image", null, null, "/images/blogs/advice-konkan-window-seat.jpg", "A WDP-4D diesel locomotive hauling an express train along the misty Sahyadri mountain ridge.", "Konkan Railway train traversing mountain cuttings"));
+            sections.add(new BlogArticleDTO.ArticleSection("image", null, null, "/images/blogs/konkan-railway-scenic-odyssey-3.jpg", "A WDP-4D diesel locomotive hauling an express train along the misty Sahyadri mountain ridge.", "Konkan Railway train traversing mountain cuttings"));
             sections.add(new BlogArticleDTO.ArticleSection("heading", "4. Estuaries, Mangroves & Trackside Konkan Flavors", "Beyond high-altitude tunnels and viaducts, the Konkan route offers serene views of peaceful coastal backwaters, swaying betel nut groves, and shimmering salt pans. Between Chiplun and Sawantwadi, the line skirts tranquil Arabian Sea tidal bays where wooden fishing boats bob under coconut palms.\n\nThe journey is also a celebrated gastronomic journey. Station halts on the Konkan Railway are legendary for coastal delicacies. Step onto the platform at Ratnagiri for sweet Alphonso mangoes and chilled Aam Panna. In Chiplun, local vendors board coaches selling crisp Jackfruit chips and Solkadhi (a refreshing kokum and coconut milk beverage). At Madgaon Junction, hot Goan fish curry rice and toasted poi bread await travelers.", null, null, null));
-            sections.add(new BlogArticleDTO.ArticleSection("image", null, null, "/images/blogs/advice-konkan-platform-snacks.jpg", "A passenger train crossing a broad estuary bridge over tidal waters lined with coconut palms.", "Konkan Railway Coastal Bridge and Estuary"));
+            sections.add(new BlogArticleDTO.ArticleSection("image", null, null, "/images/blogs/konkan-railway-scenic-odyssey-4.jpg", "A passenger train crossing a broad estuary bridge over tidal waters lined with coconut palms.", "Konkan Railway Coastal Bridge and Estuary"));
             sections.add(new BlogArticleDTO.ArticleSection("heading", "5. Passenger Guide: Monsoon Timetable, Fares & Window Tips", "Because heavy rains can trigger boulder falls and flash flooding along the steep Ghats, Indian Railways enforces a dedicated 'Monsoon Timetable' on the Konkan route from June 10 to October 31 each year. Operational speeds are throttled to ensure passenger safety, with 24/7 foot patrols inspecting tracks and continuous wireless rock-fall sensors guarding tunnel portals.\n\nFor the best photographic experience, book the day-run Mandovi Express (10103) or Jan Shatabdi (12051) from Mumbai CSMT to Madgaon. Request right-side seats (coastal side) when traveling south toward Goa. Vistadome coach tickets in the 22119 Tejas Express provide panoramic 360-degree glass roofs, observation lounge viewing decks, and rotatable plush armchairs.", null, null, null));
             sections.add(new BlogArticleDTO.ArticleSection("image", null, null, "/images/blogs/konkan-railway-scenic-odyssey-5.jpg", "Lush tropical green landscapes and paddy fields viewed from a Konkan Railway carriage.", "Scenic green countryside on Konkan Railway route"));
             sections.add(new BlogArticleDTO.ArticleSection("tip", "Pro Traveler Tip: Vistadome Booking Secret", "Vistadome coaches on the Mumbai–Goa Tejas and Jan Shatabdi have only 40 seats and sell out within minutes of the 120-day reservation opening. For the most dramatic Dudhsagar waterfall mist and valley photography, travel on the morning departures between July and September.", null, null, null));
@@ -311,8 +311,9 @@ public class BlogServiceImpl implements BlogService {
     }
 
     private void initTips() {
-        List<BlogTipDTO> sampleTips = new CopyOnWriteArrayList<>();
-        sampleTips.add(new BlogTipDTO(
+        // Konkan Railway Advice
+        List<BlogTipDTO> konkanTips = new CopyOnWriteArrayList<>();
+        konkanTips.add(new BlogTipDTO(
             UUID.randomUUID().toString(),
             "konkan-railway-scenic-odyssey",
             "Aditya Sharma",
@@ -321,22 +322,130 @@ public class BlogServiceImpl implements BlogService {
             "Sit on the right side window seat while traveling south from Mumbai to Goa for breathtaking coastal valley and waterfall views during monsoon!",
             "/images/blogs/advice-konkan-window-seat.jpg",
             "2026-09-15",
-            28,
+            38,
             LocalDateTime.now().minusDays(2)
         ));
-        sampleTips.add(new BlogTipDTO(
+        konkanTips.add(new BlogTipDTO(
             UUID.randomUUID().toString(),
             "konkan-railway-scenic-odyssey",
             "Priya Nair",
             "@priya_travels",
             "Food & Halts",
-            "Ratlam Junction sev and Chiplun jackfruit chips from platform vendors are an absolute must-try!",
+            "Ratnagiri Alphonso aam panna and Chiplun jackfruit chips from platform vendors are an absolute must-try!",
             "/images/blogs/advice-konkan-platform-snacks.jpg",
             "2026-10-02",
-            19,
+            29,
             LocalDateTime.now().minusDays(1)
         ));
-        tipsMap.put("konkan-railway-scenic-odyssey", sampleTips);
+        tipsMap.put("konkan-railway-scenic-odyssey", konkanTips);
+
+        // Vande Bharat Advice
+        List<BlogTipDTO> vbTips = new CopyOnWriteArrayList<>();
+        vbTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "vande-bharat-evolution-future-sleeper",
+            "Ananya Deshmukh",
+            "@ananya_travels",
+            "Food & Halts",
+            "The onboard breakfast service is top-notch! Warm vegetable cutlets, upma, and piping hot tea served right on your fold-out tray table.",
+            "/images/blogs/advice-vande-bharat-catering-tea.jpg",
+            "2026-10-18",
+            46,
+            LocalDateTime.now().minusDays(3)
+        ));
+        vbTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "vande-bharat-evolution-future-sleeper",
+            "Vikram Sethi",
+            "@vikram_rails",
+            "Berth Selection",
+            "Book seats 19 to 24 in Executive Class (EC) for the smoothest ride between the bogies and effortless 180° rotation toward the panoramic window!",
+            "/images/blogs/advice-vande-bharat-rotating-seat.jpg",
+            "2026-10-22",
+            52,
+            LocalDateTime.now().minusDays(2)
+        ));
+        vbTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "vande-bharat-evolution-future-sleeper",
+            "Karthik Raja",
+            "@karthik_techrail",
+            "General Tip",
+            "Connect to the onboard local Wi-Fi intranet on your smartphone to stream movies and monitor the live speed telemetry in real-time as it clocks 130 km/h!",
+            "/images/blogs/advice-vande-bharat-speed-telemetry.jpg",
+            "2026-10-25",
+            39,
+            LocalDateTime.now().minusDays(1)
+        ));
+        tipsMap.put("vande-bharat-evolution-future-sleeper", vbTips);
+
+        // Kalka-Shimla Mountain Railway Advice
+        List<BlogTipDTO> kalkaTips = new CopyOnWriteArrayList<>();
+        kalkaTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "kalka-shimla-unesco-toy-train",
+            "Deepak Sharma",
+            "@deepak_travels",
+            "Food & Halts",
+            "At Barog station during the 10-minute halt, hop onto the platform for the legendary piping hot vegetable cutlets and masala chai from the heritage refreshment room!",
+            "/images/blogs/advice-kalka-barog-refreshments.jpg",
+            "2026-10-14",
+            35,
+            LocalDateTime.now().minusDays(4)
+        ));
+        kalkaTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "kalka-shimla-unesco-toy-train",
+            "Rohit Mehta",
+            "@rohit_himalayas",
+            "Scenic Spot",
+            "Always reserve right-side seats when departing Kalka uphill toward Shimla for breathtaking panoramic views of the multi-tier stone arch bridges and Himalayan valleys.",
+            "/images/blogs/advice-kalka-valley-seat.jpg",
+            "2026-10-19",
+            41,
+            LocalDateTime.now().minusDays(2)
+        ));
+        kalkaTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "kalka-shimla-unesco-toy-train",
+            "Meera Sen",
+            "@meera_heritage",
+            "General Tip",
+            "Arriving at Shimla station feels like stepping into a Swiss Alpine village. Grab a steaming cup of adrak chai near the old heritage colonial clock tower!",
+            "/images/blogs/advice-kalka-shimla-arrival.jpg",
+            "2026-10-23",
+            27,
+            LocalDateTime.now().minusDays(1)
+        ));
+        tipsMap.put("kalka-shimla-unesco-toy-train", kalkaTips);
+
+        // Nilgiri Mountain Railway Advice
+        List<BlogTipDTO> nilgiriTips = new CopyOnWriteArrayList<>();
+        nilgiriTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "nilgiri-mountain-railway-rack-pinion",
+            "Suresh Raman",
+            "@suresh_ooty",
+            "Berth Selection",
+            "Book the front coach when traveling uphill from Mettupalayam to Ooty. Since the steam engine pushes from behind, your front window has an unobstructed view of the rack-and-pinion tracks!",
+            "/images/blogs/advice-nilgiri-front-coach.jpg",
+            "2026-10-15",
+            33,
+            LocalDateTime.now().minusDays(3)
+        ));
+        nilgiriTips.add(new BlogTipDTO(
+            UUID.randomUUID().toString(),
+            "nilgiri-mountain-railway-rack-pinion",
+            "Kavita Krishnan",
+            "@kavita_rails",
+            "Food & Halts",
+            "During the 20-minute water replenishment halt at Coonoor, step out to sample fresh Nilgiri orthodox green tea and handmade hill chocolates!",
+            "/images/blogs/advice-nilgiri-coonoor-tea.jpg",
+            "2026-10-21",
+            25,
+            LocalDateTime.now().minusDays(1)
+        ));
+        tipsMap.put("nilgiri-mountain-railway-rack-pinion", nilgiriTips);
     }
 
     @Override
