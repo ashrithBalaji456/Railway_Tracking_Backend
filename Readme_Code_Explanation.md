@@ -2386,3 +2386,24 @@ This section documents the integration of RailRadar API endpoints extending the 
     - *First Reservation Chart (Chart 1):* Finalized 10 hours before scheduled departure for trains departing after 2:00 PM or before 5:00 AM; finalized the previous night at 8:00 PM (or 9:00 PM) for trains departing between 5:00 AM and 2:00 PM.
     - *Second & Final Chart (Chart 2):* Finalized exactly 30 minutes before departure for all trains to allocate cancellations, current counter bookings, and Emergency Quota (EQ) releases.
 
+
+### 16.18. Unauthenticated RailAI Access, Principal Null-Safety & Static Amenity Asset Serving
+
+* **1. Spring Security PermitAll for RailAI (`SecurityConfig.java`):**
+  - **Issue:** Users accessing the Station Explorer without being logged in were encountering HTTP 401/403 when clicking "Ask RailAI About Station Stalls", leading to `"Something went wrong"` errors.
+  - **Fix:** Added `.requestMatchers("/api/v1/railai/**").permitAll()` in `SecurityConfig.java`, allowing seamless station exploration, food inquiries, and amenity lookups for guest visitors.
+
+* **2. Principal Null-Pointer Exception Guard (`RailAiController.java`):**
+  - **Issue:** `RailAiController` previously attempted `principal.getName()` without verifying if `principal` was null, which triggered a `NullPointerException` for unauthenticated requests.
+  - **Fix:** Safely resolved the username:
+    ```java
+    String username = (principal != null && principal.getName() != null) ? principal.getName() : "guest";
+    ```
+
+* **3. 18 Dedicated Station Amenity & District Delicacy Assets (`src/main/resources/static/images/`):**
+  - Mirrored all 18 authentic high-definition station amenity photographs into `src/main/resources/static/images/amenities/`:
+    `executive_lounge.jpg`, `waiting_hall.jpg`, `ladies_waiting.jpg`, `cloak_room.jpg`, `retiring_room.jpg`, `escalators_fob.jpg`, `water_atm.jpg`, `railwire_wifi.jpg`, `wheelchair_ramp.jpg`, `battery_buggy.jpg`, `food_plaza.jpg`, `medical_booth.jpg`, `prepaid_taxi.jpg`, `atvm_kiosk.jpg`, `rpf_security.jpg`, `coach_indicator.jpg`, `water_tap.jpg`, `platform_shelter.jpg`.
+  - Added authentic district gastronomy imagery into `src/main/resources/static/images/gastronomy/` (`sarva_pindi.jpg`, `uggani_bajji.jpg`, `litti_chokha.jpg`).
+  - All images are served with instant zero-latency caching by Spring Boot static resource handlers.
+
+

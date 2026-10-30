@@ -22,7 +22,8 @@ public class RailAiController {
     public ResponseEntity<ApiResponse<RailAiResponse>> getAiResponse(
             Principal principal,
             @RequestBody RailAiRequest request) {
-        RailAiResponse response = railAiService.getAiResponse(principal.getName(), request);
+        String username = (principal != null && principal.getName() != null) ? principal.getName() : "guest";
+        RailAiResponse response = railAiService.getAiResponse(username, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

@@ -103,6 +103,8 @@ public class RailAiServiceImpl implements RailAiService {
             7. Use the search_trains tool if you need to find a train number from a name.
             8. Use the search_stations tool if you need to find a station code from a name.
             
+            10. For questions about station food, snacks, or platform stalls, recommend authentic local specialties specific to that station's exact town and district (e.g., for Jammikunta/Karimnagar recommend Sarva Pindi and Sakinalu; for Ratlam recommend Ratlami Sev; for Vijayawada recommend Mirchi Bajji).
+            
             RESPONSE FORMAT:
             - Be conversational, professional, and concise.
             - Use clear formatting with bullet points and sections when presenting data.
@@ -191,6 +193,35 @@ public class RailAiServiceImpl implements RailAiService {
 
         if (cleaned.contains("alert") || cleaned.contains("alarm") || cleaned.contains("notification")) {
             return "You can easily set up delay alert thresholds by clicking the Bell icon next to any train timetable. You will receive warning badges in your dashboard if delays exceed your threshold.";
+        }
+
+        if (cleaned.contains("food") || cleaned.contains("specialt") || cleaned.contains("snack") || cleaned.contains("dish") || cleaned.contains("stall") || cleaned.contains("delicac") || cleaned.contains("eat")) {
+            if (cleaned.contains("jammikunta") || cleaned.contains("jmkt") || cleaned.contains("karimnagar")) {
+                return "🍲 Local Trackside Specialties for Jammikunta (JMKT) & Northern Telangana:\n\n" +
+                        "• Crispy Hot Sarva Pindi: Authentic spiced rice-flour flatbread with chana dal, sesame seeds, and green chilies—a beloved local specialty of Karimnagar and Jammikunta.\n" +
+                        "• Telangana Mirchi Bajji: Large green chilies dipped in gram flour batter, deep-fried golden, and slit open with tangy roasted onions & lemon.\n" +
+                        "• Crunchy Sakinalu: Traditional spiral rice snacks infused with carom seeds (ajwain) and sesame.\n\n" +
+                        "📍 Stalls & Locations: Available at Platform 1 IRCTC tea stalls and local refreshment kiosks outside the main station portico. You can also order hot meals and regional thalis directly to your seat via IRCTC e-Catering using train number or PNR!";
+            }
+            if (cleaned.contains("ratlam") || cleaned.contains("rtm")) {
+                return "🍲 Local Trackside Specialties for Ratlam Junction (RTM):\n\n" +
+                        "• Ratlami Clove Sev: World-famous fiery chickpea noodles spiced with fresh clove and black pepper.\n" +
+                        "• Malwa Poha: Steamed fluffy poha topped with crispy sev, pomegranate, and jeeravan masala.\n\n" +
+                        "📍 Platform 1 & 2 authorized vendor kiosks during 10-15 minute express halts.";
+            }
+            if (cleaned.contains("vijayawada") || cleaned.contains("bza")) {
+                return "🌶️ Local Trackside Specialties for Vijayawada (BZA):\n\n" +
+                        "• Andhra Mirchi Bajji with chopped onions & roasted peanuts.\n" +
+                        "• Upma Pesarattu: Golden green gram dosa stuffed with hot semolina upma.\n\n" +
+                        "📍 Platform 1, 6 & 7 IRCTC Refreshment Centers.";
+            }
+            if (cleaned.contains("kharagpur") || cleaned.contains("kgp")) {
+                return "☕ Local Trackside Specialties for Kharagpur (KGP):\n\n" +
+                        "• Kulhad Chai: Steaming ginger-cardamom tea poured in handmade terracotta cups.\n" +
+                        "• Kolkata-Style Egg Chop & Mughlai rolls at Platform 1 & 3 stalls.";
+            }
+            return "🍲 Station Gastronomy & Trackside Delicacies:\n\n" +
+                    "Indian Railways platforms feature authentic regional culinary specialties at every major junction. You can explore regional dishes and station platform stalls directly in the 'Station Flavors & Food' tab of Station Explorer. For long-distance trains, meals from verified local restaurants can also be ordered to your berth via IRCTC e-Catering!";
         }
 
         // Default chatbot response
