@@ -2310,3 +2310,24 @@ This section documents the integration of RailRadar API endpoints extending the 
   - `GET /api/v1/blogs/{slug}/tips`: Retrieves community tips for the specified railway story.
   - `POST /api/v1/blogs/{slug}/tips`: Submits a new passenger travel tip.
   - `POST /api/v1/blogs/{slug}/tips/{tipId}/like`: Upvotes a tip.
+
+
+### 16.13. Synchronized 100% Verified Wikimedia Commons Image Asset Pipeline
+
+* **Root Cause & Asset Validation:**
+  - Resolved `HTTP 404 Not Found` image endpoints in `BlogServiceImpl.java` by replacing synthetic image filenames with verified real Wikimedia Commons image thumbnails audited via live HTTP 200 checks.
+  - Aligned exact editorial section images for all 14 grand Indian Railways stories:
+    * *The Konkan Railway Odyssey* (Dudhsagar Falls lower spray, Ratnagiri cliffs, Western Ghats vistas, Zuari bridge, Kankavli station)
+    * *Vande Bharat 2.0 & Beyond* (Balasore platform stop, Trainset exterior, aerodynamic nose, express crossing)
+    * *The Pamban Sea Bridge* (Historic cantilever bridge at sunset, ocean waves, new vertical-lift span, Rameswaram approaches)
+    * *CSMT Mumbai* (Gothic stone facade, tricolor night illumination, heritage vaulted ceiling, suburban concourses)
+    * *Kalka-Shimla Railway* (Toy train arched viaducts, NH-5 cliffside tracks, Barog station, Him Darshan coaches)
+    * *Nilgiri Mountain Railway* (Hillgrove station, Kateri Road, Swiss Abt rack-and-pinion steam pusher, Coonoor tea gardens)
+    * *Mastering Tatkal* (Patna Junction platform, IRCTC reservation counter, LHB coaches)
+    * *Trackside Gastronomy* (Mumbai Vada Pav, crispy Samosas, Hyderabadi Dum Biryani, platform Kulhad Chai, Indori Poha)
+    * *Maharajas' Express* (Burgundy carriages, Rang Mahal dining saloon, Navratna presidential suite, observation car)
+    * *Palace on Wheels* (Bar and lounge salon, Deluxe Ruby stateroom, Jaisalmer arrival, Maharaja dining car)
+    * *Darjeeling Himalayan Railway* (Batasia 360-degree loop, Ghum summit, B-Class steam locomotive)
+    * *The Golden Chariot & Deccan Odyssey* (Platform departure, Swarn Mahal lounge, Pearl saloon, Deccan trainset)
+    * *1853 to Present: Complete History* (1853 Bori Bunder terminus, 1855 Fairy Queen steam engine, 1853 Bombay Times timetable, Rewari loco museum)
+    * *Matheran Hill Railway* (MHR train at Matheran station, sharp mountain curves, Neral Junction gateway, Pipeline trail)

@@ -14,3 +14,4 @@ public record BlogTipDTO(
     int likesCount,
     LocalDateTime createdAt
 ) {}
+
