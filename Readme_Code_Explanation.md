@@ -2347,3 +2347,25 @@ This section documents the integration of RailRadar API endpoints extending the 
   - Aligned the comprehensive 8,542 Indian Railway station master registry (`stations_data.json`) with frontend metadata models.
   - Standardized official station categorization codes (`NSG-1` through `NSG-6`, `SG-1` through `SG-3`, `HG-1` through `HG-3`) across all 16 Railway Zonal divisions and 32 States & Union Territories.
   - Enabled synchronized station metadata resolution between Spring Boot microservice controllers and the mobile-first frontend client.
+
+
+### 16.16. Distinct Multi-Story Editorial Photograph Alignment
+
+* **Bug Diagnosis:**
+  - An earlier batch update script in `BlogServiceImpl.java` had inadvertently mapped the fallback string `/images/blogs/konkan-railway-scenic-odyssey-1.jpg` across all article entries, causing every story card and section figure in the app to display the Dudhsagar Falls image.
+* **Resolution:**
+  - Resolved all 63 article image references in `BlogServiceImpl.java` to their respective unique story slugs and sequential asset indices:
+    * Vande Bharat 2.0 (`/images/blogs/vande-bharat-evolution-future-sleeper-{1..5}.jpg`)
+    * Pamban Sea Bridge (`/images/blogs/pamban-sea-bridge-rameswaram-{1..5}.jpg`)
+    * CSMT Mumbai Terminus (`/images/blogs/csmt-mumbai-unesco-gothic-wonder-{1..5}.jpg`)
+    * Kalka-Shimla Toy Train (`/images/blogs/kalka-shimla-unesco-toy-train-{1..5}.jpg`)
+    * Nilgiri Mountain Railway (`/images/blogs/nilgiri-mountain-railway-rack-pinion-{1..5}.jpg`)
+    * Maharajas' Express (`/images/blogs/maharajas-express-world-leading-luxury-{1..5}.jpg`)
+    * Palace on Wheels (`/images/blogs/palace-on-wheels-sovereign-desert-odyssey-{1..5}.jpg`)
+    * Darjeeling Himalayan Railway (`/images/blogs/darjeeling-himalayan-railway-unesco-toy-train-{1..5}.jpg`)
+    * Matheran Hill Railway (`/images/blogs/matheran-hill-railway-forest-toy-train-{1..5}.jpg`)
+    * Indian Railways History (`/images/blogs/epic-history-indian-railways-1853-to-future-{1..5}.jpg`)
+    * Golden Chariot & Deccan Odyssey (`/images/blogs/golden-chariot-deccan-odyssey-heritage-rails-{1..5}.jpg`)
+    * Mastering Tatkal (`/images/blogs/mastering-irctc-tatkal-booking-rules-{1..5}.jpg`)
+    * Trackside Gastronomy (`/images/blogs/iconic-station-food-indian-railways-{1..5}.jpg`)
+    * Konkan Railway (`/images/blogs/konkan-railway-scenic-odyssey-{1..5}.jpg`)
