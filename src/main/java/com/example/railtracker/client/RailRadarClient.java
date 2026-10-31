@@ -402,9 +402,11 @@ public class RailRadarClient {
 
                 String liveType = text(live, "type");
                 StationTrainLiveStatus liveStatus = mapLiveStatusEnum(liveType);
-                if (actualDeparture != null && !actualDeparture.isBlank()) {
+                if (liveStatus == StationTrainLiveStatus.NOT_STARTED || liveStatus == StationTrainLiveStatus.AT_STATION) {
+                    // Retain NOT_STARTED or AT_STATION - do not let presence of expected departure timestamp force DEPARTED
+                } else if (actualDeparture != null && !actualDeparture.isBlank() && (liveType == null || liveType.toLowerCase().contains("depart"))) {
                     liveStatus = StationTrainLiveStatus.DEPARTED;
-                } else if (actualArrival != null && !actualArrival.isBlank()) {
+                } else if (actualArrival != null && !actualArrival.isBlank() && (liveType == null || liveType.toLowerCase().contains("arriv"))) {
                     liveStatus = StationTrainLiveStatus.ARRIVED;
                 }
 
@@ -1027,8 +1029,7 @@ public class RailRadarClient {
             }
         }
 
-        boolean reached = "0".equals(nextCode) || "0".equals(nextName) || 
-                          isLastStop ||
+        boolean reached = isLastStop ||
                           (progress != null && progress >= 0.999) ||
                           (runStatus != null && (runStatus.toLowerCase().contains("reached") || runStatus.toLowerCase().contains("completed")));
         if (reached) {
@@ -1039,7 +1040,7 @@ public class RailRadarClient {
             // Next halt must NEVER be a cancelled or skipped station!
             boolean nextIsSkipped = (nextCode != null && skippedStations.contains(nextCode)) ||
                                     (nextName != null && skippedStations.contains(nextName));
-            if (nextIsSkipped || nextCode == null || nextCode.isBlank() || "-".equals(nextCode)) {
+            if (nextIsSkipped || nextCode == null || nextCode.isBlank() || "-".equals(nextCode) || "0".equals(nextCode) || "0".equals(nextName)) {
                 if (route != null && route.isArray()) {
                     int searchSeq = currentSequence != null ? currentSequence : 0;
                     for (JsonNode stop : route) {
@@ -1059,6 +1060,10 @@ public class RailRadarClient {
                             }
                         }
                     }
+                }
+                if ("0".equals(nextCode) || "0".equals(nextName)) {
+                    nextCode = "-";
+                    nextName = "-";
                 }
             }
         }

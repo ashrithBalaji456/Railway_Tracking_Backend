@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import com.example.railtracker.entity.Train;
@@ -218,26 +220,34 @@ public class StationServiceImpl implements StationService {
         }
 
         List<LiveStationBoardResponse.LiveStationBoardTrain> candidateTrains = new ArrayList<>();
+        Set<String> presentTrainNumbers = new HashSet<>();
 
         if (rawResponse != null && rawResponse.trains() != null && !rawResponse.trains().isEmpty()) {
             windowInfo = rawResponse.window() != null ? rawResponse.window() : windowInfo;
-            candidateTrains.addAll(rawResponse.trains());
-        } else {
-            // Build live station board from standard scheduled train list and enrich via GET /v1/trains/{trainNumber}/live
-            List<StationBoardTrainDto> scheduledTrains = getStationTrains(stationCode, "ALL");
-            if (scheduledTrains != null && !scheduledTrains.isEmpty()) {
-                LocalTime windowStart = now.minusMinutes(30);
-                LocalTime windowEnd = now.plusHours(hours);
-                
-                List<StationBoardTrainDto> inWindow = scheduledTrains.stream()
-                        .filter(t -> isTimeInWindow(t.scheduledArrival(), t.scheduledDeparture(), windowStart, windowEnd))
-                        .collect(Collectors.toList());
-                
-                List<StationBoardTrainDto> targetTrains = inWindow.isEmpty() ? new ArrayList<>(scheduledTrains) : inWindow;
-                targetTrains.sort(Comparator.comparingInt(t -> getMinutesFromNow(t.scheduledArrival(), t.scheduledDeparture(), now)));
-                
-                // Free-plan budget protection: cap live lookups to closest 8 trains (100 req/month budget)
-                final int MAX_LIVE_ENRICH_TRAINS = 8;
+            for (LiveStationBoardResponse.LiveStationBoardTrain t : rawResponse.trains()) {
+                candidateTrains.add(t);
+                if (t.trainNumber() != null) {
+                    presentTrainNumbers.add(t.trainNumber().trim().toUpperCase());
+                }
+            }
+        }
+
+        // Merge scheduled trains in window if rawResponse missed any (e.g. delayed trains)
+        List<StationBoardTrainDto> scheduledTrains = getStationTrains(stationCode, "ALL");
+        if (scheduledTrains != null && !scheduledTrains.isEmpty()) {
+            LocalTime windowStart = now.minusMinutes(120);
+            LocalTime windowEnd = now.plusHours(hours);
+            
+            List<StationBoardTrainDto> inWindow = scheduledTrains.stream()
+                    .filter(t -> isTimeInWindow(t.scheduledArrival(), t.scheduledDeparture(), windowStart, windowEnd))
+                    .filter(t -> t.trainNumber() == null || !presentTrainNumbers.contains(t.trainNumber().trim().toUpperCase()))
+                    .collect(Collectors.toList());
+            
+            List<StationBoardTrainDto> targetTrains = inWindow;
+            targetTrains.sort(Comparator.comparingInt(t -> getMinutesFromNow(t.scheduledArrival(), t.scheduledDeparture(), now)));
+            
+            // Free-plan budget protection: cap live lookups (up to 8 if candidateTrains was empty, or up to 4 if merging missing trains)
+            final int MAX_LIVE_ENRICH_TRAINS = candidateTrains.isEmpty() ? 8 : 4;
                 int enrichCount = Math.min(targetTrains.size(), MAX_LIVE_ENRICH_TRAINS);
                 
                 for (int i = 0; i < targetTrains.size(); i++) {
@@ -291,7 +301,11 @@ public class StationServiceImpl implements StationService {
                                     boolean hasActualDep = actDep != null && !actDep.isBlank();
                                     boolean hasActualArr = actArr != null && !actArr.isBlank();
                                     
-                                    if (sStatus.contains("depart") || hasActualDep) {
+                                    if (sStatus.contains("not-start") || sStatus.contains("not_start")) {
+                                        status = StationTrainLiveStatus.NOT_STARTED;
+                                    } else if (sStatus.contains("at-station") || sStatus.contains("at_station")) {
+                                        status = StationTrainLiveStatus.AT_STATION;
+                                    } else if (sStatus.contains("depart") || (hasActualDep && !sStatus.contains("arriv") && !sStatus.contains("upcoming"))) {
                                         status = StationTrainLiveStatus.DEPARTED;
                                     } else if (sStatus.contains("arriv") || (hasActualArr && !hasActualDep)) {
                                         status = StationTrainLiveStatus.ARRIVED;
@@ -332,6 +346,10 @@ public class StationServiceImpl implements StationService {
                         expDep = sbt.scheduledDeparture().plusMinutes(delay).format(timeFmt);
                     }
                     
+                    if (status != StationTrainLiveStatus.DEPARTED) {
+                        actDep = null;
+                    }
+
                     candidateTrains.add(new LiveStationBoardResponse.LiveStationBoardTrain(
                             trainNumber,
                             trainName,
@@ -352,7 +370,7 @@ public class StationServiceImpl implements StationService {
                     ));
                 }
             }
-        }
+        
 
         for (LiveStationBoardResponse.LiveStationBoardTrain t : candidateTrains) {
             saveTrainIfMissing(t);
@@ -377,19 +395,14 @@ public class StationServiceImpl implements StationService {
                     String actArr = t.actualArrival();
                     String actDep = t.actualDeparture();
 
-                    if (actDep != null && !actDep.isBlank()) {
+                    if (resolvedStatus == StationTrainLiveStatus.NOT_STARTED || resolvedStatus == StationTrainLiveStatus.AT_STATION) {
+                        actDep = null;
+                    } else if (resolvedStatus == StationTrainLiveStatus.UPCOMING) {
+                        actDep = null;
+                    } else if (actDep != null && !actDep.isBlank()) {
                         resolvedStatus = StationTrainLiveStatus.DEPARTED;
                     } else if (actArr != null && !actArr.isBlank()) {
                         resolvedStatus = StationTrainLiveStatus.ARRIVED;
-                    } else if (resolvedStatus == StationTrainLiveStatus.UPCOMING) {
-                        LocalTime nowT = LocalTime.now();
-                        LocalTime expDepTime = parseLocalTime(t.expectedDeparture());
-                        LocalTime expArrTime = parseLocalTime(t.expectedArrival());
-                        if (expDepTime != null && nowT.isAfter(expDepTime)) {
-                            resolvedStatus = StationTrainLiveStatus.DEPARTED;
-                        } else if (expArrTime != null && nowT.isAfter(expArrTime)) {
-                            resolvedStatus = StationTrainLiveStatus.ARRIVED;
-                        }
                     }
                             
                     return new LiveStationBoardResponse.LiveStationBoardTrain(
