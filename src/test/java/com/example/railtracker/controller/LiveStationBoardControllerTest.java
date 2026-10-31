@@ -97,4 +97,45 @@ class LiveStationBoardControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Station code must not be blank."));
     }
+
+    @Test
+    void testGetLiveStationBoardMidnightCrossingWindow() throws Exception {
+        StationDto mockStation = new StationDto("MCI", "Manchiryal", "Mancherial", "Telangana", 18.879, 79.449, true);
+        when(railwayDataProvider.searchStations("MCI")).thenReturn(Arrays.asList(mockStation));
+
+        LiveStationBoardResponse.StationInfo stationInfo = new LiveStationBoardResponse.StationInfo("MCI", "MANCHIRYAL", "Mancherial", 18.879, 79.449);
+        LiveStationBoardResponse.WindowInfo windowInfo = new LiveStationBoardResponse.WindowInfo("23:13", "05:13", 4);
+
+        java.time.ZonedDateTime nowIst = java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Kolkata"));
+        java.time.ZonedDateTime expectedPassage = nowIst.plusMinutes(30);
+        String passageIso = expectedPassage.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+        LiveStationBoardResponse.LiveStationBoardTrain train = new LiveStationBoardResponse.LiveStationBoardTrain(
+                "17035",
+                "Balharshah Express",
+                "Mail/Express",
+                new LiveStationBoardResponse.StationCodeName("KZJ", "Kazipet"),
+                new LiveStationBoardResponse.StationCodeName("BPQ", "Balharshah"),
+                StationPassType.STOPPING,
+                "00:39",
+                "00:40",
+                passageIso,
+                passageIso,
+                0,
+                "1",
+                StationTrainLiveStatus.UPCOMING,
+                "mon,tue,wed,thu,fri,sat,sun"
+        );
+
+        LiveStationBoardResponse mockResponse = new LiveStationBoardResponse(stationInfo, windowInfo, List.of(train));
+        when(railwayDataProvider.getLiveStationBoardDetails("MCI", 4)).thenReturn(mockResponse);
+
+        mockMvc.perform(get("/api/stations/MCI/live")
+                .param("hours", "4")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.trains[0].trainNumber").value("17035"))
+                .andExpect(jsonPath("$.data.trains[0].passType").value("STOPPING"));
+    }
 }

@@ -314,11 +314,12 @@ public class StationServiceImpl implements StationService {
             LocalTime rawTo = parseLocalTime(rawResponse.window().to());
             if (rawFrom != null && rawTo != null) {
                 LocalDate baseDate = nowIst.toLocalDate();
-                windowStart = ZonedDateTime.of(baseDate, rawFrom, IST_ZONE);
-                windowEnd = ZonedDateTime.of(baseDate, rawTo, IST_ZONE);
-                if (windowEnd.isBefore(windowStart)) {
-                    windowEnd = windowEnd.plusDays(1);
-                }
+                long elapsedMins = (Duration.between(rawFrom, nowIst.toLocalTime()).toMinutes() + 1440) % 1440;
+                boolean crossedMidnightPast = rawFrom.isAfter(nowIst.toLocalTime()) && elapsedMins <= 360;
+                LocalDate fromDate = crossedMidnightPast ? baseDate.minusDays(1) : baseDate;
+                windowStart = ZonedDateTime.of(fromDate, rawFrom, IST_ZONE);
+                LocalDate toDate = rawTo.isBefore(rawFrom) ? fromDate.plusDays(1) : fromDate;
+                windowEnd = ZonedDateTime.of(toDate, rawTo, IST_ZONE);
                 fromWindow = windowStart.format(timeFmt);
                 toWindow = windowEnd.format(timeFmt);
                 windowInfo = new LiveStationBoardResponse.WindowInfo(fromWindow, toWindow, hours);
@@ -681,7 +682,8 @@ public class StationServiceImpl implements StationService {
     private String formatDelayedIso(LocalTime sch, int delayMinutes, ZonedDateTime refStart) {
         if (sch == null) return null;
         LocalDate baseDate = refStart.toLocalDate();
-        ZonedDateTime dt = ZonedDateTime.of(baseDate, sch, IST_ZONE).plusMinutes(delayMinutes);
+        LocalDate schDate = sch.isBefore(refStart.toLocalTime()) ? baseDate.plusDays(1) : baseDate;
+        ZonedDateTime dt = ZonedDateTime.of(schDate, sch, IST_ZONE).plusMinutes(delayMinutes);
         return dt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
