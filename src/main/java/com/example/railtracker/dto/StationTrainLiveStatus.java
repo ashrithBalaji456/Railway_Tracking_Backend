@@ -1,9 +1,14 @@
 package com.example.railtracker.dto;
 
 public enum StationTrainLiveStatus {
-    NOT_STARTED,
-    UPCOMING,
-    AT_STATION,
+    ARRIVED,
     DEPARTED,
+    UPCOMING,
+    SCHEDULED,
+    STATUS_UNAVAILABLE,
+    // Backward-compatible aliases for legacy callers
+    AT_STATION,
+    NOT_STARTED,
     UNKNOWN
 }
+

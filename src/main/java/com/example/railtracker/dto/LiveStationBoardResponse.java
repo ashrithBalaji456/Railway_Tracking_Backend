@@ -35,8 +35,30 @@ public record LiveStationBoardResponse(
         Integer delayMinutes,
         String platform,
         StationTrainLiveStatus liveStatus,
-        String runningDays
-    ) {}
+        String runningDays,
+        String actualArrival,
+        String actualDeparture
+    ) {
+        public LiveStationBoardTrain(
+            String trainNumber,
+            String trainName,
+            String trainType,
+            StationCodeName source,
+            StationCodeName destination,
+            StationPassType passType,
+            String scheduledArrival,
+            String scheduledDeparture,
+            String expectedArrival,
+            String expectedDeparture,
+            Integer delayMinutes,
+            String platform,
+            StationTrainLiveStatus liveStatus,
+            String runningDays
+        ) {
+            this(trainNumber, trainName, trainType, source, destination, passType, scheduledArrival, scheduledDeparture,
+                 expectedArrival, expectedDeparture, delayMinutes, platform, liveStatus, runningDays, null, null);
+        }
+    }
 
     public record StationCodeName(
         String code,

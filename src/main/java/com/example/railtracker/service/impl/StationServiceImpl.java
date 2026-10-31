@@ -5,18 +5,27 @@ import com.example.railtracker.dto.LiveStationBoardResponse;
 import com.example.railtracker.dto.StationBoardTrainDto;
 import com.example.railtracker.dto.StationDto;
 import com.example.railtracker.dto.StationPassType;
+import com.example.railtracker.dto.StationTrainLiveStatus;
+import com.example.railtracker.dto.TrainLiveStatusDto;
 import com.example.railtracker.entity.Station;
 import com.example.railtracker.exception.ResourceNotFoundException;
 import com.example.railtracker.repository.StationRepository;
 import com.example.railtracker.repository.TrainStationRepository;
 import com.example.railtracker.entity.TrainStation;
 import com.example.railtracker.service.StationService;
+import com.example.railtracker.service.TrainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,16 +42,29 @@ public class StationServiceImpl implements StationService {
     private final RailwayDataProvider railwayDataProvider;
     private final TrainStationRepository trainStationRepository;
     private final TrainRepository trainRepository;
+    private final TrainService trainService;
 
+    @Autowired
+    public StationServiceImpl(
+            StationRepository stationRepository,
+            RailwayDataProvider railwayDataProvider,
+            TrainStationRepository trainStationRepository,
+            TrainRepository trainRepository,
+            @Lazy TrainService trainService) {
+        this.stationRepository = stationRepository;
+        this.railwayDataProvider = railwayDataProvider;
+        this.trainStationRepository = trainStationRepository;
+        this.trainRepository = trainRepository;
+        this.trainService = trainService;
+    }
+
+    // Overloaded constructor for tests or callers without TrainService
     public StationServiceImpl(
             StationRepository stationRepository,
             RailwayDataProvider railwayDataProvider,
             TrainStationRepository trainStationRepository,
             TrainRepository trainRepository) {
-        this.stationRepository = stationRepository;
-        this.railwayDataProvider = railwayDataProvider;
-        this.trainStationRepository = trainStationRepository;
-        this.trainRepository = trainRepository;
+        this(stationRepository, railwayDataProvider, trainStationRepository, trainRepository, null);
     }
 
     @Override
@@ -175,24 +197,168 @@ public class StationServiceImpl implements StationService {
     public LiveStationBoardResponse getLiveStationBoardDetails(String stationCode, int hours) {
         logger.debug("Retrieving live board details for station: {} for next {} hours", stationCode, hours);
         
+        StationDto st = null;
         try {
-            getStationDetails(stationCode);
+            st = getStationDetails(stationCode);
         } catch (ResourceNotFoundException e) {
             logger.warn("Station {} is not available in lookup data. Continuing.", stationCode);
         }
         
-        LiveStationBoardResponse rawResponse = railwayDataProvider.getLiveStationBoardDetails(stationCode, hours);
-        if (rawResponse == null) {
-            return null;
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
+        LocalTime now = LocalTime.now();
+        String fromWindow = now.format(timeFmt);
+        String toWindow = now.plusHours(hours).format(timeFmt);
+        LiveStationBoardResponse.WindowInfo windowInfo = new LiveStationBoardResponse.WindowInfo(fromWindow, toWindow, hours);
+
+        LiveStationBoardResponse rawResponse = null;
+        try {
+            rawResponse = railwayDataProvider.getLiveStationBoardDetails(stationCode, hours);
+        } catch (Exception e) {
+            logger.debug("Live station endpoint /stations/{}/live not accessible on current tier: {}", stationCode, e.getMessage());
         }
 
-        if (rawResponse.trains() != null) {
-            for (LiveStationBoardResponse.LiveStationBoardTrain t : rawResponse.trains()) {
-                saveTrainIfMissing(t);
+        List<LiveStationBoardResponse.LiveStationBoardTrain> candidateTrains = new ArrayList<>();
+
+        if (rawResponse != null && rawResponse.trains() != null && !rawResponse.trains().isEmpty()) {
+            windowInfo = rawResponse.window() != null ? rawResponse.window() : windowInfo;
+            candidateTrains.addAll(rawResponse.trains());
+        } else {
+            // Build live station board from standard scheduled train list and enrich via GET /v1/trains/{trainNumber}/live
+            List<StationBoardTrainDto> scheduledTrains = getStationTrains(stationCode, "ALL");
+            if (scheduledTrains != null && !scheduledTrains.isEmpty()) {
+                LocalTime windowStart = now.minusMinutes(30);
+                LocalTime windowEnd = now.plusHours(hours);
+                
+                List<StationBoardTrainDto> inWindow = scheduledTrains.stream()
+                        .filter(t -> isTimeInWindow(t.scheduledArrival(), t.scheduledDeparture(), windowStart, windowEnd))
+                        .collect(Collectors.toList());
+                
+                List<StationBoardTrainDto> targetTrains = inWindow.isEmpty() ? new ArrayList<>(scheduledTrains) : inWindow;
+                targetTrains.sort(Comparator.comparingInt(t -> getMinutesFromNow(t.scheduledArrival(), t.scheduledDeparture(), now)));
+                
+                // Free-plan budget protection: cap live lookups to closest 8 trains (100 req/month budget)
+                final int MAX_LIVE_ENRICH_TRAINS = 8;
+                int enrichCount = Math.min(targetTrains.size(), MAX_LIVE_ENRICH_TRAINS);
+                
+                for (int i = 0; i < targetTrains.size(); i++) {
+                    StationBoardTrainDto sbt = targetTrains.get(i);
+                    boolean shouldEnrich = i < enrichCount;
+                    
+                    String trainNumber = sbt.trainNumber();
+                    String trainName = sbt.trainName();
+                    String trainType = sbt.trainType();
+                    String srcCode = sbt.sourceStation() != null ? sbt.sourceStation() : stationCode;
+                    String destCode = sbt.destinationStation() != null ? sbt.destinationStation() : stationCode;
+                    StationPassType passType = Boolean.TRUE.equals(sbt.isHalt()) ? StationPassType.STOPPING : StationPassType.PASS_THROUGH;
+                    
+                    String schArr = sbt.scheduledArrival() != null ? sbt.scheduledArrival().format(timeFmt) : null;
+                    String schDep = sbt.scheduledDeparture() != null ? sbt.scheduledDeparture().format(timeFmt) : null;
+                    String expArr = schArr;
+                    String expDep = schDep;
+                    String actArr = null;
+                    String actDep = null;
+                    Integer delay = sbt.delayMinutes() != null ? sbt.delayMinutes() : 0;
+                    String platform = sbt.platform();
+                    StationTrainLiveStatus status = StationTrainLiveStatus.SCHEDULED;
+                    
+                    if (shouldEnrich && trainService != null) {
+                        try {
+                            TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber);
+                            if (liveStatus != null) {
+                                TrainLiveStatusDto.StationStatusDto matchedStop = null;
+                                if (liveStatus.stations() != null) {
+                                    for (TrainLiveStatusDto.StationStatusDto stop : liveStatus.stations()) {
+                                        if (stop.stationCode() != null && stop.stationCode().equalsIgnoreCase(stationCode)) {
+                                            matchedStop = stop;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (matchedStop != null) {
+                                    actArr = matchedStop.actualArrival();
+                                    actDep = matchedStop.actualDeparture();
+                                    if (matchedStop.delayMinutes() != null) {
+                                        delay = matchedStop.delayMinutes();
+                                    } else if (liveStatus.delayMinutes() != null) {
+                                        delay = liveStatus.delayMinutes();
+                                    }
+                                    if (matchedStop.platform() != null && !matchedStop.platform().isBlank()) {
+                                        platform = matchedStop.platform();
+                                    }
+                                    
+                                    String sStatus = matchedStop.status() != null ? matchedStop.status().toLowerCase() : "";
+                                    boolean hasActualDep = actDep != null && !actDep.isBlank();
+                                    boolean hasActualArr = actArr != null && !actArr.isBlank();
+                                    
+                                    if (sStatus.contains("depart") || hasActualDep) {
+                                        status = StationTrainLiveStatus.DEPARTED;
+                                    } else if (sStatus.contains("arriv") || (hasActualArr && !hasActualDep)) {
+                                        status = StationTrainLiveStatus.ARRIVED;
+                                    } else if (sStatus.contains("upcoming") || sStatus.contains("approach")) {
+                                        status = StationTrainLiveStatus.UPCOMING;
+                                    } else if (Boolean.TRUE.equals(liveStatus.isCancelled()) || (liveStatus.skippedStations() != null && liveStatus.skippedStations().contains(stationCode.toUpperCase()))) {
+                                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                                    } else if (liveStatus.currentStationCode() != null && !liveStatus.currentStationCode().isBlank()) {
+                                        status = StationTrainLiveStatus.UPCOMING;
+                                    } else {
+                                        status = StationTrainLiveStatus.SCHEDULED;
+                                    }
+                                } else {
+                                    if (Boolean.TRUE.equals(liveStatus.isDiverted()) || Boolean.TRUE.equals(liveStatus.isCancelled())) {
+                                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                                    } else {
+                                        status = StationTrainLiveStatus.SCHEDULED;
+                                    }
+                                }
+                            } else {
+                                status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                            }
+                        } catch (Exception e) {
+                            logger.debug("Failed to enrich live status for train {}: {}", trainNumber, e.getMessage());
+                            status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                        }
+                    }
+                    
+                    if (actArr != null && !actArr.isBlank()) {
+                        expArr = actArr;
+                    } else if (delay != null && delay > 0 && sbt.scheduledArrival() != null) {
+                        expArr = sbt.scheduledArrival().plusMinutes(delay).format(timeFmt);
+                    }
+                    
+                    if (actDep != null && !actDep.isBlank()) {
+                        expDep = actDep;
+                    } else if (delay != null && delay > 0 && sbt.scheduledDeparture() != null) {
+                        expDep = sbt.scheduledDeparture().plusMinutes(delay).format(timeFmt);
+                    }
+                    
+                    candidateTrains.add(new LiveStationBoardResponse.LiveStationBoardTrain(
+                            trainNumber,
+                            trainName,
+                            trainType,
+                            new LiveStationBoardResponse.StationCodeName(srcCode, srcCode),
+                            new LiveStationBoardResponse.StationCodeName(destCode, destCode),
+                            passType,
+                            schArr,
+                            schDep,
+                            expArr,
+                            expDep,
+                            delay,
+                            platform,
+                            status,
+                            sbt.runningDays(),
+                            actArr,
+                            actDep
+                    ));
+                }
             }
         }
+
+        for (LiveStationBoardResponse.LiveStationBoardTrain t : candidateTrains) {
+            saveTrainIfMissing(t);
+        }
         
-        List<LiveStationBoardResponse.LiveStationBoardTrain> enrichedTrains = rawResponse.trains().stream()
+        List<LiveStationBoardResponse.LiveStationBoardTrain> enrichedTrains = candidateTrains.stream()
                 .map(t -> {
                     String srcCode = t.source().code();
                     String srcName = stationRepository.findByStationCode(srcCode)
@@ -221,7 +387,9 @@ public class StationServiceImpl implements StationService {
                             t.delayMinutes(),
                             t.platform(),
                             t.liveStatus(),
-                            t.runningDays()
+                            t.runningDays(),
+                            t.actualArrival(),
+                            t.actualDeparture()
                     );
                 })
                 .sorted((t1, t2) -> {
@@ -242,26 +410,45 @@ public class StationServiceImpl implements StationService {
                 })
                 .collect(Collectors.toList());
                 
-        StationDto st = getStationDetails(stationCode);
         LiveStationBoardResponse.StationInfo resolvedStation = new LiveStationBoardResponse.StationInfo(
-                st.stationCode(),
-                st.stationName(),
-                st.city(),
-                st.latitude(),
-                st.longitude()
+                st != null ? st.stationCode() : stationCode,
+                st != null ? st.stationName() : stationCode,
+                st != null ? st.city() : null,
+                st != null ? st.latitude() : 0.0,
+                st != null ? st.longitude() : 0.0
         );
         
-        return new LiveStationBoardResponse(resolvedStation, rawResponse.window(), enrichedTrains);
+        return new LiveStationBoardResponse(resolvedStation, windowInfo, enrichedTrains);
+    }
+    
+    private boolean isTimeInWindow(LocalTime arr, LocalTime dep, LocalTime start, LocalTime end) {
+        LocalTime t = arr != null ? arr : dep;
+        if (t == null) return true;
+        if (start.isBefore(end)) {
+            return !t.isBefore(start) && !t.isAfter(end);
+        } else {
+            return !t.isBefore(start) || !t.isAfter(end);
+        }
+    }
+
+    private int getMinutesFromNow(LocalTime arr, LocalTime dep, LocalTime now) {
+        LocalTime t = arr != null ? arr : dep;
+        if (t == null) return 1440;
+        int diff = (int) java.time.Duration.between(now, t).toMinutes();
+        return diff < 0 ? diff + 1440 : diff;
     }
     
     private int getLiveStatusPriority(com.example.railtracker.dto.StationTrainLiveStatus status) {
-        if (status == null) return 5;
+        if (status == null) return 6;
         switch (status) {
+            case ARRIVED:
             case AT_STATION: return 1;
             case UPCOMING: return 2;
+            case SCHEDULED:
             case NOT_STARTED: return 3;
             case DEPARTED: return 4;
-            default: return 5;
+            case STATUS_UNAVAILABLE: return 5;
+            default: return 6;
         }
     }
     
