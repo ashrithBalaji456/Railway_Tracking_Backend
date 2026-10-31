@@ -2455,3 +2455,29 @@ This section documents the integration of RailRadar API endpoints extending the 
 
 * **3. Comprehensive Automated Regression Testing (`LiveStationBoardControllerTest.java`):**
   - Added `testGetLiveStationBoardMidnightCrossingWindow`: Tests a station board spanning across midnight (`23:13` to `05:13`) and asserts that trains arriving in the post-midnight hours (e.g. `17035 Balharshah Express` at `00:39`) are correctly included in the returned payload.
+
+
+### 16.21. Live Station Board Status-Specific Filtering & Station-Specific Departure Grace Window
+
+* **1. Authoritative Future Window Formulation (`StationServiceImpl.java`):**
+  - Live Station Board time window strictly represents future upcoming passage: `[nowIst, nowIst.plusHours(hours)]` where `hours` $\in \{2, 4, 6, 8\}$.
+  - Eliminated the previous 2-hour historical window (`now - 120 minutes`) that caused trains departed hours ago to linger across multiple window selections.
+
+* **2. Station-Specific 7-Minute Departure Grace Period:**
+  - `DEPARTED` trains are evaluated strictly using `actualDeparture` recorded at the **searched station** (`stationCode`).
+  - Grace calculation: `elapsedMinutes = Duration.between(actualDepTime, nowIst).toMinutes()`.
+  - Condition: `elapsedMinutes >= -2 && elapsedMinutes <= 7`.
+  - Trains departed within 7 minutes are retained with `liveStatus = DEPARTED` (displaying the pulsing red badge).
+  - Trains departed more than 7 minutes ago are automatically filtered out.
+  - Prevents origin station departures or previous station departures from falsely marking an approaching train as departed.
+
+* **3. Preserving Arrived Trains (`ARRIVED` & `AT_STATION`):**
+  - Trains currently halted at the station platform (`actualDeparture == null`) are strictly retained even if their arrival was in the past (e.g. actual arrival 01:30 AM, current time 01:32 AM, departure 01:35 AM).
+  - Validates expected departure is within the selected future window and dwell tolerance.
+
+* **4. Preserving Delayed Trains:**
+  - Trains scheduled in the past but delayed into the future window are retained based on their expected passage time.
+
+* **5. Comprehensive Unit Testing Suite (`LiveStationBoardControllerTest.java`):**
+  - 12 comprehensive automated tests verifying all edge cases: arrived not departed, currently at platform, departed 5m ago (kept), departed 8m ago (filtered), en route after departing previous station, delayed into window, boundary filtering (4h vs 6h), midnight crossing, and cache key isolation.
+

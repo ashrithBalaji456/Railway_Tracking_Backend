@@ -476,9 +476,10 @@ public class TrainServiceImpl implements TrainService {
     @Cacheable(value = "train:details", key = "#trainNumber")
     public TrainDto getTrainDetails(String trainNumber) {
         logger.debug("Retrieving details for train: {}", trainNumber);
+        TrainDto ext = null;
         // Verify with live RailRadar provider to heal any outdated train names or routes
         try {
-            TrainDto ext = railwayDataProvider.getTrainDetails(trainNumber);
+            ext = railwayDataProvider.getTrainDetails(trainNumber);
             if (ext != null && ext.trainNumber() != null && !ext.trainNumber().isBlank()) {
                 saveTrainIfMissing(ext);
             }
@@ -486,9 +487,14 @@ public class TrainServiceImpl implements TrainService {
             logger.debug("Live RailRadar check for {} skipped: {}", trainNumber, e.getMessage());
         }
 
+        final TrainDto alreadyFetched = (ext != null && ext.trainNumber() != null && !ext.trainNumber().isBlank()) ? ext : null;
+
         return trainRepository.findByTrainNumber(trainNumber)
                 .map(this::mapToDto)
                 .orElseGet(() -> {
+                    if (alreadyFetched != null) {
+                        return alreadyFetched;
+                    }
                     logger.info("Train {} not found locally. Searching externally.", trainNumber);
                     TrainDto foundDto = railwayDataProvider.getTrainDetails(trainNumber);
                     saveTrainIfMissing(foundDto);

@@ -13,9 +13,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import org.springframework.security.test.context.support.WithMockUser;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -37,9 +40,11 @@ class LiveUpdatesControllerTest {
                 0, 17.9689, 79.5941, 60.0, 120.0, 45.0, "Diverged near Warangal",
                 LocalDateTime.now(), Collections.emptyList()
         );
+        when(trainService.getTrainLiveStatus(eq("12760"), any())).thenReturn(statusDto);
         when(trainService.getTrainLiveStatus("12760")).thenReturn(statusDto);
 
         mockMvc.perform(get("/api/v1/live-updates/12760"))
+                .andExpect(request().asyncStarted())
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM));
     }

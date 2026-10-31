@@ -47,4 +47,19 @@ class RedisCacheIntegrationTest {
         assertNotNull(result);
         verify(railwayDataProvider, times(1)).getTrainDetails("12760");
     }
+
+    @Test
+    void testCacheFallbackWhenInitialProviderFailsThenRetries() {
+        TrainDto mockTrain = new TrainDto("12760", "Charminar", "Express", "SF", "HYB", "MS", 800, 840, "Daily", true, "ENG-GEN-GEN");
+        when(trainRepository.findByTrainNumber("12760")).thenReturn(Optional.empty());
+        // First call fails with transient exception during auto-heal; fallback call succeeds
+        when(railwayDataProvider.getTrainDetails("12760"))
+                .thenThrow(new RuntimeException("Transient connection timeout"))
+                .thenReturn(mockTrain);
+
+        TrainDto result = trainService.getTrainDetails("12760");
+
+        assertNotNull(result);
+        verify(railwayDataProvider, times(2)).getTrainDetails("12760");
+    }
 }

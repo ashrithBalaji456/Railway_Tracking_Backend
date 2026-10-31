@@ -295,7 +295,7 @@ public class StationServiceImpl implements StationService {
         
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
         ZonedDateTime nowIst = ZonedDateTime.now(IST_ZONE);
-        ZonedDateTime windowStart = nowIst.minusMinutes(120);
+        ZonedDateTime windowStart = nowIst;
         ZonedDateTime windowEnd = nowIst.plusHours(hours);
 
         String fromWindow = windowStart.format(timeFmt);
@@ -307,23 +307,6 @@ public class StationServiceImpl implements StationService {
             rawResponse = railwayDataProvider.getLiveStationBoardDetails(stationCode, hours);
         } catch (Exception e) {
             logger.debug("Live station endpoint /stations/{}/live not accessible on current tier: {}", stationCode, e.getMessage());
-        }
-
-        if (rawResponse != null && rawResponse.window() != null && rawResponse.window().from() != null) {
-            LocalTime rawFrom = parseLocalTime(rawResponse.window().from());
-            LocalTime rawTo = parseLocalTime(rawResponse.window().to());
-            if (rawFrom != null && rawTo != null) {
-                LocalDate baseDate = nowIst.toLocalDate();
-                long elapsedMins = (Duration.between(rawFrom, nowIst.toLocalTime()).toMinutes() + 1440) % 1440;
-                boolean crossedMidnightPast = rawFrom.isAfter(nowIst.toLocalTime()) && elapsedMins <= 360;
-                LocalDate fromDate = crossedMidnightPast ? baseDate.minusDays(1) : baseDate;
-                windowStart = ZonedDateTime.of(fromDate, rawFrom, IST_ZONE);
-                LocalDate toDate = rawTo.isBefore(rawFrom) ? fromDate.plusDays(1) : fromDate;
-                windowEnd = ZonedDateTime.of(toDate, rawTo, IST_ZONE);
-                fromWindow = windowStart.format(timeFmt);
-                toWindow = windowEnd.format(timeFmt);
-                windowInfo = new LiveStationBoardResponse.WindowInfo(fromWindow, toWindow, hours);
-            }
         }
 
         List<LiveStationBoardResponse.LiveStationBoardTrain> candidateTrains = new ArrayList<>();
@@ -514,9 +497,10 @@ public class StationServiceImpl implements StationService {
                     String actArr = t.actualArrival();
                     String actDep = t.actualDeparture();
 
-                    if (resolvedStatus == StationTrainLiveStatus.NOT_STARTED || resolvedStatus == StationTrainLiveStatus.AT_STATION) {
-                        actDep = null;
-                    } else if (resolvedStatus == StationTrainLiveStatus.UPCOMING) {
+                    if (resolvedStatus == StationTrainLiveStatus.NOT_STARTED || 
+                        resolvedStatus == StationTrainLiveStatus.AT_STATION ||
+                        resolvedStatus == StationTrainLiveStatus.ARRIVED ||
+                        resolvedStatus == StationTrainLiveStatus.UPCOMING) {
                         actDep = null;
                     } else if (actDep != null && !actDep.isBlank()) {
                         resolvedStatus = StationTrainLiveStatus.DEPARTED;
@@ -543,10 +527,7 @@ public class StationServiceImpl implements StationService {
                             actDep
                     );
                 })
-                .filter(t -> {
-                    ZonedDateTime passageTime = resolvePassageDateTime(t, finalWindowStart);
-                    return !passageTime.isBefore(finalWindowStart) && !passageTime.isAfter(finalWindowEnd);
-                })
+                .filter(t -> shouldIncludeInLiveBoard(t, finalWindowStart, finalWindowEnd))
                 .sorted((t1, t2) -> {
                     int p1 = getLiveStatusPriority(t1.liveStatus());
                     int p2 = getLiveStatusPriority(t2.liveStatus());
@@ -629,14 +610,88 @@ public class StationServiceImpl implements StationService {
         return parsePassageDateTime(timeStr, refStart);
     }
 
-    private ZonedDateTime parsePassageDateTime(String timeStr, ZonedDateTime refStart) {
+    boolean shouldIncludeInLiveBoard(LiveStationBoardResponse.LiveStationBoardTrain t, ZonedDateTime nowIst, ZonedDateTime windowEnd) {
+        if (t == null) return false;
+        StationTrainLiveStatus status = t.liveStatus() != null ? t.liveStatus() : StationTrainLiveStatus.SCHEDULED;
+
+        switch (status) {
+            case DEPARTED: {
+                String actDep = t.actualDeparture();
+                if (actDep == null || actDep.isBlank()) {
+                    return false;
+                }
+                ZonedDateTime actualDepTime = parsePassageDateTime(actDep, nowIst);
+                long elapsedMinutes = Duration.between(actualDepTime, nowIst).toMinutes();
+                // Retain only if actual departure from this station occurred within the last 7 minutes
+                // (with -2 minutes tolerance for clock skew)
+                return elapsedMinutes >= -2 && elapsedMinutes <= 7;
+            }
+
+            case ARRIVED:
+            case AT_STATION: {
+                // Train is currently halted at station and has not departed
+                if (t.actualDeparture() != null && !t.actualDeparture().isBlank()) {
+                    ZonedDateTime actualDepTime = parsePassageDateTime(t.actualDeparture(), nowIst);
+                    long elapsedMinutes = Duration.between(actualDepTime, nowIst).toMinutes();
+                    return elapsedMinutes >= -2 && elapsedMinutes <= 7;
+                }
+                // Check departure time if train continues beyond this station
+                ZonedDateTime depTime = resolveDepartureDateTime(t, nowIst);
+                if (depTime != null) {
+                    return !depTime.isBefore(nowIst.minusMinutes(30)) && !depTime.isAfter(windowEnd);
+                }
+                // For terminating trains without departure: check arrival was within recent 30 mins
+                ZonedDateTime arrTime = resolveArrivalDateTime(t, nowIst);
+                if (arrTime != null) {
+                    long elapsed = Duration.between(arrTime, nowIst).toMinutes();
+                    return elapsed >= -5 && elapsed <= 30;
+                }
+                return false;
+            }
+
+            case UPCOMING: {
+                ZonedDateTime passageTime = resolvePassageDateTime(t, nowIst);
+                // 5-minute pre-arrival tolerance buffer for approaching trains
+                return !passageTime.isBefore(nowIst.minusMinutes(5)) && !passageTime.isAfter(windowEnd);
+            }
+
+            case SCHEDULED:
+            case NOT_STARTED:
+            case STATUS_UNAVAILABLE:
+            case UNKNOWN:
+            default: {
+                ZonedDateTime passageTime = resolvePassageDateTime(t, nowIst);
+                // Future scheduled train or untracked train: must fall in [now - 2m, windowEnd]
+                return !passageTime.isBefore(nowIst.minusMinutes(2)) && !passageTime.isAfter(windowEnd);
+            }
+        }
+    }
+
+    ZonedDateTime resolveDepartureDateTime(LiveStationBoardResponse.LiveStationBoardTrain t, ZonedDateTime refStart) {
+        if (t == null) return null;
+        String timeStr = t.expectedDeparture() != null && !t.expectedDeparture().isBlank() ? t.expectedDeparture() :
+                         t.scheduledDeparture() != null && !t.scheduledDeparture().isBlank() ? t.scheduledDeparture() : null;
+        if (timeStr == null || timeStr.isBlank()) return null;
+        return parsePassageDateTime(timeStr, refStart);
+    }
+
+    ZonedDateTime resolveArrivalDateTime(LiveStationBoardResponse.LiveStationBoardTrain t, ZonedDateTime refStart) {
+        if (t == null) return null;
+        String timeStr = t.actualArrival() != null && !t.actualArrival().isBlank() ? t.actualArrival() :
+                         t.expectedArrival() != null && !t.expectedArrival().isBlank() ? t.expectedArrival() :
+                         t.scheduledArrival() != null && !t.scheduledArrival().isBlank() ? t.scheduledArrival() : null;
+        if (timeStr == null || timeStr.isBlank()) return null;
+        return parsePassageDateTime(timeStr, refStart);
+    }
+
+    ZonedDateTime parsePassageDateTime(String timeStr, ZonedDateTime refStart) {
         if (timeStr == null || timeStr.isBlank()) {
             return refStart.plusYears(1);
         }
         String clean = timeStr.trim();
         if (clean.contains("T")) {
             try {
-                return ZonedDateTime.parse(clean);
+                return ZonedDateTime.parse(clean).withZoneSameInstant(IST_ZONE);
             } catch (Exception e) {
                 try {
                     return java.time.OffsetDateTime.parse(clean).atZoneSameInstant(IST_ZONE);

@@ -33,12 +33,19 @@ class RailAiControllerTest {
     private RailAiService railAiService;
 
     @Test
-    void testChatRequiresAuthentication() throws Exception {
+    void testChatAllowsGuestAccessWhenUnauthenticated() throws Exception {
         RailAiRequest req = new RailAiRequest("Is train delayed?", "12760");
+        RailAiResponse res = new RailAiResponse("Train is currently running on time.");
+        when(railAiService.getAiResponse(eq("guest"), eq(req))).thenReturn(res);
+
         mockMvc.perform(post("/api/v1/railai/chat")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.response").value("Train is currently running on time."));
+
+        verify(railAiService, times(1)).getAiResponse(eq("guest"), eq(req));
     }
 
     @Test
