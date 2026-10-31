@@ -383,8 +383,10 @@ public class RailRadarClient {
                 String scheduledArrival = text(stop, "arrival");
                 String scheduledDeparture = text(stop, "departure");
 
-                String expectedArrival = text(live, "expectedArrivalTime");
-                String expectedDeparture = text(live, "expectedDepartureTime");
+                String expectedArrival = timeText(live, "expectedArrivalTime", "expectedArrival");
+                String expectedDeparture = timeText(live, "expectedDepartureTime", "expectedDeparture");
+                String actualArrival = timeText(live, "actualArrivalTime", "arrivedAt", "actualArrival");
+                String actualDeparture = timeText(live, "actualDepartureTime", "departedAt", "actualDeparture");
 
                 Integer delayMinutes = integer(live, "delayMinutes");
                 String platform = text(stop, "platform");
@@ -394,6 +396,11 @@ public class RailRadarClient {
 
                 String liveType = text(live, "type");
                 StationTrainLiveStatus liveStatus = mapLiveStatusEnum(liveType);
+                if (actualDeparture != null && !actualDeparture.isBlank()) {
+                    liveStatus = StationTrainLiveStatus.DEPARTED;
+                } else if (actualArrival != null && !actualArrival.isBlank()) {
+                    liveStatus = StationTrainLiveStatus.ARRIVED;
+                }
 
                 String runDaysStr = "";
                 if (train != null && train.has("runDays") && train.get("runDays").isArray()) {
@@ -416,7 +423,9 @@ public class RailRadarClient {
                         delayMinutes != null ? delayMinutes : 0,
                         platform,
                         liveStatus,
-                        runDaysStr
+                        runDaysStr,
+                        actualArrival,
+                        actualDeparture
                 ));
             }
         }

@@ -372,6 +372,25 @@ public class StationServiceImpl implements StationService {
 
                     boolean isOriginOrDest = stationCode.equalsIgnoreCase(srcCode) || stationCode.equalsIgnoreCase(destCode);
                     StationPassType resolvedPassType = isOriginOrDest ? StationPassType.STOPPING : t.passType();
+
+                    StationTrainLiveStatus resolvedStatus = t.liveStatus();
+                    String actArr = t.actualArrival();
+                    String actDep = t.actualDeparture();
+
+                    if (actDep != null && !actDep.isBlank()) {
+                        resolvedStatus = StationTrainLiveStatus.DEPARTED;
+                    } else if (actArr != null && !actArr.isBlank()) {
+                        resolvedStatus = StationTrainLiveStatus.ARRIVED;
+                    } else if (resolvedStatus == StationTrainLiveStatus.UPCOMING) {
+                        LocalTime nowT = LocalTime.now();
+                        LocalTime expDepTime = parseLocalTime(t.expectedDeparture());
+                        LocalTime expArrTime = parseLocalTime(t.expectedArrival());
+                        if (expDepTime != null && nowT.isAfter(expDepTime)) {
+                            resolvedStatus = StationTrainLiveStatus.DEPARTED;
+                        } else if (expArrTime != null && nowT.isAfter(expArrTime)) {
+                            resolvedStatus = StationTrainLiveStatus.ARRIVED;
+                        }
+                    }
                             
                     return new LiveStationBoardResponse.LiveStationBoardTrain(
                             t.trainNumber(),
@@ -386,10 +405,10 @@ public class StationServiceImpl implements StationService {
                             t.expectedDeparture(),
                             t.delayMinutes(),
                             t.platform(),
-                            t.liveStatus(),
+                            resolvedStatus,
                             t.runningDays(),
-                            t.actualArrival(),
-                            t.actualDeparture()
+                            actArr,
+                            actDep
                     );
                 })
                 .sorted((t1, t2) -> {
@@ -436,6 +455,24 @@ public class StationServiceImpl implements StationService {
         if (t == null) return 1440;
         int diff = (int) java.time.Duration.between(now, t).toMinutes();
         return diff < 0 ? diff + 1440 : diff;
+    }
+
+    private LocalTime parseLocalTime(String timeStr) {
+        if (timeStr == null || timeStr.isBlank()) return null;
+        try {
+            String clean = timeStr.trim();
+            if (clean.contains("T")) {
+                int tIdx = clean.indexOf('T');
+                if (clean.length() >= tIdx + 6) {
+                    clean = clean.substring(tIdx + 1, tIdx + 6);
+                }
+            } else if (clean.length() > 5) {
+                clean = clean.substring(0, 5);
+            }
+            return LocalTime.parse(clean);
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     private int getLiveStatusPriority(com.example.railtracker.dto.StationTrainLiveStatus status) {
