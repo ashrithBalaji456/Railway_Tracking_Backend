@@ -63,6 +63,24 @@ public record TrainLiveStatusDto(
         String actualDeparture,
         Integer delayMinutes,
         String status, // ARRIVED, DEPARTED, SKIPPED, UPCOMING
-        Boolean isHalt
-    ) implements Serializable {}
+        Boolean isHalt,
+        String platform
+    ) implements Serializable {
+        // Backward-compatible constructor for existing callers and tests
+        public StationStatusDto(
+            String stationCode,
+            String stationName,
+            Integer sequenceNumber,
+            String scheduledArrival,
+            String scheduledDeparture,
+            String actualArrival,
+            String actualDeparture,
+            Integer delayMinutes,
+            String status,
+            Boolean isHalt
+        ) {
+            this(stationCode, stationName, sequenceNumber, scheduledArrival, scheduledDeparture,
+                 actualArrival, actualDeparture, delayMinutes, status, isHalt, null);
+        }
+    }
 }

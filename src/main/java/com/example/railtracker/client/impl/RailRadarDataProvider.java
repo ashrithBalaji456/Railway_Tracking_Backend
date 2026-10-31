@@ -446,7 +446,8 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                             s.actualDeparture(),
                             s.delayMinutes(),
                             s.status(),
-                            Boolean.TRUE.equals(s.isHalt())
+                            Boolean.TRUE.equals(s.isHalt()),
+                            s.platform()
                     ))
                     .collect(Collectors.toList());
 
@@ -499,7 +500,8 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                             s.actualDeparture(),
                             s.delayMinutes(),
                             s.status(),
-                            Boolean.TRUE.equals(s.isHalt())
+                            Boolean.TRUE.equals(s.isHalt()),
+                            s.platform()
                     ))
                     .collect(Collectors.toList());
 

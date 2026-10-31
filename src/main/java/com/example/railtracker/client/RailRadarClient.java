@@ -929,6 +929,11 @@ public class RailRadarClient {
                     }
                 }
 
+                String platform = text(stop, "platform", "platformNumber", "platform_number");
+                if (platform != null && (platform.equalsIgnoreCase("null") || platform.trim().isEmpty())) {
+                    platform = null;
+                }
+
                 stations.add(new RailRadarLiveStationStatus(
                         sInfo,
                         integer(stop, "sequence"),
@@ -938,7 +943,8 @@ public class RailRadarClient {
                         text(stop, "actualDeparture"),
                         firstInteger(stop, "delayMinutes", "delayDeparture", "delayArrival"),
                         stopStatus,
-                        bool(stop, "isHalt")
+                        bool(stop, "isHalt"),
+                        platform
                 ));
             }
         }
@@ -1317,8 +1323,23 @@ public class RailRadarClient {
             @JsonAlias({"actual_departure"}) String actualDeparture,
             @JsonAlias({"delay_minutes"}) Integer delayMinutes,
             String status,
-            @JsonAlias({"is_halt"}) Boolean isHalt
-    ) {}
+            @JsonAlias({"is_halt"}) Boolean isHalt,
+            @JsonAlias({"platform_number", "platformNumber"}) String platform
+    ) {
+        public RailRadarLiveStationStatus(
+                RailRadarStationInfo station,
+                Integer sequence,
+                String scheduledArrival,
+                String scheduledDeparture,
+                String actualArrival,
+                String actualDeparture,
+                Integer delayMinutes,
+                String status,
+                Boolean isHalt
+        ) {
+            this(station, sequence, scheduledArrival, scheduledDeparture, actualArrival, actualDeparture, delayMinutes, status, isHalt, null);
+        }
+    }
 
     public record RailRadarTrainLiveStatus(
             @JsonAlias({"train_number"}) String trainNumber,

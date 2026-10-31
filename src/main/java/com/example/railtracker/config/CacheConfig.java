@@ -51,8 +51,8 @@ public class CacheConfig implements CachingConfigurer {
         // Custom configurations per cache name
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         
-        // Live caches - short TTL (30 seconds)
-        cacheConfigurations.put("train:live", defaultCacheConfig.entryTtl(Duration.ofSeconds(30)));
+        // Live caches - 2 minutes TTL to safeguard Free-plan monthly quota while maintaining freshness
+        cacheConfigurations.put("train:live", defaultCacheConfig.entryTtl(Duration.ofMinutes(2)));
         cacheConfigurations.put("station:live", defaultCacheConfig.entryTtl(Duration.ofSeconds(30)));
         cacheConfigurations.put("live-station", defaultCacheConfig.entryTtl(Duration.ofSeconds(30)));
         
