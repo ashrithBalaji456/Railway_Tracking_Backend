@@ -47,6 +47,7 @@ class LiveStationBoardControllerTest {
         LiveStationBoardResponse.StationInfo stationInfo = new LiveStationBoardResponse.StationInfo("BZA", "VIJAYAWADA JN", "Vijayawada", 16.517968, 80.619572);
         LiveStationBoardResponse.WindowInfo windowInfo = new LiveStationBoardResponse.WindowInfo("10:35", "18:35", 4);
         
+        String todayIso = java.time.LocalDate.now().toString();
         LiveStationBoardResponse.LiveStationBoardTrain train = new LiveStationBoardResponse.LiveStationBoardTrain(
                 "12805",
                 "Lingampalli Janmabhoomi SF Express",
@@ -56,8 +57,8 @@ class LiveStationBoardControllerTest {
                 StationPassType.STOPPING,
                 "12:02",
                 "12:12",
-                "2026-08-12T12:25:00+05:30",
-                "2026-08-12T12:35:00+05:30",
+                todayIso + "T12:25:00+05:30",
+                todayIso + "T12:35:00+05:30",
                 23,
                 "5",
                 StationTrainLiveStatus.AT_STATION,

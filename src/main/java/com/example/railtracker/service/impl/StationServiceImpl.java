@@ -31,12 +31,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.stream.Collectors;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.LocalDate;
+import java.time.Duration;
 
 import com.example.railtracker.entity.Train;
 import com.example.railtracker.repository.TrainRepository;
 
 @Service
 public class StationServiceImpl implements StationService {
+    private static final ZoneId IST_ZONE = ZoneId.of("Asia/Kolkata");
 
     private static final Logger logger = LoggerFactory.getLogger(StationServiceImpl.class);
 
@@ -207,9 +212,12 @@ public class StationServiceImpl implements StationService {
         }
         
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
-        LocalTime now = LocalTime.now();
-        String fromWindow = now.format(timeFmt);
-        String toWindow = now.plusHours(hours).format(timeFmt);
+        ZonedDateTime nowIst = ZonedDateTime.now(IST_ZONE);
+        ZonedDateTime windowStart = nowIst.minusMinutes(120);
+        ZonedDateTime windowEnd = nowIst.plusHours(hours);
+
+        String fromWindow = windowStart.format(timeFmt);
+        String toWindow = windowEnd.format(timeFmt);
         LiveStationBoardResponse.WindowInfo windowInfo = new LiveStationBoardResponse.WindowInfo(fromWindow, toWindow, hours);
 
         LiveStationBoardResponse rawResponse = null;
@@ -219,11 +227,26 @@ public class StationServiceImpl implements StationService {
             logger.debug("Live station endpoint /stations/{}/live not accessible on current tier: {}", stationCode, e.getMessage());
         }
 
+        if (rawResponse != null && rawResponse.window() != null && rawResponse.window().from() != null) {
+            LocalTime rawFrom = parseLocalTime(rawResponse.window().from());
+            LocalTime rawTo = parseLocalTime(rawResponse.window().to());
+            if (rawFrom != null && rawTo != null) {
+                LocalDate baseDate = nowIst.toLocalDate();
+                windowStart = ZonedDateTime.of(baseDate, rawFrom, IST_ZONE);
+                windowEnd = ZonedDateTime.of(baseDate, rawTo, IST_ZONE);
+                if (windowEnd.isBefore(windowStart)) {
+                    windowEnd = windowEnd.plusDays(1);
+                }
+                fromWindow = windowStart.format(timeFmt);
+                toWindow = windowEnd.format(timeFmt);
+                windowInfo = new LiveStationBoardResponse.WindowInfo(fromWindow, toWindow, hours);
+            }
+        }
+
         List<LiveStationBoardResponse.LiveStationBoardTrain> candidateTrains = new ArrayList<>();
         Set<String> presentTrainNumbers = new HashSet<>();
 
         if (rawResponse != null && rawResponse.trains() != null && !rawResponse.trains().isEmpty()) {
-            windowInfo = rawResponse.window() != null ? rawResponse.window() : windowInfo;
             for (LiveStationBoardResponse.LiveStationBoardTrain t : rawResponse.trains()) {
                 candidateTrains.add(t);
                 if (t.trainNumber() != null) {
@@ -235,146 +258,149 @@ public class StationServiceImpl implements StationService {
         // Merge scheduled trains in window if rawResponse missed any (e.g. delayed trains)
         List<StationBoardTrainDto> scheduledTrains = getStationTrains(stationCode, "ALL");
         if (scheduledTrains != null && !scheduledTrains.isEmpty()) {
-            LocalTime windowStart = now.minusMinutes(120);
-            LocalTime windowEnd = now.plusHours(hours);
+            LocalTime winStartTime = windowStart.toLocalTime();
+            LocalTime winEndTime = windowEnd.toLocalTime();
             
             List<StationBoardTrainDto> inWindow = scheduledTrains.stream()
-                    .filter(t -> isTimeInWindow(t.scheduledArrival(), t.scheduledDeparture(), windowStart, windowEnd))
+                    .filter(t -> isTimeInWindow(t.scheduledArrival(), t.scheduledDeparture(), winStartTime, winEndTime))
                     .filter(t -> t.trainNumber() == null || !presentTrainNumbers.contains(t.trainNumber().trim().toUpperCase()))
                     .collect(Collectors.toList());
             
             List<StationBoardTrainDto> targetTrains = inWindow;
-            targetTrains.sort(Comparator.comparingInt(t -> getMinutesFromNow(t.scheduledArrival(), t.scheduledDeparture(), now)));
+            final ZonedDateTime refStart = windowStart;
+            targetTrains.sort(Comparator.comparingInt(t -> getMinutesFromZoned(t.scheduledArrival(), t.scheduledDeparture(), refStart)));
             
             // Free-plan budget protection: cap live lookups (up to 8 if candidateTrains was empty, or up to 4 if merging missing trains)
             final int MAX_LIVE_ENRICH_TRAINS = candidateTrains.isEmpty() ? 8 : 4;
-                int enrichCount = Math.min(targetTrains.size(), MAX_LIVE_ENRICH_TRAINS);
+            int enrichCount = Math.min(targetTrains.size(), MAX_LIVE_ENRICH_TRAINS);
+            
+            for (int i = 0; i < targetTrains.size(); i++) {
+                StationBoardTrainDto sbt = targetTrains.get(i);
+                boolean shouldEnrich = i < enrichCount;
                 
-                for (int i = 0; i < targetTrains.size(); i++) {
-                    StationBoardTrainDto sbt = targetTrains.get(i);
-                    boolean shouldEnrich = i < enrichCount;
-                    
-                    String trainNumber = sbt.trainNumber();
-                    String trainName = sbt.trainName();
-                    String trainType = sbt.trainType();
-                    String srcCode = sbt.sourceStation() != null ? sbt.sourceStation() : stationCode;
-                    String destCode = sbt.destinationStation() != null ? sbt.destinationStation() : stationCode;
-                    StationPassType passType = Boolean.TRUE.equals(sbt.isHalt()) ? StationPassType.STOPPING : StationPassType.PASS_THROUGH;
-                    
-                    String schArr = sbt.scheduledArrival() != null ? sbt.scheduledArrival().format(timeFmt) : null;
-                    String schDep = sbt.scheduledDeparture() != null ? sbt.scheduledDeparture().format(timeFmt) : null;
-                    String expArr = schArr;
-                    String expDep = schDep;
-                    String actArr = null;
-                    String actDep = null;
-                    Integer delay = sbt.delayMinutes() != null ? sbt.delayMinutes() : 0;
-                    String platform = sbt.platform();
-                    StationTrainLiveStatus status = StationTrainLiveStatus.SCHEDULED;
-                    
-                    if (shouldEnrich && trainService != null) {
-                        try {
-                            TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber);
-                            if (liveStatus != null) {
-                                TrainLiveStatusDto.StationStatusDto matchedStop = null;
-                                if (liveStatus.stations() != null) {
-                                    for (TrainLiveStatusDto.StationStatusDto stop : liveStatus.stations()) {
-                                        if (stop.stationCode() != null && stop.stationCode().equalsIgnoreCase(stationCode)) {
-                                            matchedStop = stop;
-                                            break;
-                                        }
+                String trainNumber = sbt.trainNumber();
+                String trainName = sbt.trainName();
+                String trainType = sbt.trainType();
+                String srcCode = sbt.sourceStation() != null ? sbt.sourceStation() : stationCode;
+                String destCode = sbt.destinationStation() != null ? sbt.destinationStation() : stationCode;
+                StationPassType passType = Boolean.TRUE.equals(sbt.isHalt()) ? StationPassType.STOPPING : StationPassType.PASS_THROUGH;
+                
+                String schArr = sbt.scheduledArrival() != null ? sbt.scheduledArrival().format(timeFmt) : null;
+                String schDep = sbt.scheduledDeparture() != null ? sbt.scheduledDeparture().format(timeFmt) : null;
+                String expArr = schArr;
+                String expDep = schDep;
+                String actArr = null;
+                String actDep = null;
+                Integer delay = sbt.delayMinutes() != null ? sbt.delayMinutes() : 0;
+                String platform = sbt.platform();
+                StationTrainLiveStatus status = StationTrainLiveStatus.SCHEDULED;
+                
+                if (shouldEnrich && trainService != null) {
+                    try {
+                        TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber);
+                        if (liveStatus != null) {
+                            TrainLiveStatusDto.StationStatusDto matchedStop = null;
+                            if (liveStatus.stations() != null) {
+                                for (TrainLiveStatusDto.StationStatusDto stop : liveStatus.stations()) {
+                                    if (stop.stationCode() != null && stop.stationCode().equalsIgnoreCase(stationCode)) {
+                                        matchedStop = stop;
+                                        break;
                                     }
+                                }
+                            }
+                            
+                            if (matchedStop != null) {
+                                actArr = matchedStop.actualArrival();
+                                actDep = matchedStop.actualDeparture();
+                                if (matchedStop.delayMinutes() != null) {
+                                    delay = matchedStop.delayMinutes();
+                                } else if (liveStatus.delayMinutes() != null) {
+                                    delay = liveStatus.delayMinutes();
+                                }
+                                if (matchedStop.platform() != null && !matchedStop.platform().isBlank()) {
+                                    platform = matchedStop.platform();
                                 }
                                 
-                                if (matchedStop != null) {
-                                    actArr = matchedStop.actualArrival();
-                                    actDep = matchedStop.actualDeparture();
-                                    if (matchedStop.delayMinutes() != null) {
-                                        delay = matchedStop.delayMinutes();
-                                    } else if (liveStatus.delayMinutes() != null) {
-                                        delay = liveStatus.delayMinutes();
-                                    }
-                                    if (matchedStop.platform() != null && !matchedStop.platform().isBlank()) {
-                                        platform = matchedStop.platform();
-                                    }
-                                    
-                                    String sStatus = matchedStop.status() != null ? matchedStop.status().toLowerCase() : "";
-                                    boolean hasActualDep = actDep != null && !actDep.isBlank();
-                                    boolean hasActualArr = actArr != null && !actArr.isBlank();
-                                    
-                                    if (sStatus.contains("not-start") || sStatus.contains("not_start")) {
-                                        status = StationTrainLiveStatus.NOT_STARTED;
-                                    } else if (sStatus.contains("at-station") || sStatus.contains("at_station")) {
-                                        status = StationTrainLiveStatus.AT_STATION;
-                                    } else if (sStatus.contains("depart") || (hasActualDep && !sStatus.contains("arriv") && !sStatus.contains("upcoming"))) {
-                                        status = StationTrainLiveStatus.DEPARTED;
-                                    } else if (sStatus.contains("arriv") || (hasActualArr && !hasActualDep)) {
-                                        status = StationTrainLiveStatus.ARRIVED;
-                                    } else if (sStatus.contains("upcoming") || sStatus.contains("approach")) {
-                                        status = StationTrainLiveStatus.UPCOMING;
-                                    } else if (Boolean.TRUE.equals(liveStatus.isCancelled()) || (liveStatus.skippedStations() != null && liveStatus.skippedStations().contains(stationCode.toUpperCase()))) {
-                                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
-                                    } else if (liveStatus.currentStationCode() != null && !liveStatus.currentStationCode().isBlank()) {
-                                        status = StationTrainLiveStatus.UPCOMING;
-                                    } else {
-                                        status = StationTrainLiveStatus.SCHEDULED;
-                                    }
+                                String sStatus = matchedStop.status() != null ? matchedStop.status().toLowerCase() : "";
+                                boolean hasActualDep = actDep != null && !actDep.isBlank();
+                                boolean hasActualArr = actArr != null && !actArr.isBlank();
+                                
+                                if (sStatus.contains("not-start") || sStatus.contains("not_start")) {
+                                    status = StationTrainLiveStatus.NOT_STARTED;
+                                } else if (sStatus.contains("at-station") || sStatus.contains("at_station")) {
+                                    status = StationTrainLiveStatus.AT_STATION;
+                                } else if (sStatus.contains("depart") || (hasActualDep && !sStatus.contains("arriv") && !sStatus.contains("upcoming"))) {
+                                    status = StationTrainLiveStatus.DEPARTED;
+                                } else if (sStatus.contains("arriv") || (hasActualArr && !hasActualDep)) {
+                                    status = StationTrainLiveStatus.ARRIVED;
+                                } else if (sStatus.contains("upcoming") || sStatus.contains("approach")) {
+                                    status = StationTrainLiveStatus.UPCOMING;
+                                } else if (Boolean.TRUE.equals(liveStatus.isCancelled()) || (liveStatus.skippedStations() != null && liveStatus.skippedStations().contains(stationCode.toUpperCase()))) {
+                                    status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                                } else if (liveStatus.currentStationCode() != null && !liveStatus.currentStationCode().isBlank()) {
+                                    status = StationTrainLiveStatus.UPCOMING;
                                 } else {
-                                    if (Boolean.TRUE.equals(liveStatus.isDiverted()) || Boolean.TRUE.equals(liveStatus.isCancelled())) {
-                                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
-                                    } else {
-                                        status = StationTrainLiveStatus.SCHEDULED;
-                                    }
+                                    status = StationTrainLiveStatus.SCHEDULED;
                                 }
                             } else {
-                                status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                                if (Boolean.TRUE.equals(liveStatus.isDiverted()) || Boolean.TRUE.equals(liveStatus.isCancelled())) {
+                                    status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                                } else {
+                                    status = StationTrainLiveStatus.SCHEDULED;
+                                }
                             }
-                        } catch (Exception e) {
-                            logger.debug("Failed to enrich live status for train {}: {}", trainNumber, e.getMessage());
+                        } else {
                             status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
                         }
+                    } catch (Exception e) {
+                        logger.debug("Failed to enrich live status for train {}: {}", trainNumber, e.getMessage());
+                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
                     }
-                    
-                    if (actArr != null && !actArr.isBlank()) {
-                        expArr = actArr;
-                    } else if (delay != null && delay > 0 && sbt.scheduledArrival() != null) {
-                        expArr = sbt.scheduledArrival().plusMinutes(delay).format(timeFmt);
-                    }
-                    
-                    if (actDep != null && !actDep.isBlank()) {
-                        expDep = actDep;
-                    } else if (delay != null && delay > 0 && sbt.scheduledDeparture() != null) {
-                        expDep = sbt.scheduledDeparture().plusMinutes(delay).format(timeFmt);
-                    }
-                    
-                    if (status != StationTrainLiveStatus.DEPARTED) {
-                        actDep = null;
-                    }
-
-                    candidateTrains.add(new LiveStationBoardResponse.LiveStationBoardTrain(
-                            trainNumber,
-                            trainName,
-                            trainType,
-                            new LiveStationBoardResponse.StationCodeName(srcCode, srcCode),
-                            new LiveStationBoardResponse.StationCodeName(destCode, destCode),
-                            passType,
-                            schArr,
-                            schDep,
-                            expArr,
-                            expDep,
-                            delay,
-                            platform,
-                            status,
-                            sbt.runningDays(),
-                            actArr,
-                            actDep
-                    ));
                 }
+                
+                if (actArr != null && !actArr.isBlank()) {
+                    expArr = actArr;
+                } else if (delay != null && delay > 0 && sbt.scheduledArrival() != null) {
+                    expArr = formatDelayedIso(sbt.scheduledArrival(), delay, windowStart);
+                }
+                
+                if (actDep != null && !actDep.isBlank() && status == StationTrainLiveStatus.DEPARTED) {
+                    expDep = actDep;
+                } else if (delay != null && delay > 0 && sbt.scheduledDeparture() != null) {
+                    expDep = formatDelayedIso(sbt.scheduledDeparture(), delay, windowStart);
+                }
+                
+                if (status != StationTrainLiveStatus.DEPARTED) {
+                    actDep = null;
+                }
+                
+                candidateTrains.add(new LiveStationBoardResponse.LiveStationBoardTrain(
+                        trainNumber,
+                        trainName,
+                        trainType,
+                        new LiveStationBoardResponse.StationCodeName(srcCode, srcCode),
+                        new LiveStationBoardResponse.StationCodeName(destCode, destCode),
+                        passType,
+                        schArr,
+                        schDep,
+                        expArr,
+                        expDep,
+                        delay,
+                        platform,
+                        status,
+                        sbt.runningDays(),
+                        actArr,
+                        actDep
+                ));
             }
-        
+        }
 
         for (LiveStationBoardResponse.LiveStationBoardTrain t : candidateTrains) {
             saveTrainIfMissing(t);
         }
+        
+        final ZonedDateTime finalWindowStart = windowStart;
+        final ZonedDateTime finalWindowEnd = windowEnd;
         
         List<LiveStationBoardResponse.LiveStationBoardTrain> enrichedTrains = candidateTrains.stream()
                 .map(t -> {
@@ -424,6 +450,10 @@ public class StationServiceImpl implements StationService {
                             actDep
                     );
                 })
+                .filter(t -> {
+                    ZonedDateTime passageTime = resolvePassageDateTime(t, finalWindowStart);
+                    return !passageTime.isBefore(finalWindowStart) && !passageTime.isAfter(finalWindowEnd);
+                })
                 .sorted((t1, t2) -> {
                     int p1 = getLiveStatusPriority(t1.liveStatus());
                     int p2 = getLiveStatusPriority(t2.liveStatus());
@@ -431,14 +461,10 @@ public class StationServiceImpl implements StationService {
                         return Integer.compare(p1, p2);
                     }
                     
-                    String time1 = getSortTime(t1);
-                    String time2 = getSortTime(t2);
+                    ZonedDateTime dt1 = resolvePassageDateTime(t1, finalWindowStart);
+                    ZonedDateTime dt2 = resolvePassageDateTime(t2, finalWindowStart);
                     
-                    if (time1 == null && time2 == null) return 0;
-                    if (time1 == null) return 1;
-                    if (time2 == null) return -1;
-                    
-                    return time1.compareTo(time2);
+                    return dt1.compareTo(dt2);
                 })
                 .collect(Collectors.toList());
                 
@@ -488,6 +514,81 @@ public class StationServiceImpl implements StationService {
         }
     }
     
+    private ZonedDateTime resolvePassageDateTime(LiveStationBoardResponse.LiveStationBoardTrain t, ZonedDateTime refStart) {
+        if (t == null) return refStart.plusYears(1);
+        String timeStr = t.expectedArrival() != null && !t.expectedArrival().isBlank() ? t.expectedArrival() :
+                         t.expectedDeparture() != null && !t.expectedDeparture().isBlank() ? t.expectedDeparture() :
+                         t.actualArrival() != null && !t.actualArrival().isBlank() ? t.actualArrival() :
+                         t.actualDeparture() != null && !t.actualDeparture().isBlank() ? t.actualDeparture() :
+                         t.scheduledArrival() != null && !t.scheduledArrival().isBlank() ? t.scheduledArrival() :
+                         t.scheduledDeparture();
+        return parsePassageDateTime(timeStr, refStart);
+    }
+
+    private ZonedDateTime parsePassageDateTime(String timeStr, ZonedDateTime refStart) {
+        if (timeStr == null || timeStr.isBlank()) {
+            return refStart.plusYears(1);
+        }
+        String clean = timeStr.trim();
+        if (clean.contains("T")) {
+            try {
+                return ZonedDateTime.parse(clean);
+            } catch (Exception e) {
+                try {
+                    return java.time.OffsetDateTime.parse(clean).atZoneSameInstant(IST_ZONE);
+                } catch (Exception ex) {
+                    try {
+                        return java.time.LocalDateTime.parse(clean).atZone(IST_ZONE);
+                    } catch (Exception exc) {
+                        int tIdx = clean.indexOf('T');
+                        if (clean.length() >= tIdx + 6) {
+                            clean = clean.substring(tIdx + 1, tIdx + 6);
+                        }
+                    }
+                }
+            }
+        }
+        if (clean.length() > 5) {
+            clean = clean.substring(0, 5);
+        }
+        try {
+            LocalTime lt = LocalTime.parse(clean);
+            LocalDate baseDate = refStart.toLocalDate();
+            ZonedDateTime dtToday = ZonedDateTime.of(baseDate, lt, IST_ZONE);
+            long diffToday = Duration.between(refStart, dtToday).toMinutes();
+            if (diffToday < -180) {
+                ZonedDateTime dtTomorrow = dtToday.plusDays(1);
+                long diffTomorrow = Duration.between(refStart, dtTomorrow).toMinutes();
+                if (Math.abs(diffTomorrow) < Math.abs(diffToday)) {
+                    return dtTomorrow;
+                }
+            } else if (diffToday > 720) {
+                ZonedDateTime dtYesterday = dtToday.minusDays(1);
+                long diffYesterday = Duration.between(refStart, dtYesterday).toMinutes();
+                if (Math.abs(diffYesterday) < Math.abs(diffToday)) {
+                    return dtYesterday;
+                }
+            }
+            return dtToday;
+        } catch (Exception e) {
+            return refStart.plusYears(1);
+        }
+    }
+
+    private String formatDelayedIso(LocalTime sch, int delayMinutes, ZonedDateTime refStart) {
+        if (sch == null) return null;
+        LocalDate baseDate = refStart.toLocalDate();
+        ZonedDateTime dt = ZonedDateTime.of(baseDate, sch, IST_ZONE).plusMinutes(delayMinutes);
+        return dt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
+    private int getMinutesFromZoned(LocalTime arr, LocalTime dep, ZonedDateTime refStart) {
+        LocalTime t = arr != null ? arr : dep;
+        if (t == null) return 1440;
+        int diff = (int) Duration.between(refStart.toLocalTime(), t).toMinutes();
+        return diff < 0 ? diff + 1440 : diff;
+    }
+
     private int getLiveStatusPriority(com.example.railtracker.dto.StationTrainLiveStatus status) {
         if (status == null) return 6;
         switch (status) {

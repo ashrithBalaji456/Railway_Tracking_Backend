@@ -380,19 +380,13 @@ public class RailRadarClient {
                 }
                 StationPassType passType = isHalt ? StationPassType.STOPPING : StationPassType.PASS_THROUGH;
 
-                String scheduledArrival = text(stop, "arrival");
-                String scheduledDeparture = text(stop, "departure");
+                String scheduledArrival = timeText(stop, "arrival", "scheduledArrival");
+                String scheduledDeparture = timeText(stop, "departure", "scheduledDeparture");
 
-                String expectedArrival = timeText(live, "expectedArrivalTime", "expectedArrival");
-                String expectedDeparture = timeText(live, "expectedDepartureTime", "expectedDeparture");
+                String expectedArrival = text(live, "expectedArrivalTime", "expectedArrival");
+                String expectedDeparture = text(live, "expectedDepartureTime", "expectedDeparture");
                 String actualArrival = text(live, "actualArrivalTime", "arrivedAt", "actualArrival");
-                if (actualArrival == null) {
-                    actualArrival = timeText(live, "actualArrivalTime", "arrivedAt", "actualArrival");
-                }
                 String actualDeparture = text(live, "actualDepartureTime", "departedAt", "actualDeparture");
-                if (actualDeparture == null) {
-                    actualDeparture = timeText(live, "actualDepartureTime", "departedAt", "actualDeparture");
-                }
 
                 Integer delayMinutes = integer(live, "delayMinutes");
                 String platform = text(stop, "platform");
