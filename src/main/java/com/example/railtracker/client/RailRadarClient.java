@@ -385,8 +385,14 @@ public class RailRadarClient {
 
                 String expectedArrival = timeText(live, "expectedArrivalTime", "expectedArrival");
                 String expectedDeparture = timeText(live, "expectedDepartureTime", "expectedDeparture");
-                String actualArrival = timeText(live, "actualArrivalTime", "arrivedAt", "actualArrival");
-                String actualDeparture = timeText(live, "actualDepartureTime", "departedAt", "actualDeparture");
+                String actualArrival = text(live, "actualArrivalTime", "arrivedAt", "actualArrival");
+                if (actualArrival == null) {
+                    actualArrival = timeText(live, "actualArrivalTime", "arrivedAt", "actualArrival");
+                }
+                String actualDeparture = text(live, "actualDepartureTime", "departedAt", "actualDeparture");
+                if (actualDeparture == null) {
+                    actualDeparture = timeText(live, "actualDepartureTime", "departedAt", "actualDeparture");
+                }
 
                 Integer delayMinutes = integer(live, "delayMinutes");
                 String platform = text(stop, "platform");
@@ -502,8 +508,8 @@ public class RailRadarClient {
                 destinationStation,
                 timeText(stop, "scheduledArrival", "arrival", "arrivalTime"),
                 timeText(stop, "scheduledDeparture", "departure", "departureTime"),
-                timeText(live, "actualArrival", "liveArrival", "expectedArrival"),
-                timeText(live, "actualDeparture", "liveDeparture", "expectedDeparture"),
+                firstText(live, item, "actualArrival", "arrivedAt", "liveArrival", "expectedArrival"),
+                firstText(live, item, "actualDeparture", "departedAt", "liveDeparture", "expectedDeparture"),
                 firstInteger(live, "delayMinutes", "delay", "delayArrival", "delayDeparture"),
                 isHalt,
                 firstText(live, item, "currentStatus", "status", "liveStatus"),
