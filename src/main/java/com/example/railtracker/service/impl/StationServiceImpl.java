@@ -51,6 +51,13 @@ public class StationServiceImpl implements StationService {
     private final TrainRepository trainRepository;
     private final TrainService trainService;
 
+    @Autowired(required = false)
+    private org.springframework.cache.CacheManager cacheManager;
+
+    public void setCacheManager(org.springframework.cache.CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
+
     @Autowired
     public StationServiceImpl(
             StationRepository stationRepository,
@@ -145,36 +152,91 @@ public class StationServiceImpl implements StationService {
 
     @Override
     public List<StationBoardTrainDto> getStationTrains(String stationCode, String type) {
-        logger.debug("Retrieving trains for station: {} with filter: {}", stationCode, type);
-        try {
-            getStationDetails(stationCode);
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Station {} is not available in lookup data. Continuing with empty/remote board lookup.", stationCode, e);
-        }
+        return getStationTrains(stationCode, type, false);
+    }
 
-        List<StationBoardTrainDto> allTrains = railwayDataProvider.getStationBoard(stationCode, true);
-        if (allTrains != null) {
-            allTrains = allTrains.stream()
-                    .map(t -> ensureOriginDestHalts(t, stationCode))
-                    .collect(Collectors.toList());
-            for (StationBoardTrainDto t : allTrains) {
-                saveTrainIfMissing(t);
+    @Override
+    public List<StationBoardTrainDto> getStationTrains(String stationCode, String type, boolean forceRefresh) {
+        logger.debug("Retrieving trains for station: {} with filter: {} (forceRefresh={})", stationCode, type, forceRefresh);
+        String cacheKey = (stationCode != null ? stationCode.trim().toUpperCase() : "") + ":" + (type != null ? type.trim().toUpperCase() : "ALL");
+
+        if (!forceRefresh && cacheManager != null) {
+            try {
+                var cache = cacheManager.getCache("station:trains");
+                if (cache != null) {
+                    var wrapper = cache.get(cacheKey);
+                    if (wrapper != null && wrapper.get() instanceof List<?> cachedList) {
+                        logger.debug("Cache hit for station:trains key: {}", cacheKey);
+                        @SuppressWarnings("unchecked")
+                        List<StationBoardTrainDto> typed = (List<StationBoardTrainDto>) cachedList;
+                        return typed;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Cache read error for station:trains: {}", e.getMessage());
             }
         }
-        allTrains = enrichArrivalDays(allTrains, stationCode);
 
-        if (type == null || type.equalsIgnoreCase("ALL")) {
-            return allTrains;
-        } else if (type.equalsIgnoreCase("STOPPING")) {
-            return allTrains.stream()
-                    .filter(StationBoardTrainDto::isHalt)
-                    .collect(Collectors.toList());
-        } else if (type.equalsIgnoreCase("NON_STOP")) {
-            return allTrains.stream()
-                    .filter(t -> !t.isHalt())
-                    .collect(Collectors.toList());
+        List<StationBoardTrainDto> allTrains = null;
+        try {
+            try {
+                getStationDetails(stationCode);
+            } catch (ResourceNotFoundException e) {
+                logger.warn("Station {} is not available in lookup data. Continuing with empty/remote board lookup.", stationCode, e);
+            }
+
+            allTrains = railwayDataProvider.getStationBoard(stationCode, true);
+            if (allTrains != null) {
+                allTrains = allTrains.stream()
+                        .map(t -> ensureOriginDestHalts(t, stationCode))
+                        .collect(Collectors.toList());
+                saveStationTrainsIfMissing(allTrains);
+            }
+            allTrains = enrichArrivalDays(allTrains, stationCode);
+
+            List<StationBoardTrainDto> result;
+            if (type == null || type.equalsIgnoreCase("ALL")) {
+                result = allTrains;
+            } else if (type.equalsIgnoreCase("STOPPING")) {
+                result = allTrains.stream()
+                        .filter(StationBoardTrainDto::isHalt)
+                        .collect(Collectors.toList());
+            } else if (type.equalsIgnoreCase("NON_STOP")) {
+                result = allTrains.stream()
+                        .filter(t -> !t.isHalt())
+                        .collect(Collectors.toList());
+            } else {
+                result = allTrains;
+            }
+
+            if (cacheManager != null && result != null && !result.isEmpty()) {
+                try {
+                    var cache = cacheManager.getCache("station:trains");
+                    if (cache != null) {
+                        cache.put(cacheKey, result);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Cache write error for station:trains: {}", e.getMessage());
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            if (forceRefresh && cacheManager != null) {
+                try {
+                    var cache = cacheManager.getCache("station:trains");
+                    if (cache != null) {
+                        var wrapper = cache.get(cacheKey);
+                        if (wrapper != null && wrapper.get() instanceof List<?> cachedList) {
+                            logger.warn("Preserving existing cached station:trains on error for key {}: {}", cacheKey, e.getMessage());
+                            @SuppressWarnings("unchecked")
+                            List<StationBoardTrainDto> typed = (List<StationBoardTrainDto>) cachedList;
+                            return typed;
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+            throw e;
         }
-        return allTrains;
     }
 
     @Override
@@ -200,10 +262,30 @@ public class StationServiceImpl implements StationService {
     }
 
     @Override
-    @Cacheable(value = "live-station", key = "#stationCode + ':' + #hours")
     public LiveStationBoardResponse getLiveStationBoardDetails(String stationCode, int hours) {
-        logger.debug("Retrieving live board details for station: {} for next {} hours", stationCode, hours);
-        
+        return getLiveStationBoardDetails(stationCode, hours, false);
+    }
+
+    @Override
+    public LiveStationBoardResponse getLiveStationBoardDetails(String stationCode, int hours, boolean forceRefresh) {
+        logger.debug("Retrieving live board details for station: {} for next {} hours (forceRefresh={})", stationCode, hours, forceRefresh);
+        String cacheKey = (stationCode != null ? stationCode.trim().toUpperCase() : "") + ":" + hours;
+
+        if (!forceRefresh && cacheManager != null) {
+            try {
+                var cache = cacheManager.getCache("live-station");
+                if (cache != null) {
+                    var wrapper = cache.get(cacheKey);
+                    if (wrapper != null && wrapper.get() instanceof LiveStationBoardResponse cachedRes) {
+                        logger.debug("Cache hit for live-station key: {}", cacheKey);
+                        return cachedRes;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Cache read error for live-station: {}", e.getMessage());
+            }
+        }
+
         StationDto st = null;
         try {
             st = getStationDetails(stationCode);
@@ -255,164 +337,174 @@ public class StationServiceImpl implements StationService {
             }
         }
 
-        // Merge scheduled trains in window if rawResponse missed any (e.g. delayed trains)
-        List<StationBoardTrainDto> scheduledTrains = getStationTrains(stationCode, "ALL");
-        if (scheduledTrains != null && !scheduledTrains.isEmpty()) {
-            LocalTime winStartTime = windowStart.toLocalTime();
-            LocalTime winEndTime = windowEnd.toLocalTime();
-            
-            List<StationBoardTrainDto> inWindow = scheduledTrains.stream()
-                    .filter(t -> isTimeInWindow(t.scheduledArrival(), t.scheduledDeparture(), winStartTime, winEndTime))
-                    .filter(t -> t.trainNumber() == null || !presentTrainNumbers.contains(t.trainNumber().trim().toUpperCase()))
-                    .collect(Collectors.toList());
-            
-            List<StationBoardTrainDto> targetTrains = inWindow;
-            final ZonedDateTime refStart = windowStart;
-            targetTrains.sort(Comparator.comparingInt(t -> getMinutesFromZoned(t.scheduledArrival(), t.scheduledDeparture(), refStart)));
-            
-            // Free-plan budget protection: cap live lookups (up to 8 if candidateTrains was empty, or up to 4 if merging missing trains)
-            final int MAX_LIVE_ENRICH_TRAINS = candidateTrains.isEmpty() ? 8 : 4;
-            int enrichCount = Math.min(targetTrains.size(), MAX_LIVE_ENRICH_TRAINS);
-            
-            for (int i = 0; i < targetTrains.size(); i++) {
-                StationBoardTrainDto sbt = targetTrains.get(i);
-                boolean shouldEnrich = i < enrichCount;
+        // Only fall back to heavy scheduled timetable lookup if rawResponse provided zero trains!
+        if (candidateTrains.isEmpty()) {
+            List<StationBoardTrainDto> scheduledTrains = getStationTrains(stationCode, "ALL", false);
+            if (scheduledTrains != null && !scheduledTrains.isEmpty()) {
+                LocalTime winStartTime = windowStart.toLocalTime();
+                LocalTime winEndTime = windowEnd.toLocalTime();
                 
-                String trainNumber = sbt.trainNumber();
-                String trainName = sbt.trainName();
-                String trainType = sbt.trainType();
-                String srcCode = sbt.sourceStation() != null ? sbt.sourceStation() : stationCode;
-                String destCode = sbt.destinationStation() != null ? sbt.destinationStation() : stationCode;
-                StationPassType passType = Boolean.TRUE.equals(sbt.isHalt()) ? StationPassType.STOPPING : StationPassType.PASS_THROUGH;
+                List<StationBoardTrainDto> inWindow = scheduledTrains.stream()
+                        .filter(t -> isTimeInWindow(t.scheduledArrival(), t.scheduledDeparture(), winStartTime, winEndTime))
+                        .filter(t -> t.trainNumber() == null || !presentTrainNumbers.contains(t.trainNumber().trim().toUpperCase()))
+                        .collect(Collectors.toList());
                 
-                String schArr = sbt.scheduledArrival() != null ? sbt.scheduledArrival().format(timeFmt) : null;
-                String schDep = sbt.scheduledDeparture() != null ? sbt.scheduledDeparture().format(timeFmt) : null;
-                String expArr = schArr;
-                String expDep = schDep;
-                String actArr = null;
-                String actDep = null;
-                Integer delay = sbt.delayMinutes() != null ? sbt.delayMinutes() : 0;
-                String platform = sbt.platform();
-                StationTrainLiveStatus status = StationTrainLiveStatus.SCHEDULED;
+                List<StationBoardTrainDto> targetTrains = inWindow;
+                final ZonedDateTime refStart = windowStart;
+                targetTrains.sort(Comparator.comparingInt(t -> getMinutesFromZoned(t.scheduledArrival(), t.scheduledDeparture(), refStart)));
                 
-                if (shouldEnrich && trainService != null) {
-                    try {
-                        TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber);
-                        if (liveStatus != null) {
-                            TrainLiveStatusDto.StationStatusDto matchedStop = null;
-                            if (liveStatus.stations() != null) {
-                                for (TrainLiveStatusDto.StationStatusDto stop : liveStatus.stations()) {
-                                    if (stop.stationCode() != null && stop.stationCode().equalsIgnoreCase(stationCode)) {
-                                        matchedStop = stop;
-                                        break;
+                // Free-plan budget protection: cap live lookups
+                final int MAX_LIVE_ENRICH_TRAINS = 8;
+                int enrichCount = Math.min(targetTrains.size(), MAX_LIVE_ENRICH_TRAINS);
+                
+                for (int i = 0; i < targetTrains.size(); i++) {
+                    StationBoardTrainDto sbt = targetTrains.get(i);
+                    boolean shouldEnrich = i < enrichCount;
+                    
+                    String trainNumber = sbt.trainNumber();
+                    String trainName = sbt.trainName();
+                    String trainType = sbt.trainType();
+                    String srcCode = sbt.sourceStation() != null ? sbt.sourceStation() : stationCode;
+                    String destCode = sbt.destinationStation() != null ? sbt.destinationStation() : stationCode;
+                    StationPassType passType = Boolean.TRUE.equals(sbt.isHalt()) ? StationPassType.STOPPING : StationPassType.PASS_THROUGH;
+                    
+                    String schArr = sbt.scheduledArrival() != null ? sbt.scheduledArrival().format(timeFmt) : null;
+                    String schDep = sbt.scheduledDeparture() != null ? sbt.scheduledDeparture().format(timeFmt) : null;
+                    String expArr = schArr;
+                    String expDep = schDep;
+                    String actArr = null;
+                    String actDep = null;
+                    Integer delay = sbt.delayMinutes() != null ? sbt.delayMinutes() : 0;
+                    String platform = sbt.platform();
+                    StationTrainLiveStatus status = StationTrainLiveStatus.SCHEDULED;
+                    
+                    if (shouldEnrich && trainService != null) {
+                        try {
+                            TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber);
+                            if (liveStatus != null) {
+                                TrainLiveStatusDto.StationStatusDto matchedStop = null;
+                                if (liveStatus.stations() != null) {
+                                    for (TrainLiveStatusDto.StationStatusDto stop : liveStatus.stations()) {
+                                        if (stop.stationCode() != null && stop.stationCode().equalsIgnoreCase(stationCode)) {
+                                            matchedStop = stop;
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                            
-                            if (matchedStop != null) {
-                                actArr = matchedStop.actualArrival();
-                                actDep = matchedStop.actualDeparture();
-                                if (matchedStop.delayMinutes() != null) {
-                                    delay = matchedStop.delayMinutes();
-                                } else if (liveStatus.delayMinutes() != null) {
-                                    delay = liveStatus.delayMinutes();
-                                }
-                                if (matchedStop.platform() != null && !matchedStop.platform().isBlank()) {
-                                    platform = matchedStop.platform();
-                                }
                                 
-                                String sStatus = matchedStop.status() != null ? matchedStop.status().toLowerCase() : "";
-                                boolean hasActualDep = actDep != null && !actDep.isBlank();
-                                boolean hasActualArr = actArr != null && !actArr.isBlank();
-                                
-                                if (sStatus.contains("not-start") || sStatus.contains("not_start")) {
-                                    status = StationTrainLiveStatus.NOT_STARTED;
-                                } else if (sStatus.contains("at-station") || sStatus.contains("at_station")) {
-                                    status = StationTrainLiveStatus.AT_STATION;
-                                } else if (sStatus.contains("depart") || (hasActualDep && !sStatus.contains("arriv") && !sStatus.contains("upcoming"))) {
-                                    status = StationTrainLiveStatus.DEPARTED;
-                                } else if (sStatus.contains("arriv") || (hasActualArr && !hasActualDep)) {
-                                    status = StationTrainLiveStatus.ARRIVED;
-                                } else if (sStatus.contains("upcoming") || sStatus.contains("approach")) {
-                                    status = StationTrainLiveStatus.UPCOMING;
-                                } else if (Boolean.TRUE.equals(liveStatus.isCancelled()) || (liveStatus.skippedStations() != null && liveStatus.skippedStations().contains(stationCode.toUpperCase()))) {
-                                    status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
-                                } else if (liveStatus.currentStationCode() != null && !liveStatus.currentStationCode().isBlank()) {
-                                    status = StationTrainLiveStatus.UPCOMING;
+                                if (matchedStop != null) {
+                                    actArr = matchedStop.actualArrival();
+                                    actDep = matchedStop.actualDeparture();
+                                    if (matchedStop.delayMinutes() != null) {
+                                        delay = matchedStop.delayMinutes();
+                                    } else if (liveStatus.delayMinutes() != null) {
+                                        delay = liveStatus.delayMinutes();
+                                    }
+                                    if (matchedStop.platform() != null && !matchedStop.platform().isBlank()) {
+                                        platform = matchedStop.platform();
+                                    }
+                                    
+                                    String sStatus = matchedStop.status() != null ? matchedStop.status().toLowerCase() : "";
+                                    boolean hasActualDep = actDep != null && !actDep.isBlank();
+                                    boolean hasActualArr = actArr != null && !actArr.isBlank();
+                                    
+                                    if (sStatus.contains("not-start") || sStatus.contains("not_start")) {
+                                        status = StationTrainLiveStatus.NOT_STARTED;
+                                    } else if (sStatus.contains("at-station") || sStatus.contains("at_station")) {
+                                        status = StationTrainLiveStatus.AT_STATION;
+                                    } else if (sStatus.contains("depart") || (hasActualDep && !sStatus.contains("arriv") && !sStatus.contains("upcoming"))) {
+                                        status = StationTrainLiveStatus.DEPARTED;
+                                    } else if (sStatus.contains("arriv") || (hasActualArr && !hasActualDep)) {
+                                        status = StationTrainLiveStatus.ARRIVED;
+                                    } else if (sStatus.contains("upcoming") || sStatus.contains("approach")) {
+                                        status = StationTrainLiveStatus.UPCOMING;
+                                    } else if (Boolean.TRUE.equals(liveStatus.isCancelled()) || (liveStatus.skippedStations() != null && liveStatus.skippedStations().contains(stationCode.toUpperCase()))) {
+                                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                                    } else if (liveStatus.currentStationCode() != null && !liveStatus.currentStationCode().isBlank()) {
+                                        status = StationTrainLiveStatus.UPCOMING;
+                                    } else {
+                                        status = StationTrainLiveStatus.SCHEDULED;
+                                    }
                                 } else {
-                                    status = StationTrainLiveStatus.SCHEDULED;
+                                    if (Boolean.TRUE.equals(liveStatus.isDiverted()) || Boolean.TRUE.equals(liveStatus.isCancelled())) {
+                                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
+                                    } else {
+                                        status = StationTrainLiveStatus.SCHEDULED;
+                                    }
                                 }
                             } else {
-                                if (Boolean.TRUE.equals(liveStatus.isDiverted()) || Boolean.TRUE.equals(liveStatus.isCancelled())) {
-                                    status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
-                                } else {
-                                    status = StationTrainLiveStatus.SCHEDULED;
-                                }
+                                status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
                             }
-                        } else {
+                        } catch (Exception e) {
+                            logger.debug("Failed to enrich live status for train {}: {}", trainNumber, e.getMessage());
                             status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
                         }
-                    } catch (Exception e) {
-                        logger.debug("Failed to enrich live status for train {}: {}", trainNumber, e.getMessage());
-                        status = StationTrainLiveStatus.STATUS_UNAVAILABLE;
                     }
+                    
+                    if (actArr != null && !actArr.isBlank()) {
+                        expArr = actArr;
+                    } else if (delay != null && delay > 0 && sbt.scheduledArrival() != null) {
+                        expArr = formatDelayedIso(sbt.scheduledArrival(), delay, windowStart);
+                    }
+                    
+                    if (actDep != null && !actDep.isBlank() && status == StationTrainLiveStatus.DEPARTED) {
+                        expDep = actDep;
+                    } else if (delay != null && delay > 0 && sbt.scheduledDeparture() != null) {
+                        expDep = formatDelayedIso(sbt.scheduledDeparture(), delay, windowStart);
+                    }
+                    
+                    if (status != StationTrainLiveStatus.DEPARTED) {
+                        actDep = null;
+                    }
+                    
+                    candidateTrains.add(new LiveStationBoardResponse.LiveStationBoardTrain(
+                            trainNumber,
+                            trainName,
+                            trainType,
+                            new LiveStationBoardResponse.StationCodeName(srcCode, srcCode),
+                            new LiveStationBoardResponse.StationCodeName(destCode, destCode),
+                            passType,
+                            schArr,
+                            schDep,
+                            expArr,
+                            expDep,
+                            delay,
+                            platform,
+                            status,
+                            sbt.runningDays(),
+                            actArr,
+                            actDep
+                    ));
                 }
-                
-                if (actArr != null && !actArr.isBlank()) {
-                    expArr = actArr;
-                } else if (delay != null && delay > 0 && sbt.scheduledArrival() != null) {
-                    expArr = formatDelayedIso(sbt.scheduledArrival(), delay, windowStart);
-                }
-                
-                if (actDep != null && !actDep.isBlank() && status == StationTrainLiveStatus.DEPARTED) {
-                    expDep = actDep;
-                } else if (delay != null && delay > 0 && sbt.scheduledDeparture() != null) {
-                    expDep = formatDelayedIso(sbt.scheduledDeparture(), delay, windowStart);
-                }
-                
-                if (status != StationTrainLiveStatus.DEPARTED) {
-                    actDep = null;
-                }
-                
-                candidateTrains.add(new LiveStationBoardResponse.LiveStationBoardTrain(
-                        trainNumber,
-                        trainName,
-                        trainType,
-                        new LiveStationBoardResponse.StationCodeName(srcCode, srcCode),
-                        new LiveStationBoardResponse.StationCodeName(destCode, destCode),
-                        passType,
-                        schArr,
-                        schDep,
-                        expArr,
-                        expDep,
-                        delay,
-                        platform,
-                        status,
-                        sbt.runningDays(),
-                        actArr,
-                        actDep
-                ));
             }
         }
 
-        for (LiveStationBoardResponse.LiveStationBoardTrain t : candidateTrains) {
-            saveTrainIfMissing(t);
-        }
+        saveLiveTrainsIfMissing(candidateTrains);
         
         final ZonedDateTime finalWindowStart = windowStart;
         final ZonedDateTime finalWindowEnd = windowEnd;
+
+        // Batch station name lookup in ONE query
+        Set<String> codesToFetch = new HashSet<>();
+        for (LiveStationBoardResponse.LiveStationBoardTrain t : candidateTrains) {
+            if (t.source() != null && t.source().code() != null) codesToFetch.add(t.source().code().trim().toUpperCase());
+            if (t.destination() != null && t.destination().code() != null) codesToFetch.add(t.destination().code().trim().toUpperCase());
+        }
+        Map<String, String> stationNameMap = codesToFetch.isEmpty() ? Map.of() :
+                stationRepository.findByStationCodeIn(codesToFetch).stream()
+                        .collect(Collectors.toMap(
+                                s -> s.getStationCode().toUpperCase(),
+                                com.example.railtracker.entity.Station::getStationName,
+                                (existing, rep) -> existing
+                        ));
         
         List<LiveStationBoardResponse.LiveStationBoardTrain> enrichedTrains = candidateTrains.stream()
                 .map(t -> {
                     String srcCode = t.source().code();
-                    String srcName = stationRepository.findByStationCode(srcCode)
-                            .map(com.example.railtracker.entity.Station::getStationName)
-                            .orElse(srcCode);
+                    String srcName = stationNameMap.getOrDefault(srcCode != null ? srcCode.toUpperCase() : "", srcCode);
                             
                     String destCode = t.destination().code();
-                    String destName = stationRepository.findByStationCode(destCode)
-                            .map(com.example.railtracker.entity.Station::getStationName)
-                            .orElse(destCode);
+                    String destName = stationNameMap.getOrDefault(destCode != null ? destCode.toUpperCase() : "", destCode);
 
                     boolean isOriginOrDest = stationCode.equalsIgnoreCase(srcCode) || stationCode.equalsIgnoreCase(destCode);
                     StationPassType resolvedPassType = isOriginOrDest ? StationPassType.STOPPING : t.passType();
@@ -476,7 +568,18 @@ public class StationServiceImpl implements StationService {
                 st != null ? st.longitude() : 0.0
         );
         
-        return new LiveStationBoardResponse(resolvedStation, windowInfo, enrichedTrains);
+        LiveStationBoardResponse result = new LiveStationBoardResponse(resolvedStation, windowInfo, enrichedTrains);
+        if (cacheManager != null && result != null) {
+            try {
+                var cache = cacheManager.getCache("live-station");
+                if (cache != null) {
+                    cache.put(cacheKey, result);
+                }
+            } catch (Exception e) {
+                logger.warn("Cache write error for live-station: {}", e.getMessage());
+            }
+        }
+        return result;
     }
     
     private boolean isTimeInWindow(LocalTime arr, LocalTime dep, LocalTime start, LocalTime end) {
@@ -696,6 +799,96 @@ public class StationServiceImpl implements StationService {
                             t.arrivalDay()
                     ))
                     .collect(Collectors.toList());
+        }
+    }
+
+    private void saveStationTrainsIfMissing(List<StationBoardTrainDto> trains) {
+        if (trains == null || trains.isEmpty()) return;
+        try {
+            Set<String> numbers = trains.stream()
+                    .map(StationBoardTrainDto::trainNumber)
+                    .filter(n -> n != null && !n.isBlank())
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+            if (numbers.isEmpty()) return;
+
+            Set<String> existingNumbers = trainRepository.findByTrainNumberIn(numbers).stream()
+                    .map(t -> t.getTrainNumber().trim())
+                    .collect(Collectors.toSet());
+
+            List<Train> newTrains = new ArrayList<>();
+            for (StationBoardTrainDto t : trains) {
+                String num = t.trainNumber() != null ? t.trainNumber().trim() : null;
+                if (num != null && !existingNumbers.contains(num)) {
+                    existingNumbers.add(num);
+                    String name = t.trainName() != null ? t.trainName().trim() : "Express";
+                    String type = t.trainType() != null ? t.trainType().trim() : "Express";
+                    String cat = determineCategory(name, type);
+                    newTrains.add(new Train(
+                            num,
+                            name,
+                            type,
+                            cat,
+                            t.sourceStation() != null ? t.sourceStation().trim() : "",
+                            t.destinationStation() != null ? t.destinationStation().trim() : "",
+                            null,
+                            null,
+                            t.runningDays() != null ? t.runningDays() : "Daily"
+                    ));
+                }
+            }
+            if (!newTrains.isEmpty()) {
+                trainRepository.saveAll(newTrains);
+                logger.debug("Bulk saved {} new scheduled trains", newTrains.size());
+            }
+        } catch (Exception e) {
+            logger.debug("Bulk save of scheduled trains skipped: {}", e.getMessage());
+        }
+    }
+
+    private void saveLiveTrainsIfMissing(List<LiveStationBoardResponse.LiveStationBoardTrain> trains) {
+        if (trains == null || trains.isEmpty()) return;
+        try {
+            Set<String> numbers = trains.stream()
+                    .map(LiveStationBoardResponse.LiveStationBoardTrain::trainNumber)
+                    .filter(n -> n != null && !n.isBlank())
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+            if (numbers.isEmpty()) return;
+
+            Set<String> existingNumbers = trainRepository.findByTrainNumberIn(numbers).stream()
+                    .map(t -> t.getTrainNumber().trim())
+                    .collect(Collectors.toSet());
+
+            List<Train> newTrains = new ArrayList<>();
+            for (LiveStationBoardResponse.LiveStationBoardTrain t : trains) {
+                String num = t.trainNumber() != null ? t.trainNumber().trim() : null;
+                if (num != null && !existingNumbers.contains(num)) {
+                    existingNumbers.add(num);
+                    String name = t.trainName() != null ? t.trainName().trim() : "Express";
+                    String type = t.trainType() != null ? t.trainType().trim() : "Express";
+                    String cat = determineCategory(name, type);
+                    String src = t.source() != null && t.source().name() != null ? t.source().name().trim() : (t.source() != null ? t.source().code() : "");
+                    String dest = t.destination() != null && t.destination().name() != null ? t.destination().name().trim() : (t.destination() != null ? t.destination().code() : "");
+                    newTrains.add(new Train(
+                            num,
+                            name,
+                            type,
+                            cat,
+                            src,
+                            dest,
+                            null,
+                            null,
+                            t.runningDays() != null ? t.runningDays() : "Daily"
+                    ));
+                }
+            }
+            if (!newTrains.isEmpty()) {
+                trainRepository.saveAll(newTrains);
+                logger.debug("Bulk saved {} new live board trains", newTrains.size());
+            }
+        } catch (Exception e) {
+            logger.debug("Bulk save of live trains skipped: {}", e.getMessage());
         }
     }
 

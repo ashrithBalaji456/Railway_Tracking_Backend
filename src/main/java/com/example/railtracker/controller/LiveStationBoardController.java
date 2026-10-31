@@ -19,7 +19,8 @@ public class LiveStationBoardController {
     @GetMapping("/{stationCode}/live")
     public ResponseEntity<ApiResponse<LiveStationBoardResponse>> getLiveStationBoard(
             @PathVariable("stationCode") String stationCode,
-            @RequestParam(name = "hours", defaultValue = "4") int hours) {
+            @RequestParam(name = "hours", defaultValue = "4") int hours,
+            @RequestParam(name = "refresh", defaultValue = "false") boolean refresh) {
         
         // 1. Validate stationCode is not blank
         if (stationCode == null || stationCode.trim().isEmpty()) {
@@ -31,7 +32,7 @@ public class LiveStationBoardController {
             throw new com.example.railtracker.exception.BadRequestException("Supported time windows are 2, 4, 6, or 8 hours.");
         }
         
-        LiveStationBoardResponse response = stationService.getLiveStationBoardDetails(stationCode, hours);
+        LiveStationBoardResponse response = stationService.getLiveStationBoardDetails(stationCode, hours, refresh);
         return ResponseEntity.ok(ApiResponse.success("Live station board retrieved successfully", response));
     }
 }

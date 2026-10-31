@@ -69,10 +69,12 @@ public class RailRadarClient {
     private JsonNode executeGet(String path) {
         try {
             java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(5))
                     .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
                     .build();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create(baseUrl + path))
+                    .timeout(java.time.Duration.ofSeconds(10))
                     .header("Authorization", "Bearer " + apiKey)
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .header("Accept", "application/json")
@@ -104,11 +106,13 @@ public class RailRadarClient {
     public JsonNode executePost(String path, Object body) {
         try {
             java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(5))
                     .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
                     .build();
             String jsonPayload = this.objectMapper.writeValueAsString(body);
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create(baseUrl + path))
+                    .timeout(java.time.Duration.ofSeconds(10))
                     .header("Authorization", "Bearer " + apiKey)
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .header("Content-Type", "application/json")

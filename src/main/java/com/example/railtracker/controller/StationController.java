@@ -33,8 +33,9 @@ public class StationController {
     @GetMapping("/{stationCode}/trains")
     public ResponseEntity<ApiResponse<List<StationBoardTrainDto>>> getStationTrains(
             @PathVariable("stationCode") String stationCode,
-            @RequestParam(value = "type", defaultValue = "ALL") String type) {
-        List<StationBoardTrainDto> trains = stationService.getStationTrains(stationCode, type);
+            @RequestParam(value = "type", defaultValue = "ALL") String type,
+            @RequestParam(value = "refresh", defaultValue = "false") boolean refresh) {
+        List<StationBoardTrainDto> trains = stationService.getStationTrains(stationCode, type, refresh);
         return ResponseEntity.ok(ApiResponse.success("Station board trains retrieved successfully", trains));
     }
 

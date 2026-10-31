@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface StationRepository extends JpaRepository<Station, Long> {
     Optional<Station> findByStationCode(String stationCode);
+    List<Station> findByStationCodeIn(java.util.Collection<String> stationCodes);
 
     @Query("SELECT s FROM Station s WHERE " +
            "LOWER(s.stationCode) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
