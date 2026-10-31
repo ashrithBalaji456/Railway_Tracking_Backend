@@ -176,6 +176,10 @@ This guide is specifically designed for developers, students, or system administ
 
     - 16.6. Multi-Leg Delay Overlay
 
+    - 16.19. Live Station Board Caching, N+1 Query Elimination & Instant Fast-Path Architecture
+
+    - 16.20. Rolling Time-Window Filtering & Robust Midnight-Crossing Date Reconciliation
+
 
 
 ---
@@ -2407,3 +2411,47 @@ This section documents the integration of RailRadar API endpoints extending the 
   - All images are served with instant zero-latency caching by Spring Boot static resource handlers.
 
 
+### 16.19. Live Station Board Caching, N+1 Query Elimination & Instant Fast-Path Architecture
+
+* **1. Fast-Path Upstream Candidate Train Discovery (`StationServiceImpl.java`):**
+  - **Bottleneck Identified:** Previously, every `/api/stations/{stationCode}/live` call initiated `getStationTrains(stationCode, "ALL")` which fetched up to 250 scheduled timetable trains, looped over them, and fired up to 8 synchronous HTTP requests (`trainService.getTrainLiveStatus(...)`) to the external RailRadar API. This caused 15–25 second response latencies on every tab switch or refresh.
+  - **Resolution:** Implemented an intelligent fast-path. If `railwayDataProvider.getLiveStationBoardDetails(...)` returns live candidate trains in `rawResponse.trains()`, the service directly processes and enriches those candidates, bypassing the redundant 250-train scheduled timetable fetch and serial live-status lookups entirely. This reduced response time from ~25s down to <1s.
+
+* **2. Elimination of Sequential N+1 Database Lookups (`StationRepository` & `TrainRepository`):**
+  - **Bottleneck Identified:** The service was executing individual `stationRepository.findByStationCode(...)` queries inside a `.map()` loop for every single source and destination code (generating up to 140 database queries per board request), followed by sequential single-row `trainRepository.save(train)` calls.
+  - **Resolution:**
+    - Added `findByStationCodeIn(Collection<String> stationCodes)` in `StationRepository` to fetch all station names in a single SQL query (`WHERE station_code IN (...)`) and mapped them into an in-memory `Map<String, String>`.
+    - Added `findByTrainNumberIn(Collection<String> trainNumbers)` in `TrainRepository` and converted single saves to batch `trainRepository.saveAll(...)`.
+
+* **3. Redis Multi-Tier Cache Tuning (`CacheConfig.java`):**
+  - Configured `live-station` and `station:live` cache TTL to 5 minutes (`Duration.ofMinutes(5)`), protecting external quota while maintaining timely train tracking.
+  - Introduced dedicated `station:trains` cache region with 30-minute TTL (`Duration.ofMinutes(30)`) for static timetable rosters.
+  - Added HTTP client connection timeouts (5 seconds) and request timeouts (10 seconds) in `RailRadarClient.java` to prevent thread starvation under slow upstream connectivity.
+
+* **4. Manual Cache-Bypass Synchronization (`forceRefresh`):**
+  - Exposed `@RequestParam(name = "refresh", defaultValue = "false") boolean refresh` across `LiveStationBoardController.java` (`/api/stations/{code}/live`) and `StationController.java` (`/api/v1/stations/{code}/trains`).
+  - When `refresh=true`, the service programmatically invalidates the relevant Redis cache entry and fetches fresh upstream data before writing the new result back to cache.
+
+
+### 16.20. Rolling Time-Window Filtering & Robust Midnight-Crossing Date Reconciliation
+
+* **1. Real-Time Rolling Window Formulation (`StationServiceImpl.java`):**
+  - Indian Railways station display boards display trains in a rolling window: 2 hours in the past (`now - 120 minutes`) through `$H$` hours in the future (`now + hours`), where `$H \in \{2, 4, 6, 8\}$`.
+  - Standardized all time parsing and window comparisons on `Asia/Kolkata` (`IST_ZONE`), eliminating server timezone discrepancies when running on UTC cloud hosts (e.g., Render / AWS / GCP).
+
+* **2. Midnight-Crossing Past-Window Date Calculation Bug & Resolution:**
+  - **Issue:** When querying the board in the early morning hours (e.g. `01:13 AM`), the past 2-hour window begins before midnight (`23:13` yesterday). Previously, attaching today's date (`baseDate = nowIst.toLocalDate()`) to `"23:13"` erroneously shifted `windowStart` to **Tonight at 23:13 (22 hours in the future)** and `windowEnd` to **Tomorrow at 05:13 (28 hours in the future)**. As a result, all trains running at the station right now (e.g. `00:19`, `00:40`, `01:30`, `03:48`) were falsely flagged as "before window start" and discarded, producing `"0 Trains"` and displaying `"No trains found in the next 4 hours."`
+  - **Fix:** Implemented bidirectional midnight-crossing reconciliation:
+    ```java
+    LocalDate baseDate = nowIst.toLocalDate();
+    long elapsedMins = (Duration.between(rawFrom, nowIst.toLocalTime()).toMinutes() + 1440) % 1440;
+    boolean crossedMidnightPast = rawFrom.isAfter(nowIst.toLocalTime()) && elapsedMins <= 360;
+    LocalDate fromDate = crossedMidnightPast ? baseDate.minusDays(1) : baseDate;
+    windowStart = ZonedDateTime.of(fromDate, rawFrom, IST_ZONE);
+    LocalDate toDate = rawTo.isBefore(rawFrom) ? fromDate.plusDays(1) : fromDate;
+    windowEnd = ZonedDateTime.of(toDate, rawTo, IST_ZONE);
+    ```
+  - Also resolved `formatDelayedIso` to advance the scheduled base date when `sch.isBefore(refStart.toLocalTime())`.
+
+* **3. Comprehensive Automated Regression Testing (`LiveStationBoardControllerTest.java`):**
+  - Added `testGetLiveStationBoardMidnightCrossingWindow`: Tests a station board spanning across midnight (`23:13` to `05:13`) and asserts that trains arriving in the post-midnight hours (e.g. `17035 Balharshah Express` at `00:39`) are correctly included in the returned payload.
