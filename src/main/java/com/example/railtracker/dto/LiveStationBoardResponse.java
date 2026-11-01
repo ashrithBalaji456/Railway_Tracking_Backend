@@ -18,8 +18,14 @@ public record LiveStationBoardResponse(
     public record WindowInfo(
         String from,
         String to,
-        Integer hours
-    ) {}
+        Integer hours,
+        String fromDateTime,
+        String toDateTime
+    ) {
+        public WindowInfo(String from, String to, Integer hours) {
+            this(from, to, hours, null, null);
+        }
+    }
 
     public record LiveStationBoardTrain(
         String trainNumber,
