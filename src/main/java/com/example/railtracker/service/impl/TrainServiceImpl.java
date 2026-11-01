@@ -658,12 +658,22 @@ public class TrainServiceImpl implements TrainService {
     }
 
     @Override
-    @Cacheable(value = "train:live", key = "#trainNumber + '_' + (#journeyDate != null ? #journeyDate : 'current')")
+    @Cacheable(value = "train:live", key = "#trainNumber + '_' + (#journeyDate != null ? #journeyDate.trim() : 'current')")
     public TrainLiveStatusDto getTrainLiveStatus(String trainNumber, String journeyDate) {
         if (journeyDate == null || journeyDate.isBlank()) {
             return getTrainLiveStatus(trainNumber);
         }
-        TrainLiveStatusDto status = railwayDataProvider.getTrainLiveStatus(trainNumber, journeyDate);
+        TrainLiveStatusDto status = railwayDataProvider.getTrainLiveStatus(trainNumber, journeyDate.trim());
+        if (status != null && status.startDate() != null && !status.startDate().isBlank()) {
+            String normReq = journeyDate.replaceAll("[^0-9]", "");
+            String normResp = status.startDate().replaceAll("[^0-9]", "");
+            if (!normReq.isEmpty() && !normResp.isEmpty() && !normReq.equals(normResp)) {
+                logger.warn("Live status startDate mismatch for train {}: requested journeyDate {}, but provider returned rake starting on {}",
+                        trainNumber, journeyDate, status.startDate());
+                throw new ResourceNotFoundException("No running rake found for train " + trainNumber + " with journey date " + journeyDate
+                        + " (provider returned active rake for " + status.startDate() + ")");
+            }
+        }
         saveTrainIfMissingFromLive(status);
         return status;
     }

@@ -415,6 +415,14 @@ public class RailRadarClient {
                     runDaysStr = String.join(",", days);
                 }
 
+                String journeyDate = text(live, "startDate", "start_date", "journeyDate", "journey_date");
+                if (journeyDate == null || journeyDate.isBlank()) {
+                    Integer day = integer(stop, "day", "arrivalDay", "dayOffset");
+                    int dayOffset = (day != null && day > 1) ? day - 1 : 0;
+                    LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+                    journeyDate = today.minusDays(dayOffset).toString();
+                }
+
                 trainsList.add(new LiveStationBoardResponse.LiveStationBoardTrain(
                         trainNumber,
                         trainName,
@@ -431,7 +439,8 @@ public class RailRadarClient {
                         liveStatus,
                         runDaysStr,
                         actualArrival,
-                        actualDeparture
+                        actualDeparture,
+                        journeyDate
                 ));
             }
         }
@@ -949,17 +958,51 @@ public class RailRadarClient {
                     platform = null;
                 }
 
+                String rawActualArrival = text(stop, "actualArrival");
+                String rawActualDeparture = text(stop, "actualDeparture");
+                String rawExpectedArrival = text(stop, "expectedArrival", "expectedArrivalTime");
+                String rawExpectedDeparture = text(stop, "expectedDeparture", "expectedDepartureTime");
+                String provenance = text(stop, "provenance");
+                boolean isUpcoming = stopStatus != null && (stopStatus.equalsIgnoreCase("upcoming") || stopStatus.equalsIgnoreCase("scheduled"));
+                boolean isPredicted = "predicted".equalsIgnoreCase(provenance) || isUpcoming;
+
+                String confirmedActualArrival = null;
+                String confirmedActualDeparture = null;
+                String resolvedExpectedArrival = rawExpectedArrival;
+                String resolvedExpectedDeparture = rawExpectedDeparture;
+
+                if (isPredicted) {
+                    if (resolvedExpectedArrival == null || resolvedExpectedArrival.isBlank()) {
+                        resolvedExpectedArrival = rawActualArrival;
+                    }
+                    if (resolvedExpectedDeparture == null || resolvedExpectedDeparture.isBlank()) {
+                        resolvedExpectedDeparture = rawActualDeparture;
+                    }
+                } else {
+                    confirmedActualArrival = rawActualArrival;
+                    confirmedActualDeparture = rawActualDeparture;
+                    if (stopStatus != null && (stopStatus.toLowerCase().contains("at-station") || stopStatus.toLowerCase().contains("at_station") || stopStatus.equalsIgnoreCase("arrived"))) {
+                        if (resolvedExpectedDeparture == null || resolvedExpectedDeparture.isBlank()) {
+                            resolvedExpectedDeparture = rawActualDeparture;
+                        }
+                        confirmedActualDeparture = null;
+                    }
+                }
+
                 stations.add(new RailRadarLiveStationStatus(
                         sInfo,
                         integer(stop, "sequence"),
                         text(stop, "scheduledArrival"),
                         text(stop, "scheduledDeparture"),
-                        text(stop, "actualArrival"),
-                        text(stop, "actualDeparture"),
+                        confirmedActualArrival,
+                        confirmedActualDeparture,
                         firstInteger(stop, "delayMinutes", "delayDeparture", "delayArrival"),
                         stopStatus,
                         bool(stop, "isHalt"),
-                        platform
+                        platform,
+                        resolvedExpectedArrival,
+                        resolvedExpectedDeparture,
+                        isPredicted
                 ));
             }
         }
@@ -1096,6 +1139,8 @@ public class RailRadarClient {
             }
         }
 
+        String startDate = text(dataNode, "startDate", "start_date", "journeyDate", "journey_date");
+
         return new RailRadarTrainLiveStatus(
                 text(dataNode, "trainNumber", "number") != null ? text(dataNode, "trainNumber", "number") : requestedTrainNumber,
                 text(dataNode, "trainName", "name"),
@@ -1117,7 +1162,8 @@ public class RailRadarClient {
                 isDiverted,
                 isRescheduled,
                 disruptionMessage,
-                skippedStations
+                skippedStations,
+                startDate
         );
     }
 
@@ -1342,8 +1388,26 @@ public class RailRadarClient {
             @JsonAlias({"delay_minutes"}) Integer delayMinutes,
             String status,
             @JsonAlias({"is_halt"}) Boolean isHalt,
-            @JsonAlias({"platform_number", "platformNumber"}) String platform
+            @JsonAlias({"platform_number", "platformNumber"}) String platform,
+            @JsonAlias({"expected_arrival", "expectedArrivalTime"}) String expectedArrival,
+            @JsonAlias({"expected_departure", "expectedDepartureTime"}) String expectedDeparture,
+            @JsonAlias({"is_predicted"}) Boolean isPredicted
     ) {
+        public RailRadarLiveStationStatus(
+                RailRadarStationInfo station,
+                Integer sequence,
+                String scheduledArrival,
+                String scheduledDeparture,
+                String actualArrival,
+                String actualDeparture,
+                Integer delayMinutes,
+                String status,
+                Boolean isHalt,
+                String platform
+        ) {
+            this(station, sequence, scheduledArrival, scheduledDeparture, actualArrival, actualDeparture, delayMinutes, status, isHalt, platform, null, null, false);
+        }
+
         public RailRadarLiveStationStatus(
                 RailRadarStationInfo station,
                 Integer sequence,
@@ -1355,7 +1419,7 @@ public class RailRadarClient {
                 String status,
                 Boolean isHalt
         ) {
-            this(station, sequence, scheduledArrival, scheduledDeparture, actualArrival, actualDeparture, delayMinutes, status, isHalt, null);
+            this(station, sequence, scheduledArrival, scheduledDeparture, actualArrival, actualDeparture, delayMinutes, status, isHalt, null, null, null, false);
         }
     }
 
@@ -1380,8 +1444,21 @@ public class RailRadarClient {
             @JsonAlias({"is_diverted", "isDiverted"}) Boolean isDiverted,
             @JsonAlias({"is_rescheduled", "isRescheduled"}) Boolean isRescheduled,
             @JsonAlias({"disruption_message", "disruptionMessage"}) String disruptionMessage,
-            @JsonAlias({"skipped_stations", "skippedStations"}) List<String> skippedStations
-    ) {}
+            @JsonAlias({"skipped_stations", "skippedStations"}) List<String> skippedStations,
+            @JsonAlias({"start_date", "startDate", "journey_date", "journeyDate"}) String startDate
+    ) {
+        public RailRadarTrainLiveStatus(
+            String trainNumber, String trainName, String runStatus, String currentStationCode, String currentStationName,
+            String nextStationCode, String nextStationName, Integer delayMinutes, Double latitude, Double longitude,
+            Double speed, Double bearing, Double routeProgress, String lastLocationInfo, String lastUpdatedAt,
+            List<RailRadarLiveStationStatus> stations, Boolean isCancelled, Boolean isDiverted, Boolean isRescheduled,
+            String disruptionMessage, List<String> skippedStations
+        ) {
+            this(trainNumber, trainName, runStatus, currentStationCode, currentStationName, nextStationCode, nextStationName,
+                 delayMinutes, latitude, longitude, speed, bearing, routeProgress, lastLocationInfo, lastUpdatedAt, stations,
+                 isCancelled, isDiverted, isRescheduled, disruptionMessage, skippedStations, null);
+        }
+    }
 
     public record RailRadarStationBoardTrain(
             @JsonAlias({"train_number"}) String trainNumber,

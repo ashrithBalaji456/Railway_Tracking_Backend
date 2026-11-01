@@ -362,9 +362,12 @@ public class StationServiceImpl implements StationService {
                     String platform = sbt.platform();
                     StationTrainLiveStatus status = StationTrainLiveStatus.SCHEDULED;
                     
+                    int dayOffset = (sbt.arrivalDay() != null && sbt.arrivalDay() > 1) ? sbt.arrivalDay() - 1 : 0;
+                    String expectedJourneyDate = windowStart.toLocalDate().minusDays(dayOffset).toString();
+                    
                     if (shouldEnrich && trainService != null) {
                         try {
-                            TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber);
+                            TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber, expectedJourneyDate);
                             if (liveStatus != null) {
                                 TrainLiveStatusDto.StationStatusDto matchedStop = null;
                                 if (liveStatus.stations() != null) {
@@ -457,7 +460,8 @@ public class StationServiceImpl implements StationService {
                             status,
                             sbt.runningDays(),
                             actArr,
-                            actDep
+                            actDep,
+                            expectedJourneyDate
                     ));
                 }
             }
@@ -524,7 +528,8 @@ public class StationServiceImpl implements StationService {
                             resolvedStatus,
                             t.runningDays(),
                             actArr,
-                            actDep
+                            actDep,
+                            t.journeyDate()
                     );
                 })
                 .filter(t -> shouldIncludeInLiveBoard(t, finalWindowStart, finalWindowEnd))

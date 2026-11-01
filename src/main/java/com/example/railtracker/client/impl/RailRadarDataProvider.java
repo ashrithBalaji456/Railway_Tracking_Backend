@@ -447,7 +447,10 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                             s.delayMinutes(),
                             s.status(),
                             Boolean.TRUE.equals(s.isHalt()),
-                            s.platform()
+                            s.platform(),
+                            s.expectedArrival(),
+                            s.expectedDeparture(),
+                            Boolean.TRUE.equals(s.isPredicted())
                     ))
                     .collect(Collectors.toList());
 
@@ -472,7 +475,8 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                     l.isDiverted(),
                     l.isRescheduled(),
                     l.disruptionMessage(),
-                    l.skippedStations()
+                    l.skippedStations(),
+                    l.startDate()
             );
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -501,7 +505,10 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                             s.delayMinutes(),
                             s.status(),
                             Boolean.TRUE.equals(s.isHalt()),
-                            s.platform()
+                            s.platform(),
+                            s.expectedArrival(),
+                            s.expectedDeparture(),
+                            Boolean.TRUE.equals(s.isPredicted())
                     ))
                     .collect(Collectors.toList());
 
@@ -526,7 +533,8 @@ public class RailRadarDataProvider implements RailwayDataProvider {
                     l.isDiverted(),
                     l.isRescheduled(),
                     l.disruptionMessage(),
-                    l.skippedStations()
+                    l.skippedStations(),
+                    l.startDate()
             );
         } catch (ResourceNotFoundException e) {
             throw e;
