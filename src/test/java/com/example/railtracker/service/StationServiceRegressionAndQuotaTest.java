@@ -304,13 +304,15 @@ class StationServiceRegressionAndQuotaTest {
 
         LocalTime now = LocalTime.now(ZoneId.of("Asia/Kolkata"));
 
+        String yesterdayStr = LocalDate.now(ZoneId.of("Asia/Kolkata")).minusDays(1).toString();
+
         String arr = now.plusMinutes(20).format(DateTimeFormatter.ofPattern("HH:mm"));
 
         String dep = now.plusMinutes(25).format(DateTimeFormatter.ofPattern("HH:mm"));
 
 
 
-        // Train 12792 running from yesterday's journey (2026-10-31) in live feed
+        // Train 12792 running from yesterday's journey in live feed
 
         LiveStationBoardTrain yesterdayRake = new LiveStationBoardTrain(
 
@@ -320,7 +322,7 @@ class StationServiceRegressionAndQuotaTest {
 
                 StationPassType.STOPPING, arr, dep, arr, dep, 0, "1",
 
-                StationTrainLiveStatus.UPCOMING, "DAILY", null, null, "2026-10-31");
+                StationTrainLiveStatus.UPCOMING, "DAILY", null, null, yesterdayStr);
 
 
 
@@ -334,7 +336,7 @@ class StationServiceRegressionAndQuotaTest {
 
 
 
-        // Timetable contains 12792 with arrivalDay = 2 (day offset = 1, resolving to 2026-10-31)
+        // Timetable contains 12792 with arrivalDay = 2 (day offset = 1, resolving to yesterday)
 
         StationBoardTrainDto schTrain = createScheduled("12792", "Secunderabad SF Express", LocalTime.parse(arr), LocalTime.parse(dep), 2);
 
@@ -354,7 +356,7 @@ class StationServiceRegressionAndQuotaTest {
 
         assertEquals("12792", response.trains().get(0).trainNumber());
 
-        assertEquals("2026-10-31", response.trains().get(0).journeyDate());
+        assertEquals(yesterdayStr, response.trains().get(0).journeyDate());
 
     }
 

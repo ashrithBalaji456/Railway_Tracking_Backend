@@ -249,4 +249,78 @@ class StationServiceLiveBoardReconciliationTest {
                 assertFalse(stationServiceImpl.shouldIncludeInLiveBoard(staleTrain, nowIst, nowIst.plusHours(4)),
                                 "Train dwelling older than 30 minutes past departure without updates must be dropped by stale-dwell guard");
         }
+
+        @Test
+        void testDelayedIntoWindow_TrainScheduled7HoursAgo_IsIncludedWhenDelayBringsItIntoWindow() {
+                ZonedDateTime nowIst = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+                // Train scheduled 7 hours 20 minutes ago (440 mins ago)
+                LocalTime schTime = nowIst.minusMinutes(440).toLocalTime();
+                int delayMinutes = 470; // Expected passage in 30 mins (inside the 4-hour window)
+
+                com.example.railtracker.dto.StationBoardTrainDto keralaExp = new com.example.railtracker.dto.StationBoardTrainDto(
+                                "12626", "Kerala Express", "SUPERFAST", "DAILY", "NDLS", "TVC",
+                                schTime, schTime.plusMinutes(5), null, null, null,
+                                "STOPPING", true, "SCHEDULED", 1, 1, "1");
+
+                when(railwayDataProvider.getLiveStationBoardDetails(eq("MCI"), anyInt())).thenReturn(null);
+                when(railwayDataProvider.getStationBoard(eq("MCI"), anyBoolean()))
+                                .thenReturn(List.of(keralaExp));
+
+                // Cache live telemetry showing 470 minutes delay
+                StationStatusDto stop = new StationStatusDto(
+                                "MCI", "Mancherial", 10, null, null, null, null, delayMinutes, "UPCOMING",
+                                true, "1", null, null, false);
+                TrainLiveStatusDto liveStatus = new TrainLiveStatusDto(
+                                "12626", "Kerala Express", "RUNNING",
+                                "SKZR", "Sirpur Kaghaznagar", "MCI", "Mancherial",
+                                delayMinutes, 19.35, 79.48, 85.0, 160.0, 35.0,
+                                "Departed SKZR, approaching MCI", LocalDateTime.now(), List.of(stop),
+                                false, false, false, null, List.of(), nowIst.minusMinutes(440).toLocalDate().toString());
+
+                when(trainLiveCache.get(startsWith("12626"))).thenReturn(() -> liveStatus);
+
+                LiveStationBoardResponse result = stationServiceImpl.getLiveStationBoardDetails("MCI", 4, true);
+
+                assertNotNull(result);
+                assertEquals(1, result.trains().size(), "Train delayed by 7+ hours whose expected passage is in 30 mins must be included");
+                LiveStationBoardTrain t = result.trains().get(0);
+                assertEquals("12626", t.trainNumber());
+                assertEquals(470, t.delayMinutes());
+                assertEquals(StationTrainLiveStatus.UPCOMING, t.liveStatus());
+        }
+
+        @Test
+        void testDelayedOutOfWindow_TrainScheduledInWindow_IsExcludedWhenDelayPushesPastWindowEnd() {
+                ZonedDateTime nowIst = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+                // Train scheduled in 30 mins (inside 2h window)
+                LocalTime schTime = nowIst.plusMinutes(30).toLocalTime();
+                int delayMinutes = 180; // 3 hours delay pushes expected arrival to 3h 30m (outside 2h window)
+
+                com.example.railtracker.dto.StationBoardTrainDto delayedOutTrain = new com.example.railtracker.dto.StationBoardTrainDto(
+                                "12722", "Dakshin Express", "SUPERFAST", "DAILY", "NZM", "HYB",
+                                schTime, schTime.plusMinutes(5), null, null, null,
+                                "STOPPING", true, "SCHEDULED", 1, 1, "1");
+
+                when(railwayDataProvider.getLiveStationBoardDetails(eq("MCI"), anyInt())).thenReturn(null);
+                when(railwayDataProvider.getStationBoard(eq("MCI"), anyBoolean()))
+                                .thenReturn(List.of(delayedOutTrain));
+
+                // Cache live telemetry showing 180 minutes delay
+                StationStatusDto stop = new StationStatusDto(
+                                "MCI", "Mancherial", 10, null, null, null, null, delayMinutes, "UPCOMING",
+                                true, "1", null, null, false);
+                TrainLiveStatusDto liveStatus = new TrainLiveStatusDto(
+                                "12722", "Dakshin Express", "RUNNING",
+                                "BPQ", "Balharshah", "MCI", "Mancherial",
+                                delayMinutes, 19.8, 79.3, 70.0, 150.0, 90.0,
+                                "Delayed by 3 hours", LocalDateTime.now(), List.of(stop),
+                                false, false, false, null, List.of(), nowIst.toLocalDate().toString());
+
+                when(trainLiveCache.get(startsWith("12722"))).thenReturn(() -> liveStatus);
+
+                LiveStationBoardResponse result = stationServiceImpl.getLiveStationBoardDetails("MCI", 2, true);
+
+                assertNotNull(result);
+                assertEquals(0, result.trains().size(), "Train delayed 3h past 2h window must be excluded");
+        }
 }

@@ -360,24 +360,30 @@ public class RailRadarClient {
 
         // 3. Parse trains block
         List<LiveStationBoardResponse.LiveStationBoardTrain> trainsList = new ArrayList<>();
-        JsonNode trainsNode = dataNode.get("trains");
+        JsonNode trainsNode = dataNode.has("trains") ? dataNode.get("trains") :
+                              dataNode.has("board") ? dataNode.get("board") :
+                              dataNode.has("services") ? dataNode.get("services") :
+                              (dataNode.isArray() ? dataNode : null);
         if (trainsNode != null && trainsNode.isArray()) {
             for (JsonNode item : trainsNode) {
-                JsonNode train = item.get("train");
-                JsonNode stop = item.get("stop");
-                JsonNode live = item.get("live");
+                JsonNode train = item != null && item.has("train") ? item.get("train") : item;
+                JsonNode stop = item != null && item.has("stop") ? item.get("stop") : item;
+                JsonNode live = item != null && item.has("live") ? item.get("live") : item;
 
-                String trainNumber = text(train, "number");
-                String trainName = text(train, "name");
-                String trainType = text(train, "type");
+                String trainNumber = firstText(train, item, "number", "trainNumber", "train_no", "trainNo");
+                String trainName = firstText(train, item, "name", "trainName", "train_name");
+                String trainType = firstText(train, item, "type", "trainType", "train_type");
 
-                String sourceCode = text(train, "source");
+                JsonNode srcNode = train != null && train.has("source") ? train.get("source") : item.get("source");
+                String sourceCode = stationCode(srcNode, firstText(train, item, "sourceStation", "source"));
                 LiveStationBoardResponse.StationCodeName source = new LiveStationBoardResponse.StationCodeName(sourceCode, sourceCode);
 
-                String destCode = text(train, "destination");
+                JsonNode dstNode = train != null && train.has("destination") ? train.get("destination") : item.get("destination");
+                String destCode = stationCode(dstNode, firstText(train, item, "destinationStation", "destination"));
                 LiveStationBoardResponse.StationCodeName destination = new LiveStationBoardResponse.StationCodeName(destCode, destCode);
 
                 Boolean isHaltVal = bool(stop, "isHalt");
+                if (isHaltVal == null) isHaltVal = bool(item, "isHalt");
                 boolean isHalt = isHaltVal != null ? isHaltVal : true;
                 if (currentStationCode != null && (
                         currentStationCode.equalsIgnoreCase(sourceCode) ||
@@ -395,8 +401,10 @@ public class RailRadarClient {
                 String actualArrival = text(live, "actualArrivalTime", "arrivedAt", "actualArrival");
                 String actualDeparture = text(live, "actualDepartureTime", "departedAt", "actualDeparture");
 
-                Integer delayMinutes = integer(live, "delayMinutes");
+                Integer delayMinutes = firstInteger(live, "delayMinutes", "delay", "delayArrival", "delayDeparture");
+                if (delayMinutes == null) delayMinutes = firstInteger(item, "delayMinutes", "delay", "delayArrival", "delayDeparture");
                 String platform = text(stop, "platform");
+                if (platform == null) platform = text(item, "platform");
                 if (platform == null || platform.equalsIgnoreCase("null") || platform.trim().isEmpty()) {
                     platform = null;
                 }
@@ -404,6 +412,9 @@ public class RailRadarClient {
                 String liveType = text(live, "type", "status", "liveStatus");
                 if (liveType == null || liveType.isBlank()) {
                     liveType = text(stop, "status");
+                }
+                if (liveType == null || liveType.isBlank()) {
+                    liveType = text(item, "status");
                 }
                 StationTrainLiveStatus liveStatus = mapLiveStatusEnum(liveType);
                 if (actualDeparture != null && !actualDeparture.isBlank()) {
@@ -440,7 +451,7 @@ public class RailRadarClient {
                         scheduledDeparture,
                         expectedArrival,
                         expectedDeparture,
-                        delayMinutes != null ? delayMinutes : 0,
+                        delayMinutes,
                         platform,
                         liveStatus,
                         runDaysStr,
