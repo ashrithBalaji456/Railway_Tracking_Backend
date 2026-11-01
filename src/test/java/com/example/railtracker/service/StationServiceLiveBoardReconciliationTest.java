@@ -17,6 +17,10 @@ import com.example.railtracker.repository.TrainStationRepository;
 import com.example.railtracker.service.impl.StationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import java.time.LocalDate;
+import java.time.Duration;
+import com.example.railtracker.dto.StationBoardTrainDto;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -322,5 +326,54 @@ class StationServiceLiveBoardReconciliationTest {
 
                 assertNotNull(result);
                 assertEquals(0, result.trains().size(), "Train delayed 3h past 2h window must be excluded");
+        }
+        @Test
+        @DisplayName("Multi-day train with timetable default arrivalDay=1 delayed 7+ hours into current window must be discovered and included")
+        void testMultiDayTrainDelayedIntoWindow_DiscoveredAndIncluded() {
+                ZonedDateTime nowIst = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+                LocalDate yesterday = nowIst.toLocalDate().minusDays(1);
+                LocalTime schTime = LocalTime.of(18, 28);
+
+                StationBoardTrainDto keralaExpress = new StationBoardTrainDto(
+                                "12626", "Kerala Express", "SUPERFAST", "DAILY", "NDLS", "TVC",
+                                schTime, schTime.plusMinutes(2), null, null, null,
+                                "STOPPING", true, "SCHEDULED", 1, 1, "1");
+
+                when(railwayDataProvider.getLiveStationBoardDetails(eq("WL"), anyInt())).thenReturn(null);
+                when(railwayDataProvider.getStationBoard(eq("WL"), anyBoolean()))
+                                .thenReturn(List.of(keralaExpress));
+
+                LocalDate originStartDate = yesterday.minusDays(1);
+                // Calculate delay so that (yesterday 18:28 + delay) falls inside [nowIst, nowIst + 4 hours]
+                ZonedDateTime targetExpected = nowIst.plusHours(1);
+                long delayMinutes = Duration.between(ZonedDateTime.of(yesterday, schTime, ZoneId.of("Asia/Kolkata")), targetExpected).toMinutes();
+                String scheduledArrIso = ZonedDateTime.of(yesterday, schTime, ZoneId.of("Asia/Kolkata")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+                StationStatusDto stop = new StationStatusDto(
+                                "WL", "Warangal", 206, scheduledArrIso, scheduledArrIso, null, null, (int) delayMinutes, "UPCOMING",
+                                true, "1", null, null, true);
+
+                TrainLiveStatusDto liveStatus = new TrainLiveStatusDto(
+                                "12626", "Kerala Express", "RUNNING",
+                                "HSP", "Hasanparti Road", "WL", "Warangal",
+                                (int) delayMinutes, 17.9, 79.5, 69.0, 180.0, 45.0,
+                                "Departed at Hasanparti Road", LocalDateTime.now(), List.of(stop),
+                                false, false, false, null, List.of(), originStartDate.toString());
+
+                Station wlStation = new Station("WL", "Warangal", "Warangal", "Telangana", 17.969, 79.598);
+                when(stationRepository.findByStationCode("WL")).thenReturn(Optional.of(wlStation));
+                when(stationRepository.findByStationCodeIn(anySet())).thenReturn(List.of(wlStation));
+
+                when(trainLiveCache.get("12626_current")).thenReturn(() -> liveStatus);
+
+                LiveStationBoardResponse result = stationServiceImpl.getLiveStationBoardDetails("WL", 4, true);
+
+                assertNotNull(result);
+                assertEquals(1, result.trains().size(), "Multi-day delayed train must be included in the live station board");
+                LiveStationBoardResponse.LiveStationBoardTrain train = result.trains().get(0);
+                assertEquals("12626", train.trainNumber());
+                assertEquals(Integer.valueOf((int) delayMinutes), train.delayMinutes());
+                assertEquals("1", train.platform());
+                assertEquals(originStartDate.toString(), train.journeyDate().substring(0, 10));
         }
 }

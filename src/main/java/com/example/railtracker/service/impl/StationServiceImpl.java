@@ -258,47 +258,67 @@ public class StationServiceImpl implements StationService {
 
     public StationDto getStationDetails(String stationCode) {
 
-        logger.debug("Retrieving details for station: {}", stationCode);
+        if (stationCode == null || stationCode.trim().isEmpty()) {
 
-        return stationRepository.findByStationCode(stationCode)
+            throw new ResourceNotFoundException("Station code cannot be empty");
+
+        }
+
+        String cleanCode = stationCode.trim().toUpperCase();
+
+        logger.debug("Retrieving details for station: {}", cleanCode);
+
+        return stationRepository.findByStationCode(cleanCode)
 
                 .map(this::mapToDto)
 
                 .orElseGet(() -> {
 
-                    logger.info("Station {} not found locally. Searching externally.", stationCode);
+                    logger.info("Station {} not found locally. Searching externally.", cleanCode);
 
-                    List<StationDto> searchResults = railwayDataProvider.searchStations(stationCode);
+                    try {
 
-                    StationDto foundDto = searchResults.stream()
+                        List<StationDto> searchResults = railwayDataProvider.searchStations(cleanCode);
 
-                            .filter(s -> s.stationCode().equalsIgnoreCase(stationCode))
+                        StationDto foundDto = searchResults.stream()
 
-                            .findFirst()
+                                .filter(s -> s.stationCode() != null && s.stationCode().equalsIgnoreCase(cleanCode))
 
-                            .orElseThrow(() -> new ResourceNotFoundException("Station not found: " + stationCode));
+                                .findFirst()
 
+                                .orElse(null);
 
+                        if (foundDto != null) {
 
-                    Station station = new Station(
+                            Station station = new Station(
 
-                            foundDto.stationCode(),
+                                    foundDto.stationCode().toUpperCase(),
 
-                            foundDto.stationName(),
+                                    foundDto.stationName(),
 
-                            foundDto.city(),
+                                    foundDto.city(),
 
-                            foundDto.state(),
+                                    foundDto.state(),
 
-                            foundDto.latitude(),
+                                    foundDto.latitude(),
 
-                            foundDto.longitude()
+                                    foundDto.longitude()
 
-                    );
+                            );
 
-                    stationRepository.save(station);
+                            stationRepository.save(station);
 
-                    return foundDto;
+                            return foundDto;
+
+                        }
+
+                    } catch (Exception e) {
+
+                        logger.warn("External lookup failed for station {}: {}", cleanCode, e.getMessage());
+
+                    }
+
+                    return new StationDto(cleanCode, cleanCode, null, null, null, null, true, null, null, null, null, null, null);
 
                 });
 
@@ -726,6 +746,8 @@ public class StationServiceImpl implements StationService {
 
 
 
+            int liveLookupsRemaining = 3;
+
             for (StationBoardTrainDto sbt : scheduledTrains) {
 
                 if (sbt == null || sbt.trainNumber() == null) continue;
@@ -842,7 +864,38 @@ public class StationServiceImpl implements StationService {
 
                     // Fast cache-only check for live delay without external API calls
 
-                    TrainLiveStatusDto cachedLive = getCachedTrainLiveStatus(normNum, expectedJourneyDate);
+                    // Fast cache check (with multi-day station stop matching)
+                    TrainLiveStatusDto cachedLive = getCachedTrainLiveStatus(normNum, expectedJourneyDate, stationCode, candDate, schedTime);
+
+                    boolean isPastCandidate = candPassage.isBefore(refStart.minusMinutes(2));
+                    if (cachedLive == null && isPastCandidate && liveLookupsRemaining > 0 && trainService != null) {
+                        long hoursInPast = Duration.between(candPassage, refStart).toHours();
+                        if (hoursInPast <= 12) {
+                            try {
+                                cachedLive = trainService.getTrainLiveStatus(normNum, expectedJourneyDate);
+                                liveLookupsRemaining--;
+                                logger.info("Live candidate discovery for past train {} ({}) at {}: lookup succeeded",
+                                        normNum, sbt.trainName(), stationCode);
+                            } catch (Exception ex) {
+                                logger.debug("Live candidate discovery lookup for train {} failed: {}", normNum, ex.getMessage());
+                            }
+                        }
+                    }
+
+                    if (cachedLive != null && cachedLive.startDate() != null && !cachedLive.startDate().isBlank()) {
+                        try {
+                            String rawStart = cachedLive.startDate().trim();
+                            if (rawStart.length() >= 10) {
+                                LocalDate actualJourneyStart = LocalDate.parse(rawStart.substring(0, 10));
+                                journeyStartDate = actualJourneyStart;
+                                expectedJourneyDate = actualJourneyStart.toString();
+                                compKey = normNum + "_" + expectedJourneyDate + "_" + passageTimeStr;
+                                jKey = normNum + "_" + expectedJourneyDate;
+                            }
+                        } catch (Exception e) {
+                            logger.debug("Failed to parse live startDate {}: {}", cachedLive.startDate(), e.getMessage());
+                        }
+                    }
 
                     Integer delay = null;
 
@@ -1560,6 +1613,12 @@ public class StationServiceImpl implements StationService {
 
     private TrainLiveStatusDto getCachedTrainLiveStatus(String trainNumber, String journeyDate) {
 
+        return getCachedTrainLiveStatus(trainNumber, journeyDate, null, null, null);
+
+    }
+
+    private TrainLiveStatusDto getCachedTrainLiveStatus(String trainNumber, String journeyDate, String stationCode, LocalDate candDate, LocalTime schedTime) {
+
         if (cacheManager == null || trainNumber == null || trainNumber.isBlank()) {
 
             return null;
@@ -1595,6 +1654,64 @@ public class StationServiceImpl implements StationService {
                     if (isLiveCacheValid(currDto, journeyDate)) {
 
                         return currDto;
+
+                    }
+
+                    // Multi-day station stop matching: if journeyDate didn't match origin startDate,
+
+                    // verify if currDto has a stop for stationCode matching candidate date/time at this station.
+
+                    if (stationCode != null && candDate != null && currDto.stations() != null) {
+
+                        for (TrainLiveStatusDto.StationStatusDto stop : currDto.stations()) {
+
+                            if (stop.stationCode() != null && stop.stationCode().equalsIgnoreCase(stationCode)) {
+
+                                String stopTimeStr = stop.scheduledArrival() != null ? stop.scheduledArrival() : stop.scheduledDeparture();
+
+                                if (stopTimeStr != null && !stopTimeStr.isBlank()) {
+
+                                    try {
+
+                                        ZonedDateTime stopDt = ZonedDateTime.parse(stopTimeStr);
+
+                                        if (stopDt.toLocalDate().equals(candDate)) {
+
+                                            if (schedTime == null || Math.abs(Duration.between(stopDt.toLocalTime(), schedTime).toMinutes()) <= 15) {
+
+                                                if (currDto.lastUpdatedAt() != null) {
+
+                                                    long minutesOld = java.time.Duration.between(currDto.lastUpdatedAt(), java.time.LocalDateTime.now()).toMinutes();
+
+                                                    if (minutesOld <= 45 && minutesOld >= -5) {
+
+                                                        return currDto;
+
+                                                    }
+
+                                                } else {
+
+                                                    return currDto;
+
+                                                }
+
+                                            }
+
+                                        }
+
+                                    } catch (Exception e) {
+
+                                        // Ignore parse error on stop time
+
+                                    }
+
+                                }
+
+                                break;
+
+                            }
+
+                        }
 
                     }
 
