@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Mono;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -417,7 +418,7 @@ public class RailRadarClient {
 
                 String journeyDate = text(live, "startDate", "start_date", "journeyDate", "journey_date");
                 if (journeyDate == null || journeyDate.isBlank()) {
-                    Integer day = integer(stop, "day", "arrivalDay", "dayOffset");
+                    Integer day = firstInteger(stop, "day", "arrivalDay", "dayOffset");
                     int dayOffset = (day != null && day > 1) ? day - 1 : 0;
                     LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
                     journeyDate = today.minusDays(dayOffset).toString();
