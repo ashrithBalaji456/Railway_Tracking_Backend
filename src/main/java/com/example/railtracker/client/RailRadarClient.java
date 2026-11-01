@@ -295,7 +295,7 @@ public class RailRadarClient {
         String path = "/trains/" + trainNumber + "/live";
         if (journeyDate != null && !journeyDate.isBlank()) {
             String normalizedDate = normalizeDateParam(journeyDate);
-            path += "?date=" + normalizedDate + "&journeyDate=" + normalizedDate;
+            path += "?date=" + normalizedDate;
         }
         logger.info("RailRadar live status request: GET {}", path);
         JsonNode responseNode = executeGet(path);
@@ -312,7 +312,7 @@ public class RailRadarClient {
                 liveStatusNode = dataNode.get("status");
             }
         }
-        return mapLiveStatus(trainNumber, liveStatusNode != null ? liveStatusNode : dataNode);
+        return mapLiveStatus(trainNumber, dataNode, liveStatusNode != null ? liveStatusNode : dataNode);
     }
 
     public List<RailRadarStationBoardTrain> getStationBoard(String stationCode, boolean includeIntermediate) {
@@ -928,7 +928,7 @@ public class RailRadarClient {
         );
     }
 
-    private RailRadarTrainLiveStatus mapLiveStatus(String requestedTrainNumber, JsonNode dataNode) {
+    private RailRadarTrainLiveStatus mapLiveStatus(String requestedTrainNumber, JsonNode rootNode, JsonNode dataNode) {
         if (dataNode == null || dataNode.isNull()) return null;
         JsonNode route = dataNode.has("route") ? dataNode.get("route") : dataNode.get("stations");
         JsonNode current = dataNode.get("currentLocation");
@@ -1148,7 +1148,10 @@ public class RailRadarClient {
             }
         }
 
-        String startDate = text(dataNode, "startDate", "start_date", "journeyDate", "journey_date");
+        String startDate = text(rootNode, "startDate", "start_date", "journeyDate", "journey_date");
+        if (startDate == null || startDate.isBlank()) {
+            startDate = text(dataNode, "startDate", "start_date", "journeyDate", "journey_date");
+        }
 
         return new RailRadarTrainLiveStatus(
                 text(dataNode, "trainNumber", "number") != null ? text(dataNode, "trainNumber", "number") : requestedTrainNumber,

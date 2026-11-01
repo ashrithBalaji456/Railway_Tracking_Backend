@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import static org.mockito.Mockito.*;
 
 class StationServiceLiveBoardReconciliationTest {
@@ -36,6 +38,8 @@ class StationServiceLiveBoardReconciliationTest {
         private TrainStationRepository trainStationRepository;
         private TrainRepository trainRepository;
         private TrainService trainService;
+        private CacheManager cacheManager;
+        private Cache trainLiveCache;
         private StationServiceImpl stationServiceImpl;
 
         @BeforeEach
@@ -46,12 +50,17 @@ class StationServiceLiveBoardReconciliationTest {
                 trainRepository = mock(TrainRepository.class);
                 trainService = mock(TrainService.class);
 
+                cacheManager = mock(CacheManager.class);
+                trainLiveCache = mock(Cache.class);
+                when(cacheManager.getCache("train:live")).thenReturn(trainLiveCache);
+
                 stationServiceImpl = new StationServiceImpl(
                                 stationRepository,
                                 railwayDataProvider,
                                 trainStationRepository,
                                 trainRepository,
                                 trainService);
+                stationServiceImpl.setCacheManager(cacheManager);
 
                 Station mci = new Station();
                 mci.setStationCode("MCI");
@@ -182,6 +191,7 @@ class StationServiceLiveBoardReconciliationTest {
                                 "at-station at Mancherial", LocalDateTime.now(), List.of(mciStop),
                                 false, false, false, null, List.of(), "2026-11-01");
                 when(trainService.getTrainLiveStatus(eq("17034"), anyString())).thenReturn(liveStatus);
+                when(trainLiveCache.get(startsWith("17034"))).thenReturn(() -> liveStatus);
 
                 LiveStationBoardResponse result = stationServiceImpl.getLiveStationBoardDetails("MCI", 4, false);
 
