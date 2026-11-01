@@ -497,19 +497,70 @@ public class StationServiceImpl implements StationService {
                     boolean isOriginOrDest = stationCode.equalsIgnoreCase(srcCode) || stationCode.equalsIgnoreCase(destCode);
                     StationPassType resolvedPassType = isOriginOrDest ? StationPassType.STOPPING : t.passType();
 
-                    StationTrainLiveStatus resolvedStatus = t.liveStatus();
+                    StationTrainLiveStatus resolvedStatus = t.liveStatus() != null ? t.liveStatus() : StationTrainLiveStatus.SCHEDULED;
                     String actArr = t.actualArrival();
                     String actDep = t.actualDeparture();
 
-                    if (resolvedStatus == StationTrainLiveStatus.NOT_STARTED || 
-                        resolvedStatus == StationTrainLiveStatus.AT_STATION ||
-                        resolvedStatus == StationTrainLiveStatus.ARRIVED ||
-                        resolvedStatus == StationTrainLiveStatus.UPCOMING) {
-                        actDep = null;
-                    } else if (actDep != null && !actDep.isBlank()) {
+                    // Precedence 1: Confirmed departure telemetry -> DEPARTED
+                    if (actDep != null && !actDep.isBlank()) {
                         resolvedStatus = StationTrainLiveStatus.DEPARTED;
-                    } else if (actArr != null && !actArr.isBlank()) {
-                        resolvedStatus = StationTrainLiveStatus.ARRIVED;
+                    } 
+                    // Precedence 2: Confirmed arrival telemetry without confirmed departure -> ARRIVED / AT_STATION
+                    else if (actArr != null && !actArr.isBlank()) {
+                        resolvedStatus = (resolvedStatus == StationTrainLiveStatus.AT_STATION)
+                                ? StationTrainLiveStatus.AT_STATION
+                                : StationTrainLiveStatus.ARRIVED;
+                        actDep = null;
+                    } 
+                    // Precedence 3: Reliable station-specific live telemetry supporting arrival -> AT_STATION / ARRIVED
+                    else if (resolvedStatus == StationTrainLiveStatus.AT_STATION || resolvedStatus == StationTrainLiveStatus.ARRIVED) {
+                        actDep = null;
+                    } 
+                    // Precedence 4 & 5: When status is UPCOMING or SCHEDULED
+                    else if (resolvedStatus == StationTrainLiveStatus.UPCOMING || resolvedStatus == StationTrainLiveStatus.SCHEDULED) {
+                        actDep = null;
+                        // Check if reliable live train tracking telemetry from trainService confirms arrival
+                        if (trainService != null) {
+                            try {
+                                String jDate = t.journeyDate() != null ? t.journeyDate() : finalWindowStart.toLocalDate().toString();
+                                TrainLiveStatusDto trainLive = trainService.getTrainLiveStatus(t.trainNumber(), jDate);
+                                if (trainLive != null) {
+                                    boolean atStationTelemetry = false;
+                                    if (trainLive.currentStationCode() != null && trainLive.currentStationCode().equalsIgnoreCase(stationCode)) {
+                                        atStationTelemetry = true;
+                                    } else if (trainLive.stations() != null) {
+                                        for (TrainLiveStatusDto.StationStatusDto stop : trainLive.stations()) {
+                                            if (stop.stationCode() != null && stop.stationCode().equalsIgnoreCase(stationCode)) {
+                                                if (stop.actualDeparture() != null && !stop.actualDeparture().isBlank()) {
+                                                    actDep = stop.actualDeparture();
+                                                    resolvedStatus = StationTrainLiveStatus.DEPARTED;
+                                                    break;
+                                                }
+                                                if (stop.actualArrival() != null && !stop.actualArrival().isBlank()) {
+                                                    actArr = stop.actualArrival();
+                                                    atStationTelemetry = true;
+                                                    break;
+                                                }
+                                                String sStatus = stop.status() != null ? stop.status().toLowerCase() : "";
+                                                if (sStatus.contains("at-station") || sStatus.contains("at_station") || sStatus.contains("arriv")) {
+                                                    atStationTelemetry = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (atStationTelemetry && resolvedStatus != StationTrainLiveStatus.DEPARTED) {
+                                        resolvedStatus = StationTrainLiveStatus.AT_STATION;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                logger.debug("Live telemetry query for train {} not available: {}", t.trainNumber(), e.getMessage());
+                            }
+                        }
+                        // If no reliable live telemetry confirms arrival, predicted arrival time elapsed alone
+                        // does NOT claim confirmed arrival. It remains UPCOMING (or SCHEDULED).
+                    } else if (resolvedStatus == StationTrainLiveStatus.NOT_STARTED) {
+                        actDep = null;
                     }
                             
                     return new LiveStationBoardResponse.LiveStationBoardTrain(
@@ -551,8 +602,8 @@ public class StationServiceImpl implements StationService {
                 st != null ? st.stationCode() : stationCode,
                 st != null ? st.stationName() : stationCode,
                 st != null ? st.city() : null,
-                st != null ? st.latitude() : 0.0,
-                st != null ? st.longitude() : 0.0
+                st != null && st.latitude() != null ? st.latitude() : 0.0,
+                st != null && st.longitude() != null ? st.longitude() : 0.0
         );
         
         LiveStationBoardResponse result = new LiveStationBoardResponse(resolvedStation, windowInfo, enrichedTrains);
@@ -615,7 +666,7 @@ public class StationServiceImpl implements StationService {
         return parsePassageDateTime(timeStr, refStart);
     }
 
-    boolean shouldIncludeInLiveBoard(LiveStationBoardResponse.LiveStationBoardTrain t, ZonedDateTime nowIst, ZonedDateTime windowEnd) {
+    public boolean shouldIncludeInLiveBoard(LiveStationBoardResponse.LiveStationBoardTrain t, ZonedDateTime nowIst, ZonedDateTime windowEnd) {
         if (t == null) return false;
         StationTrainLiveStatus status = t.liveStatus() != null ? t.liveStatus() : StationTrainLiveStatus.SCHEDULED;
 

@@ -401,12 +401,12 @@ public class RailRadarClient {
 
                 String liveType = text(live, "type");
                 StationTrainLiveStatus liveStatus = mapLiveStatusEnum(liveType);
-                if (liveStatus == StationTrainLiveStatus.NOT_STARTED || liveStatus == StationTrainLiveStatus.AT_STATION) {
-                    // Retain NOT_STARTED or AT_STATION - do not let presence of expected departure timestamp force DEPARTED
-                } else if (actualDeparture != null && !actualDeparture.isBlank() && (liveType == null || liveType.toLowerCase().contains("depart"))) {
+                if (actualDeparture != null && !actualDeparture.isBlank()) {
                     liveStatus = StationTrainLiveStatus.DEPARTED;
-                } else if (actualArrival != null && !actualArrival.isBlank() && (liveType == null || liveType.toLowerCase().contains("arriv"))) {
+                } else if (actualArrival != null && !actualArrival.isBlank()) {
                     liveStatus = StationTrainLiveStatus.ARRIVED;
+                } else if (liveStatus == StationTrainLiveStatus.NOT_STARTED || liveStatus == StationTrainLiveStatus.AT_STATION) {
+                    // Retain NOT_STARTED or AT_STATION from live.type
                 }
 
                 String runDaysStr = "";
