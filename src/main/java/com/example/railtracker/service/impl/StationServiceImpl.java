@@ -507,9 +507,9 @@ public class StationServiceImpl implements StationService {
                     } 
                     // Precedence 2: Confirmed arrival telemetry without confirmed departure -> ARRIVED / AT_STATION
                     else if (actArr != null && !actArr.isBlank()) {
-                        resolvedStatus = (resolvedStatus == StationTrainLiveStatus.AT_STATION)
-                                ? StationTrainLiveStatus.AT_STATION
-                                : StationTrainLiveStatus.ARRIVED;
+                        resolvedStatus = (resolvedStatus == StationTrainLiveStatus.ARRIVED)
+                                ? StationTrainLiveStatus.ARRIVED
+                                : StationTrainLiveStatus.AT_STATION;
                         actDep = null;
                     } 
                     // Precedence 3: Reliable station-specific live telemetry supporting arrival -> AT_STATION / ARRIVED
@@ -550,7 +550,9 @@ public class StationServiceImpl implements StationService {
                                         }
                                     }
                                     if (atStationTelemetry && resolvedStatus != StationTrainLiveStatus.DEPARTED) {
-                                        resolvedStatus = StationTrainLiveStatus.AT_STATION;
+                                        resolvedStatus = (resolvedStatus == StationTrainLiveStatus.ARRIVED)
+                                ? StationTrainLiveStatus.ARRIVED
+                                : StationTrainLiveStatus.AT_STATION;
                                     }
                                 }
                             } catch (Exception e) {

@@ -90,16 +90,20 @@ public class TrainController {
     @GetMapping("/{trainNumber}/route")
     public ResponseEntity<ApiResponse<TrainRouteDto>> getTrainRoute(
             @PathVariable("trainNumber") String trainNumber,
-            @RequestParam(value = "journeyDate", required = false) String journeyDate) {
-        TrainRouteDto route = trainService.getTrainRoute(trainNumber, journeyDate);
+            @RequestParam(value = "journeyDate", required = false) String journeyDate,
+            @RequestParam(value = "date", required = false) String date) {
+        String effectiveDate = (journeyDate != null && !journeyDate.isBlank()) ? journeyDate : date;
+        TrainRouteDto route = trainService.getTrainRoute(trainNumber, effectiveDate);
         return ResponseEntity.ok(ApiResponse.success("Train route schedule retrieved successfully", route));
     }
 
     @GetMapping("/{trainNumber}/live")
     public ResponseEntity<ApiResponse<TrainLiveStatusDto>> getTrainLiveStatus(
             @PathVariable("trainNumber") String trainNumber,
-            @RequestParam(value = "journeyDate", required = false) String journeyDate) {
-        TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber, journeyDate);
+            @RequestParam(value = "journeyDate", required = false) String journeyDate,
+            @RequestParam(value = "date", required = false) String date) {
+        String effectiveDate = (journeyDate != null && !journeyDate.isBlank()) ? journeyDate : date;
+        TrainLiveStatusDto liveStatus = trainService.getTrainLiveStatus(trainNumber, effectiveDate);
         return ResponseEntity.ok(ApiResponse.success("Live train status retrieved successfully", liveStatus));
     }
 

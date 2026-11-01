@@ -236,7 +236,7 @@ public class RailRadarClient {
         String path = "/trains/" + trainNumber;
         if (journeyDate != null && !journeyDate.isBlank()) {
             String normalizedDate = normalizeDateParam(journeyDate);
-            path += "?journeyDate=" + normalizedDate;
+            path += "?date=" + normalizedDate + "&journeyDate=" + normalizedDate;
         }
         logger.info("RailRadar train details request: GET {}", path);
         JsonNode responseNode = executeGet(path);
@@ -293,7 +293,7 @@ public class RailRadarClient {
         String path = "/trains/" + trainNumber + "/live";
         if (journeyDate != null && !journeyDate.isBlank()) {
             String normalizedDate = normalizeDateParam(journeyDate);
-            path += "?journeyDate=" + normalizedDate;
+            path += "?date=" + normalizedDate + "&journeyDate=" + normalizedDate;
         }
         logger.info("RailRadar live status request: GET {}", path);
         JsonNode responseNode = executeGet(path);
@@ -399,7 +399,10 @@ public class RailRadarClient {
                     platform = null;
                 }
 
-                String liveType = text(live, "type");
+                String liveType = text(live, "type", "status", "liveStatus");
+                if (liveType == null || liveType.isBlank()) {
+                    liveType = text(stop, "status");
+                }
                 StationTrainLiveStatus liveStatus = mapLiveStatusEnum(liveType);
                 if (actualDeparture != null && !actualDeparture.isBlank()) {
                     liveStatus = StationTrainLiveStatus.DEPARTED;
@@ -451,12 +454,15 @@ public class RailRadarClient {
 
     private StationTrainLiveStatus mapLiveStatusEnum(String type) {
         if (type == null) return StationTrainLiveStatus.UNKNOWN;
-        switch (type.toLowerCase()) {
+        String lower = type.toLowerCase().replace('_', '-');
+        switch (lower) {
             case "not-started":
                 return StationTrainLiveStatus.NOT_STARTED;
             case "upcoming":
+            case "scheduled":
                 return StationTrainLiveStatus.UPCOMING;
             case "at-station":
+            case "arrived":
                 return StationTrainLiveStatus.AT_STATION;
             case "departed":
                 return StationTrainLiveStatus.DEPARTED;
@@ -922,7 +928,7 @@ public class RailRadarClient {
 
     private RailRadarTrainLiveStatus mapLiveStatus(String requestedTrainNumber, JsonNode dataNode) {
         if (dataNode == null || dataNode.isNull()) return null;
-        JsonNode route = dataNode.get("route");
+        JsonNode route = dataNode.has("route") ? dataNode.get("route") : dataNode.get("stations");
         JsonNode current = dataNode.get("currentLocation");
         JsonNode previousHalt = dataNode.get("previousHalt");
         JsonNode nextHalt = dataNode.get("nextHalt");
