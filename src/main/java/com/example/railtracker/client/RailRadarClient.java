@@ -206,22 +206,24 @@ public class RailRadarClient {
     }
 
     /**
-     * Normalize journey date to YYYYMMDD format (what RailRadar expects).
+     * Normalize journey date to ISO YYYY-MM-DD format (what RailRadar expects).
      * Accepts: YYYY-MM-DD, YYYYMMDD, DD-MM-YYYY
      */
     private String normalizeDateParam(String date) {
         if (date == null || date.isBlank()) return date;
         String cleaned = date.trim();
-        // Already YYYYMMDD (8 digits, no dashes)
-        if (cleaned.matches("\\d{8}")) return cleaned;
-        // YYYY-MM-DD -> YYYYMMDD
+        // Already YYYY-MM-DD (ISO 8601)
         if (cleaned.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            return cleaned.replace("-", "");
+            return cleaned;
         }
-        // DD-MM-YYYY -> YYYYMMDD
+        // YYYYMMDD -> YYYY-MM-DD
+        if (cleaned.matches("\\d{8}")) {
+            return cleaned.substring(0, 4) + "-" + cleaned.substring(4, 6) + "-" + cleaned.substring(6, 8);
+        }
+        // DD-MM-YYYY -> YYYY-MM-DD
         if (cleaned.matches("\\d{2}-\\d{2}-\\d{4}")) {
             String[] parts = cleaned.split("-");
-            return parts[2] + parts[1] + parts[0];
+            return parts[2] + "-" + parts[1] + "-" + parts[0];
         }
         // Fallback: return as-is
         logger.warn("Unrecognized date format: '{}', passing as-is", cleaned);
