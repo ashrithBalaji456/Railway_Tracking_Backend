@@ -14,3 +14,4 @@ public interface NewsletterEditionRepository extends JpaRepository<NewsletterEdi
 
     List<NewsletterEdition> findTop15ByOrderBySentAtDesc();
 }
+

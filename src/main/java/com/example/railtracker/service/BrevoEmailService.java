@@ -713,5 +713,121 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }
+
+    /**
+     * Sends an automated Travel Day Morning Reminder.
+     */
+    public boolean sendTravelDayReminderEmail(
+            String toEmail,
+            String username,
+            String pnr,
+            String trainNumber,
+            String trainName,
+            java.time.LocalDate travelDate,
+            String liveLocation,
+            Integer delayMinutes) {
+
+        String trainLabel = (trainName != null && !trainName.isBlank()) ? trainName : "Express";
+        String subject = "🚆 Travel Day Reminder: Your train %s (%s) is scheduled for today!".formatted(trainNumber, trainLabel);
+
+        String baseUrl = (frontendUrl != null ? frontendUrl.split(",")[0].trim() : "https://railtrack.in");
+        String trackUrl = baseUrl + "/trains/" + trainNumber;
+        String stationsUrl = baseUrl + "/stations";
+
+        String delayText = (delayMinutes != null && delayMinutes > 0)
+                ? "<span style=\"color: #f87171; font-weight: 700;\">Running " + delayMinutes + " mins late</span>"
+                : "<span style=\"color: #34d399; font-weight: 700;\">Expected On-Time</span>";
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+                .container { max-width: 580px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+                .header { background: linear-gradient(135deg, #0284c7 0%%, #2563eb 100%%); padding: 28px 24px; text-align: center; }
+                .header-tag { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #bae6fd; margin-bottom: 4px; }
+                .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: 800; }
+                .content { padding: 30px 24px; }
+                .greeting { font-size: 16px; color: #f8fafc; font-weight: 700; margin-bottom: 12px; }
+                .reminder-box { background-color: #0f172a; border: 1px solid #0284c7; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+                .table-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+                .table-label { color: #94a3b8; font-weight: 500; }
+                .table-val { color: #f8fafc; font-weight: 700; }
+                .pnr-badge { background-color: #1e1b4b; border: 1px solid #4f46e5; color: #a5b4fc; font-family: monospace; font-size: 14px; font-weight: 800; padding: 2px 8px; border-radius: 6px; letter-spacing: 1px; }
+                .btn-group { display: flex; gap: 10px; margin: 24px 0 16px; }
+                .btn-primary { background: linear-gradient(135deg, #0284c7 0%%, #2563eb 100%%); color: #ffffff !important; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; text-align: center; flex: 1; }
+                .btn-secondary { background-color: #1e293b; border: 1px solid #475569; color: #e2e8f0 !important; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; text-align: center; flex: 1; }
+                .checklist { background-color: #0f172a; border-radius: 8px; padding: 16px; border: 1px solid #334155; font-size: 12px; color: #94a3b8; line-height: 1.6; }
+                .footer { background-color: #0f172a; padding: 18px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="header-tag">TRAVEL DAY REMINDER</div>
+                  <h1>🚆 Your Journey is Today!</h1>
+                </div>
+                <div class="content">
+                  <div class="greeting">Good morning %s! 🌅</div>
+                  <p style="font-size: 13px; color: #94a3b8; margin: 0 0 20px 0; line-height: 1.5;">
+                    This is a reminder that your train journey on <strong>Train %s (%s)</strong> is scheduled for today (%s).
+                  </p>
+
+                  <div class="reminder-box">
+                    <div class="table-row">
+                      <span class="table-label">PNR Number:</span>
+                      <span class="pnr-badge">%s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Train:</span>
+                      <span class="table-val">%s - %s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Expected Status:</span>
+                      <span>%s</span>
+                    </div>
+                    <div class="table-row" style="border-bottom: none;">
+                      <span class="table-label">Live Telemetry:</span>
+                      <span class="table-val" style="color: #38bdf8;">%s</span>
+                    </div>
+                  </div>
+
+                  <div class="btn-group">
+                    <a href="%s" class="btn-primary">Track Train Live</a>
+                    <a href="%s" class="btn-secondary">Station Platform Board</a>
+                  </div>
+
+                  <div class="checklist">
+                    <strong style="color: #e2e8f0;">✈️ Pre-Departure Checklist:</strong><br/>
+                    &bull; Keep a valid original Government ID proof (Aadhaar, Voter ID, Passport, DL).<br/>
+                    &bull; Arrive at your boarding station at least 30-45 minutes before departure.<br/>
+                    &bull; Re-check the station display boards as platform allocations may dynamically shift.
+                  </div>
+                </div>
+                <div class="footer">
+                  Have a pleasant and safe journey!<br/>
+                  &copy; 2026 RailTrack India &bull; Live Train Telemetry & Travel Assistance
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                username != null ? username : "Passenger",
+                trainNumber,
+                trainLabel,
+                travelDate != null ? travelDate.toString() : "Today",
+                pnr,
+                trainNumber,
+                trainLabel,
+                delayText,
+                liveLocation != null && !liveLocation.isBlank() ? liveLocation : "Telemetry live on RailTrack",
+                trackUrl,
+                stationsUrl
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 

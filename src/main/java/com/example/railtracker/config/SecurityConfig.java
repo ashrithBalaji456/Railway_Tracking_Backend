@@ -66,6 +66,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/stations/**").permitAll()
                 .requestMatchers("/api/stations/**").permitAll()
                 .requestMatchers("/api/v1/journey/**").permitAll()
+                .requestMatchers("/api/v1/pnr/**").permitAll()
                 .requestMatchers("/api/v1/disruptions/**").permitAll()
                 .requestMatchers("/api/v1/blogs/**").permitAll()
                 .requestMatchers("/api/v1/railai/**").permitAll()

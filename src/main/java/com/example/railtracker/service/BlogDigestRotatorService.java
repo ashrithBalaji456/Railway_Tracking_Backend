@@ -149,3 +149,4 @@ public class BlogDigestRotatorService {
         return "Always keep digital copies of your train tickets and photo ID handy on mobile before boarding!";
     }
 }
+

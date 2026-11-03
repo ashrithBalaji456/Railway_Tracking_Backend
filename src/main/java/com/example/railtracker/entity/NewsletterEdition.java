@@ -67,3 +67,4 @@ public class NewsletterEdition {
     public Integer getRecipientsCount() { return recipientsCount; }
     public void setRecipientsCount(Integer recipientsCount) { this.recipientsCount = recipientsCount; }
 }
+
