@@ -2584,3 +2584,48 @@ Added explicit permit rules for `/api/v1/notifications/**` in the Spring Securit
 .requestMatchers("/api/v1/notifications/**").permitAll()
 ```
 This enables both authenticated members and session-based passengers to query, customize, and persist their preferred notification thresholds seamlessly.
+
+---
+
+## 19. 📊 IRCTC Chart Preparation Alert & Notification Engine
+
+### 19.1. Architectural Overview & Domain Logic
+Tracking chart preparation is critical for waitlisted and RAC passengers because berth and coach allocations (e.g., `B3, Berth 47`) are finalized during charting.
+
+The system incorporates the official Indian Railways charting rules:
+1. **First Reservation Chart (Chart 1):**
+   - **Morning Trains (Departing 05:00 to 14:00):** Finalized at **08:00 PM on the previous evening**.
+   - **Other Trains (Departing after 14:00 or before 05:00):** Finalized **10 hours before departure** from originating station.
+2. **Second / Final Reservation Chart (Chart 2):**
+   - Finalized **30 minutes before departure** from originating station to release current counter bookings and last-minute cancellations.
+
+### 19.2. Chart Alert DTO (`ChartAlertRequest.java`)
+File path: `src/main/java/com/example/railtracker/dto/ChartAlertRequest.java`
+
+Encapsulates:
+* `pnr`: 10-digit Passenger Name Record.
+* `trainNumber` & `trainName`: Journey identifier and locomotive service.
+* `travelDate` & `departureTime`: Scheduled origin departure timestamp.
+* `chartType`: Specific chart phase (`Chart 1` or `Chart 2`).
+* `confirmationProbability`: Statistical probability score generated on the client.
+* `email`: Recipient address for Brevo transactional alert delivery.
+
+### 19.3. Brevo Transactional Email Service (`BrevoEmailService.java`)
+File path: `src/main/java/com/example/railtracker/service/BrevoEmailService.java`
+
+* **Method:** `sendChartPreparationEmail(...)`
+  - Composes a responsive dark-themed HTML memo with `📊 IRCTC RESERVATION CHART ALERT` badge.
+  - Highlights PNR, journey date, scheduled departure time, chart status (`Finalized & Locked`), and statistical confirmation probability forecast.
+  - Outlines actionable guidelines:
+    1. Checking allocated Coach and Berth number on IRCTC or station display.
+    2. Automatic cancellation and 100% refund rules for waitlisted e-tickets.
+    3. Current booking window open until 30 minutes before departure.
+  - Includes direct call-to-action buttons jumping directly to live GPS tracking and PNR re-verification on RailTrack.
+
+### 19.4. REST Controller Endpoints (`PnrReminderController.java`)
+File path: `src/main/java/com/example/railtracker/controller/PnrReminderController.java`
+
+* **`POST /api/v1/pnr/chart-alert`:**
+  - Registers passenger notification request for IRCTC chart preparation and persists a travel reminder record in PostgreSQL.
+* **`POST /api/v1/pnr/chart-alert/test`:**
+  - Dispatches an instant test notification email via Brevo so passengers can verify their email address and preview the alert design.

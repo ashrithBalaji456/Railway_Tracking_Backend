@@ -130,3 +130,4 @@ public class UserNotificationPreferences {
         this.updatedAt = updatedAt;
     }
 }
+

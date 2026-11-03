@@ -13,3 +13,4 @@ public record NotificationPreferencesResponse(
     boolean stationWakeUpAlarmEnabled,
     LocalDateTime updatedAt
 ) {}
+

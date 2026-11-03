@@ -20,3 +20,4 @@ public record NotificationPreferencesRequest(
 
     Boolean stationWakeUpAlarmEnabled
 ) {}
+

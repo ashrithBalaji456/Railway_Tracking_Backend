@@ -1123,5 +1123,141 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }
+
+    /**
+     * Sends an automated or test IRCTC Chart Preparation Notification email.
+     */
+    public boolean sendChartPreparationEmail(
+            String toEmail,
+            String username,
+            String pnr,
+            String trainNumber,
+            String trainName,
+            String chartType,
+            String departureTime,
+            String travelDate,
+            String confirmationProbability) {
+
+        String recipient = (username != null && !username.isBlank()) ? username : "Passenger";
+        String effectiveTrainName = (trainName != null && !trainName.isBlank()) ? trainName : "Express";
+        String effectiveChartType = (chartType != null && !chartType.isBlank()) ? chartType : "Chart 1 (First Reservation Chart)";
+        String effectiveDep = (departureTime != null && !departureTime.isBlank()) ? departureTime : "Scheduled Time";
+        String probText = (confirmationProbability != null && !confirmationProbability.isBlank()) ? confirmationProbability : "High / Confirmed";
+
+        String subject = "📊 IRCTC %s Finalized: Train %s (%s) • PNR %s".formatted(
+                effectiveChartType.contains("Chart 2") ? "Final Chart (Chart 2)" : "Chart 1",
+                trainNumber,
+                effectiveTrainName,
+                pnr
+        );
+
+        String trackUrl = "%s/trains/%s".formatted(
+                frontendUrl != null ? frontendUrl.replaceAll("/$", "") : "http://localhost:5173",
+                trainNumber
+        );
+
+        String pnrUrl = "%s/pnr?pnr=%s".formatted(
+                frontendUrl != null ? frontendUrl.replaceAll("/$", "") : "http://localhost:5173",
+                pnr
+        );
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
+                .container { max-width: 600px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+                .header { background: linear-gradient(135deg, #1e1b4b 0%%, #312e81 50%%, #4338ca 100%%); padding: 28px 24px; text-align: center; }
+                .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #a5b4fc; border: 1px solid rgba(165, 180, 252, 0.3); margin-bottom: 8px; }
+                .title { margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; }
+                .subtitle { margin-top: 6px; font-size: 13px; color: #c7d2fe; }
+                .content { padding: 24px; }
+                .card { background: #1e293b; border-radius: 14px; padding: 18px; margin-bottom: 20px; border: 1px solid #334155; }
+                .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; font-size: 13px; }
+                .stat-box { background: #0b0f19; padding: 12px; border-radius: 10px; border: 1px solid #1e293b; }
+                .stat-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
+                .stat-value { font-size: 15px; font-weight: 800; color: #f8fafc; }
+                .prob-tag { color: #34d399; font-weight: 800; }
+                .btn { display: block; text-align: center; background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff; padding: 14px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; margin-top: 20px; }
+                .tips { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 14px; margin-top: 20px; font-size: 12px; color: #bfdbfe; line-height: 1.6; }
+                .footer { padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="badge">📊 IRCTC RESERVATION CHART ALERT</div>
+                  <h1 class="title">%s PREPARED</h1>
+                  <div class="subtitle">Train %s &bull; %s</div>
+                </div>
+                <div class="content">
+                  <p style="font-size: 14px; color: #cbd5e1; margin-top: 0;">
+                    Hello %s, Indian Railways has finalized <strong>%s</strong> for your upcoming journey on Train <strong>%s</strong>.
+                  </p>
+
+                  <div class="card">
+                    <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #818cf8; letter-spacing: 0.05em; margin-bottom: 8px;">
+                      JOURNEY & CHARTING DETAILS
+                    </div>
+                    <div class="grid">
+                      <div class="stat-box">
+                        <div class="stat-label">PNR Number</div>
+                        <div class="stat-value" style="font-family: monospace; color: #a5b4fc;">%s</div>
+                      </div>
+                      <div class="stat-box">
+                        <div class="stat-label">Travel Date & Time</div>
+                        <div class="stat-value">%s (%s)</div>
+                      </div>
+                      <div class="stat-box">
+                        <div class="stat-label">Chart Status</div>
+                        <div class="stat-value" style="color: #38bdf8;">Finalized & Locked</div>
+                      </div>
+                      <div class="stat-box">
+                        <div class="stat-label">Confirmation Forecast</div>
+                        <div class="stat-value prob-tag">%s</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tips">
+                    <strong>📌 Important Next Steps for Passengers:</strong>
+                    <ul style="margin: 8px 0 0; padding-left: 18px;">
+                      <li>Check your confirmed <strong>Coach (e.g. B3) and Berth (e.g. 47 LB)</strong> on IRCTC or at the station charting board.</li>
+                      <li>For waitlisted e-tickets that remain fully unconfirmed after Chart 2, tickets are auto-cancelled with 100%% refund.</li>
+                      <li>Current Booking counter remains open until 30 minutes prior to departure for any unallocated berths.</li>
+                    </ul>
+                  </div>
+
+                  <a href="%s" class="btn">View Live Train GPS Tracking & Platform</a>
+
+                  <p style="text-align: center; margin-top: 14px;">
+                    <a href="%s" style="color: #818cf8; font-size: 12px; text-decoration: underline;">Re-verify PNR on RailTrack</a>
+                  </p>
+                </div>
+                <div class="footer">
+                  Automated Indian Railways Charting Intelligence &bull; &copy; 2026 RailTrack Telemetry
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                effectiveChartType.toUpperCase(),
+                trainNumber,
+                effectiveTrainName,
+                recipient,
+                effectiveChartType,
+                trainNumber,
+                pnr,
+                travelDate,
+                effectiveDep,
+                probText,
+                trackUrl,
+                pnrUrl
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 

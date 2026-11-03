@@ -13,3 +13,4 @@ public interface UserNotificationPreferencesRepository extends JpaRepository<Use
 
     Optional<UserNotificationPreferences> findByUsernameIgnoreCase(String username);
 }
+
