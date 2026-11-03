@@ -25,3 +25,4 @@ public record ChartAlertRequest(
     @Email(message = "Invalid email format")
     String email
 ) {}
+

@@ -1259,5 +1259,158 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }
+
+    /**
+     * Dispatches an automated or test Route Disruption & Weather Safety Advisory email.
+     */
+    public boolean sendDisruptionAdvisoryEmail(
+            String toEmail,
+            String username,
+            String trainNumber,
+            String trainName,
+            String disruptionType,
+            String message,
+            String sourceStation,
+            String destStation,
+            String alternativeRoute,
+            String effectiveDate) {
+
+        String recipient = (username != null && !username.isBlank()) ? username : "Passenger";
+        String effectiveTrainName = (trainName != null && !trainName.isBlank()) ? trainName : "Express";
+        String effectiveType = (disruptionType != null && !disruptionType.isBlank()) ? disruptionType.toUpperCase() : "DISRUPTED";
+        String effectiveNotice = (message != null && !message.isBlank()) ? message : "Operational disruption reported along scheduled route.";
+        String effectiveRoute = (sourceStation != null && destStation != null) ? "%s ➔ %s".formatted(sourceStation, destStation) : "Scheduled Route";
+        String dateStr = (effectiveDate != null && !effectiveDate.isBlank()) ? effectiveDate : "Current Date";
+
+        String subject = "⚠️ Route Disruption Advisory: Train %s (%s) • %s".formatted(
+                trainNumber,
+                effectiveTrainName,
+                effectiveType
+        );
+
+        String trackUrl = "%s/trains/%s".formatted(
+                frontendUrl != null ? frontendUrl.replaceAll("/$", "") : "http://localhost:5173",
+                trainNumber
+        );
+
+        String altUrl = "%s/disruptions".formatted(
+                frontendUrl != null ? frontendUrl.replaceAll("/$", "") : "http://localhost:5173"
+        );
+
+        String badgeBg = effectiveType.contains("CANCEL") ? "#e11d48" : effectiveType.contains("DIVERT") ? "#d97706" : "#2563eb";
+
+        String divertedHtml = "";
+        if (alternativeRoute != null && !alternativeRoute.isBlank()) {
+            divertedHtml = """
+                <div style="background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(217, 119, 6, 0.4); border-radius: 10px; padding: 12px 16px; margin-top: 14px;">
+                  <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #fbbf24; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Diverted Route</span>
+                  <span style="font-size: 13px; color: #fef3c7; font-weight: 600;">%s</span>
+                </div>
+            """.formatted(alternativeRoute);
+        }
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
+                .container { max-width: 620px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+                .header { background: linear-gradient(135deg, #1e1b4b 0%%, #312e81 50%%, #4338ca 100%%); padding: 28px 24px; text-align: center; }
+                .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: %s; color: #ffffff; margin-bottom: 8px; }
+                .title { margin: 0; font-size: 22px; font-weight: 900; color: #ffffff; }
+                .subtitle { margin-top: 6px; font-size: 13px; color: #c7d2fe; }
+                .content { padding: 24px; }
+                .card { background: #1e293b; border-radius: 14px; padding: 18px; margin-bottom: 20px; border: 1px solid #334155; }
+                .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; font-size: 13px; }
+                .stat-box { background: #0b0f19; padding: 12px; border-radius: 10px; border: 1px solid #1e293b; }
+                .stat-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
+                .stat-value { font-size: 14px; font-weight: 800; color: #f8fafc; }
+                .notice-box { background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); border-radius: 12px; padding: 14px; margin: 16px 0; font-size: 13px; color: #fecdd3; line-height: 1.5; }
+                .refund-box { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 14px; margin-top: 20px; font-size: 12px; color: #a7f3d0; line-height: 1.6; }
+                .btn { display: block; text-align: center; background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff; padding: 13px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; margin-top: 20px; }
+                .footer { padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="badge">%s</div>
+                  <h1 class="title">Train %s • %s</h1>
+                  <div class="subtitle">%s</div>
+                </div>
+                <div class="content">
+                  <p style="font-size: 14px; color: #cbd5e1; margin-top: 0;">
+                    Hello %s, Indian Railways has reported a service exception affecting your route on Train <strong>%s (%s)</strong>.
+                  </p>
+
+                  <div class="card">
+                    <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #818cf8; letter-spacing: 0.05em; margin-bottom: 8px;">
+                      SERVICE EXCEPTION DETAILS
+                    </div>
+                    <div class="grid">
+                      <div class="stat-box">
+                        <div class="stat-label">Disruption Status</div>
+                        <div class="stat-value" style="color: #f43f5e;">%s</div>
+                      </div>
+                      <div class="stat-box">
+                        <div class="stat-label">Effective Date</div>
+                        <div class="stat-value">%s</div>
+                      </div>
+                      <div class="stat-box" style="grid-column: span 2;">
+                        <div class="stat-label">Origin & Destination Route</div>
+                        <div class="stat-value">%s</div>
+                      </div>
+                    </div>
+                    %s
+                  </div>
+
+                  <div class="notice-box">
+                    <strong>📢 Official Railway Notice:</strong><br>
+                    %s
+                  </div>
+
+                  <div class="refund-box">
+                    <strong>💰 IRCTC Refund & Passenger Rights Guidance:</strong>
+                    <ul style="margin: 6px 0 0; padding-left: 18px;">
+                      <li><strong>Fully Cancelled Trains:</strong> 100%% fare refund is credited automatically for online e-tickets. No TDR filing is required.</li>
+                      <li><strong>Diverted Route:</strong> If the train is diverted and you choose not to travel, file a TDR on IRCTC within 72 hours for a full refund without cancellation deductions.</li>
+                      <li><strong>Rescheduled > 3 Hours:</strong> Eligible for 100%% refund upon TDR filing before train departure.</li>
+                    </ul>
+                  </div>
+
+                  <a href="%s" class="btn">View Alternate Connecting Trains</a>
+
+                  <p style="text-align: center; margin-top: 14px;">
+                    <a href="%s" style="color: #818cf8; font-size: 12px; text-decoration: underline;">View Live GPS Coordinates & Route Halts</a>
+                  </p>
+                </div>
+                <div class="footer">
+                  Automated Indian Railways Operational Advisory &bull; &copy; 2026 RailTrack Telemetry
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                badgeBg,
+                effectiveType,
+                trainNumber,
+                effectiveTrainName,
+                effectiveRoute,
+                recipient,
+                trainNumber,
+                effectiveTrainName,
+                effectiveType,
+                dateStr,
+                effectiveRoute,
+                divertedHtml,
+                effectiveNotice,
+                altUrl,
+                trackUrl
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 

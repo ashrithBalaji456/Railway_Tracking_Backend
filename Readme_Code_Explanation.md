@@ -2629,3 +2629,45 @@ File path: `src/main/java/com/example/railtracker/controller/PnrReminderControll
   - Registers passenger notification request for IRCTC chart preparation and persists a travel reminder record in PostgreSQL.
 * **`POST /api/v1/pnr/chart-alert/test`:**
   - Dispatches an instant test notification email via Brevo so passengers can verify their email address and preview the alert design.
+
+---
+
+## 20. 🚨 Route Disruption & Safety Advisory Email Engine
+
+### 20.1. Architectural Overview & Domain Purpose
+Indian Railways operations frequently face unplanned service exceptions—including dense winter fog speed restrictions, monsoon track inundations, infrastructure blockades, train cancellations, and line diversions. 
+
+The Disruption Advisory engine equips passengers with proactive email communication dispatched via Brevo, delivering real-time status notices, diverted route details, alternative train recommendations, and explicit guidance on claiming 100% IRCTC fare refunds.
+
+### 20.2. Disruption Alert DTO (`DisruptionAlertRequest.java`)
+File path: `src/main/java/com/example/railtracker/dto/DisruptionAlertRequest.java`
+
+* **Fields:**
+  * `trainNumber` (`String`, Mandatory): Service identifier.
+  * `trainName` (`String`, Optional): Express or Superfast branding.
+  * `disruptionType` (`String`, Mandatory): `CANCELLED`, `DIVERTED`, `RESCHEDULED`, or weather advisory.
+  * `message` (`String`): Official operational exception notice.
+  * `sourceStation` & `destStation` (`String`): Origin and destination stations.
+  * `alternativeRoute` (`String`): Diverted path if the train was re-routed.
+  * `effectiveDate` (`String`): Scheduled date of disrupted operation.
+  * `email` (`String`, Mandatory & Validated): Recipient address for Brevo transactional delivery.
+
+### 20.3. Transactional Email Template (`BrevoEmailService.java`)
+File path: `src/main/java/com/example/railtracker/service/BrevoEmailService.java`
+
+* **Method:** `sendDisruptionAdvisoryEmail(...)`
+  * Dynamically changes badge colors based on severity (Crimson for `CANCELLED`, Amber for `DIVERTED`, Indigo for `RESCHEDULED`).
+  * Features a prominent **Diverted Route** card showing re-routed intermediate stations.
+  * Integrates official **IRCTC Refund & TDR Passenger Rights**:
+    1. **Cancelled Trains:** 100% fare auto-refund for e-tickets; counter tickets refundable at any PRS window within 72 hours.
+    2. **Diverted Trains:** 100% fare refund with zero cancellation charges upon filing an online TDR within 72 hours if the passenger chooses not to travel.
+    3. **Rescheduled Trains (>3 Hours):** 100% fare refund on TDR filing prior to departure.
+  * Includes direct call-to-action buttons for finding alternate connecting trains and live GPS tracking.
+
+### 20.4. REST API Controller Endpoints (`TrainDisruptionController.java`)
+File path: `src/main/java/com/example/railtracker/controller/TrainDisruptionController.java`
+
+* **`POST /api/v1/disruptions/alert`:**
+  - Registers passenger email alerts for a specific disrupted train, ensuring passengers receive updates if the diversion route is updated or services resume.
+* **`POST /api/v1/disruptions/alert/test`:**
+  - Dispatches an instant sample advisory email via Brevo to the passenger's inbox for immediate layout preview and verification.
