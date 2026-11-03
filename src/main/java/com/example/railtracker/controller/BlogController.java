@@ -3,7 +3,12 @@ package com.example.railtracker.controller;
 import com.example.railtracker.dto.ApiResponse;
 import com.example.railtracker.dto.BlogArticleDTO;
 import com.example.railtracker.dto.BlogTipDTO;
+import com.example.railtracker.entity.User;
+import com.example.railtracker.repository.UserRepository;
+import com.example.railtracker.service.BlogDigestRotatorService;
 import com.example.railtracker.service.BlogService;
+import com.example.railtracker.service.WeeklyBlogDigestScheduler;
+import java.security.Principal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +19,16 @@ import java.util.List;
 public class BlogController {
 
     private final BlogService blogService;
+    private final WeeklyBlogDigestScheduler weeklyBlogDigestScheduler;
+    private final UserRepository userRepository;
 
-    public BlogController(BlogService blogService) {
+    public BlogController(
+            BlogService blogService,
+            WeeklyBlogDigestScheduler weeklyBlogDigestScheduler,
+            UserRepository userRepository) {
         this.blogService = blogService;
+        this.weeklyBlogDigestScheduler = weeklyBlogDigestScheduler;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -72,5 +84,28 @@ public class BlogController {
             return ResponseEntity.ok(ApiResponse.success("Tip upvoted", updated));
         }
         return ResponseEntity.status(404).body(ApiResponse.error("Tip not found"));
+    }
+
+    @PostMapping("/newsletter/test")
+    public ResponseEntity<ApiResponse<BlogDigestRotatorService.WeeklyDigestBundle>> testWeeklyNewsletter(
+            @RequestParam(required = false) String email,
+            Principal principal) {
+
+        String targetEmail = email;
+        String targetName = "Passenger";
+
+        if ((targetEmail == null || targetEmail.isBlank()) && principal != null) {
+            targetEmail = userRepository.findByUsername(principal.getName())
+                    .map(User::getEmail)
+                    .orElse(null);
+            targetName = principal.getName();
+        }
+
+        if (targetEmail == null || targetEmail.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Target email is required to test the newsletter"));
+        }
+
+        BlogDigestRotatorService.WeeklyDigestBundle bundle = weeklyBlogDigestScheduler.sendTestDigest(targetEmail.trim(), targetName);
+        return ResponseEntity.ok(ApiResponse.success("Issue #" + bundle.editionNumber() + " dispatched to " + targetEmail, bundle));
     }
 }

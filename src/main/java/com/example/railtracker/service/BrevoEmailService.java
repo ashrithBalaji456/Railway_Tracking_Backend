@@ -589,5 +589,129 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, recipientName, subject, htmlContent);
     }
+
+    /**
+     * Sends the weekly curated rail blog digest.
+     */
+    public boolean sendWeeklyBlogDigestEmail(
+            String toEmail,
+            String username,
+            BlogDigestRotatorService.WeeklyDigestBundle digest) {
+
+        if (digest == null || digest.spotlight() == null) return false;
+
+        var spotlight = digest.spotlight();
+        String subject = "📰 RailTrack Weekly #%d: %s".formatted(
+                digest.editionNumber(),
+                spotlight.title()
+        );
+
+        String baseUrl = (frontendUrl != null ? frontendUrl.split(",")[0].trim() : "https://railtrack.in");
+        String spotlightUrl = baseUrl + "/blogs/" + spotlight.slug();
+
+        StringBuilder secondariesHtml = new StringBuilder();
+        if (digest.secondaries() != null) {
+            for (var article : digest.secondaries()) {
+                String articleUrl = baseUrl + "/blogs/" + article.slug();
+                secondariesHtml.append("""
+                    <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                      <div style="display: inline-block; background-color: #4f46e5; color: #ffffff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-bottom: 6px;">
+                        %s
+                      </div>
+                      <h4 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 700; color: #f8fafc;">
+                        <a href="%s" style="color: #f8fafc; text-decoration: none;">%s</a>
+                      </h4>
+                      <p style="margin: 0 0 10px 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                        %s
+                      </p>
+                      <div style="font-size: 11px; color: #818cf8; font-weight: 600;">
+                        ⏱️ %d min read &bull; <a href="%s" style="color: #818cf8; text-decoration: underline;">Read story &rarr;</a>
+                      </div>
+                    </div>
+                    """.formatted(
+                        article.category() != null ? article.category() : "Explore",
+                        articleUrl,
+                        article.title(),
+                        article.subtitle() != null ? article.subtitle() : "",
+                        article.readTimeMinutes() != null ? article.readTimeMinutes() : 4,
+                        articleUrl
+                ));
+            }
+        }
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+                .container { max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+                .header { background: linear-gradient(135deg, #1e1b4b 0%%, #312e81 100%%); padding: 28px 24px; text-align: center; border-bottom: 2px solid #4f46e5; }
+                .header-tag { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #818cf8; margin-bottom: 4px; }
+                .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: 800; }
+                .content { padding: 30px 24px; }
+                .greeting { font-size: 15px; color: #cbd5e1; margin-bottom: 20px; }
+                .spotlight-card { background-color: #0f172a; border: 1px solid #4338ca; border-radius: 10px; padding: 20px; margin-bottom: 28px; }
+                .category-badge { display: inline-block; background-color: #4338ca; color: #e0e7ff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; margin-bottom: 10px; }
+                .spotlight-title { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 8px 0; line-height: 1.3; }
+                .spotlight-sub { font-size: 13px; color: #94a3b8; line-height: 1.6; margin: 0 0 16px 0; }
+                .spotlight-meta { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+                .button { background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 13px; display: inline-block; }
+                .section-header { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin: 0 0 14px 0; }
+                .tip-box { background-color: #172554; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 18px; margin-top: 24px; font-size: 13px; color: #bfdbfe; line-height: 1.5; }
+                .footer { background-color: #0f172a; padding: 20px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="header-tag">RAILTRACK WEEKLY GAZETTE &bull; ISSUE #%d</div>
+                  <h1>🚆 Stories Along the Tracks</h1>
+                </div>
+                <div class="content">
+                  <div class="greeting">Hello %s, here is your curated selection of rail journeys, scenic routes, and travel stories for the week:</div>
+
+                  <!-- Cover Story -->
+                  <div class="spotlight-card">
+                    <div class="category-badge">%s</div>
+                    <h2 class="spotlight-title">%s</h2>
+                    <p class="spotlight-sub">%s</p>
+                    <div class="spotlight-meta">⏱️ %d min read &bull; By %s</div>
+                    <a href="%s" class="button">Read Full Story &rarr;</a>
+                  </div>
+
+                  <!-- More Stories -->
+                  <div class="section-header">More Stories in This Issue</div>
+                  %s
+
+                  <!-- Traveler Tip -->
+                  <div class="tip-box">
+                    💡 <strong>Rail Traveler Tip of the Week:</strong><br/>
+                    %s
+                  </div>
+                </div>
+                <div class="footer">
+                  Curated with ❤️ by RailTrack India &bull; Live Train Intelligence<br/>
+                  &copy; 2026 RailTrack India. All rights reserved.
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                digest.editionNumber(),
+                username != null ? username : "Passenger",
+                spotlight.category() != null ? spotlight.category() : "Cover Story",
+                spotlight.title(),
+                spotlight.subtitle() != null ? spotlight.subtitle() : "",
+                spotlight.readTimeMinutes() != null ? spotlight.readTimeMinutes() : 5,
+                spotlight.author() != null ? spotlight.author() : "RailTrack Editorial",
+                spotlightUrl,
+                secondariesHtml.toString(),
+                digest.travelerTip() != null ? digest.travelerTip() : "Keep digital copies of tickets handy on mobile."
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 

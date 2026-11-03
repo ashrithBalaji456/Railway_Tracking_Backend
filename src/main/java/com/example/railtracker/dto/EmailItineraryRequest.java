@@ -9,3 +9,4 @@ public record EmailItineraryRequest(
     @NotNull(message = "Journey details cannot be null")
     JourneyOptionDto journey
 ) {}
+
