@@ -65,7 +65,8 @@ public class TravelReminderScheduler {
     }
 
     /**
-     * Periodic dynamic check (every 15 minutes) to evaluate dynamic departure wake-up alarms
+     * Periodic dynamic check (every 15 minutes) to evaluate dynamic departure
+     * wake-up alarms
      * based on: (Scheduled Departure + Live Delay) - Advance Warning Minutes.
      */
     @Scheduled(cron = "${app.reminder.dynamic-cron:0 */15 * * * *}", zone = "Asia/Kolkata")
@@ -115,13 +116,15 @@ public class TravelReminderScheduler {
                     reminder.setPlatform(liveStatus.platform());
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         LocalDateTime expectedDeparture = scheduledDeparture.plusMinutes(delayMinutes);
         int advanceMinutes = reminder.getAdvanceMinutes() != null ? reminder.getAdvanceMinutes() : 150;
         LocalDateTime alertTargetTime = expectedDeparture.minusMinutes(advanceMinutes);
 
-        // Trigger if current time has reached or passed alertTargetTime (with a 20-min tolerance window)
+        // Trigger if current time has reached or passed alertTargetTime (with a 20-min
+        // tolerance window)
         return (now.isEqual(alertTargetTime) || now.isAfter(alertTargetTime.minusMinutes(5)))
                 && now.isBefore(expectedDeparture);
     }
@@ -145,7 +148,8 @@ public class TravelReminderScheduler {
                     liveLocation = liveStatus.lastLocationInfo();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         String scheduledTime = reminder.getDepartureTime() != null ? reminder.getDepartureTime() : "Morning";
         String expectedTime = scheduledTime;
@@ -169,8 +173,7 @@ public class TravelReminderScheduler {
                     scheduledTime,
                     expectedTime,
                     delay,
-                    reminder.getAdvanceMinutes() != null ? reminder.getAdvanceMinutes() : 150
-            );
+                    reminder.getAdvanceMinutes() != null ? reminder.getAdvanceMinutes() : 150);
         } else {
             sent = brevoEmailService.sendTravelDayReminderEmail(
                     reminder.getEmail(),
@@ -180,8 +183,7 @@ public class TravelReminderScheduler {
                     reminder.getTrainName(),
                     reminder.getTravelDate(),
                     liveLocation,
-                    delay
-            );
+                    delay);
         }
 
         if (sent) {
@@ -211,7 +213,8 @@ public class TravelReminderScheduler {
                     liveLocation = "Near " + liveStatus.currentStationName();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         String boardingStation = request.boardingStation() != null && !request.boardingStation().isBlank()
                 ? request.boardingStation().trim()
@@ -241,12 +244,12 @@ public class TravelReminderScheduler {
                 scheduledTime,
                 expectedTime,
                 delay,
-                advanceMinutes
-        );
+                advanceMinutes);
     }
 
     private LocalTime parseTimeSafe(String timeStr) {
-        if (timeStr == null || timeStr.isBlank()) return null;
+        if (timeStr == null || timeStr.isBlank())
+            return null;
         String clean = timeStr.trim();
         try {
             return LocalTime.parse(clean, DateTimeFormatter.ofPattern("HH:mm"));
