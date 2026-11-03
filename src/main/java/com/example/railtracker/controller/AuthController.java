@@ -13,6 +13,7 @@ import com.example.railtracker.repository.RoleRepository;
 import com.example.railtracker.repository.UserRepository;
 import com.example.railtracker.security.JwtTokenProvider;
 import com.example.railtracker.security.UserDetailsImpl;
+import com.example.railtracker.service.BrevoEmailService;
 import com.example.railtracker.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final PasswordResetService passwordResetService;
+    private final BrevoEmailService brevoEmailService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -45,13 +47,15 @@ public class AuthController {
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider tokenProvider,
-            PasswordResetService passwordResetService) {
+            PasswordResetService passwordResetService,
+            BrevoEmailService brevoEmailService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.passwordResetService = passwordResetService;
+        this.brevoEmailService = brevoEmailService;
     }
 
     @PostMapping("/signin")
@@ -115,6 +119,15 @@ public class AuthController {
 
         user.setRoles(roles);
         userRepository.save(user);
+
+        // Asynchronously dispatch warm welcome email via Brevo without slowing down registration
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                brevoEmailService.sendWelcomeEmail(user.getEmail(), user.getUsername());
+            } catch (Exception e) {
+                // Handled gracefully in BrevoEmailService logging
+            }
+        });
 
         return ResponseEntity.ok(ApiResponse.success("User registered successfully", null));
     }

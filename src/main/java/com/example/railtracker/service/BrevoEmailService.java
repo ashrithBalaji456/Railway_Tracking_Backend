@@ -322,5 +322,90 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }
+
+    /**
+     * Sends a warm welcome email to newly registered users.
+     */
+    public boolean sendWelcomeEmail(String toEmail, String username) {
+        String subject = "🚆 Welcome aboard RailTrack, %s! Your live train companion".formatted(
+                username != null ? username : "Passenger");
+
+        String appUrl = (frontendUrl != null ? frontendUrl.split(",")[0].trim() : "http://localhost:5173");
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+                .container { max-width: 580px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+                .header { background: linear-gradient(135deg, #4f46e5 0%%, #3b82f6 100%%); padding: 32px 24px; text-align: center; }
+                .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: 800; }
+                .header p { margin: 6px 0 0; color: #e0e7ff; font-size: 14px; font-weight: 500; }
+                .content { padding: 32px 24px; }
+                .greeting { font-size: 18px; color: #f8fafc; font-weight: 700; margin-bottom: 12px; }
+                .intro { font-size: 14px; color: #94a3b8; line-height: 1.6; margin-bottom: 24px; }
+                .features { margin-bottom: 28px; }
+                .feature-item { background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+                .feature-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }
+                .feature-desc { font-size: 12px; color: #94a3b8; line-height: 1.4; }
+                .btn-container { text-align: center; margin: 28px 0 16px; }
+                .button { background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; }
+                .footer { background-color: #0f172a; padding: 20px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; line-height: 1.6; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>🚆 RailTrack India</h1>
+                  <p>Live Train Telemetry & Travel Intelligence</p>
+                </div>
+                <div class="content">
+                  <div class="greeting">Welcome aboard, %s! 🎉</div>
+                  <div class="intro">
+                    Thank you for joining <strong>RailTrack</strong>. You now have access to real-time train tracking, automated delay warnings, and intelligent journey planning.
+                  </div>
+
+                  <div class="features">
+                    <div class="feature-item">
+                      <div class="feature-title">📍 Live GPS Train Tracking</div>
+                      <div class="feature-desc">Track live speed, delay, coordinates, and intermediate stops on an interactive map.</div>
+                    </div>
+
+                    <div class="feature-item">
+                      <div class="feature-title">⚠️ Automated Delay Notifications</div>
+                      <div class="feature-desc">Set custom delay thresholds and receive real-time email alerts straight to your inbox.</div>
+                    </div>
+
+                    <div class="feature-item">
+                      <div class="feature-title">🚉 Live Station Boards</div>
+                      <div class="feature-desc">Check upcoming arrivals and departures with live platform numbers across 8,000+ Indian stations.</div>
+                    </div>
+
+                    <div class="feature-item">
+                      <div class="feature-title">🤖 RailAI Travel Assistant</div>
+                      <div class="feature-desc">Ask questions about coach positions, train schedules, and best transit routes anytime.</div>
+                    </div>
+                  </div>
+
+                  <div class="btn-container">
+                    <a href="%s" class="button">Start Exploring RailTrack</a>
+                  </div>
+                </div>
+                <div class="footer">
+                  Happy Journey! 🛤️<br/>
+                  © 2026 RailTrack India • All Rights Reserved
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                username != null ? username : "Passenger",
+                appUrl
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 
