@@ -2785,16 +2785,18 @@ The RailTrack India notification suite is engineered to solve critical real-worl
 
 ---
 
-### 5. 🚨 Route Disruption & Weather Safety Advisory Alert
+### 5. 🚨 Route Disruption & Weather Safety Advisory Alert (Dual-Channel Push + Email)
 * **What is the use of this notification:**
-  * When Indian Railways cancels, diverts, or slows down trains due to winter fog, monsoon floods, or track repairs, passengers need immediate advice on diverted routes, alternate trains, and how to get a 100% fare refund.
+  * When Indian Railways cancels, diverts, or slows down trains due to winter fog, monsoon floods, or track repairs, passengers need immediate lock-screen push notifications and email advisories detailing diverted routes, alternate trains, and how to get a 100% IRCTC fare refund.
 * **How the user uses it (Step-by-Step):**
   1. Open the **Disruptions** page (`/disruptions`) or view any live train with an active disruption banner.
-  2. Click the **"Email Advisory"** button on the disrupted train card.
+  2. Click the **"Email Advisory"** or **"Disruption Advisory"** button on the disrupted train card.
   3. Review the diverted route, cancellation notice, and IRCTC TDR refund guidelines.
-  4. Enter your email and click **"Arm Disruption Alert"** (or **"Send Sample Email"** for instant verification).
+  4. Enter your email and click **"Arm Disruption Alert"**.
+  5. Click **"Test Push Alert"** to test the lock-screen notification and audio chime on your device immediately, or **"Sample Email"** for instant inbox verification.
 * **Execution Flow:**
-  * `POST /api/v1/disruptions/alert` logs the subscription.
+  * Client triggers `webNotificationService.sendDisruptionAlert(...)` for instant device push and in-app toast banner.
+  * `POST /api/v1/disruptions/alert` logs the subscription in PostgreSQL.
   * `POST /api/v1/disruptions/alert/test` triggers `BrevoEmailService.sendDisruptionAdvisoryEmail(...)`.
   * Dispatches a responsive email featuring severity badges, diverted intermediate station paths, TDR 100% refund rules, and direct links to live alternate trains.
 
