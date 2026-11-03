@@ -1,5 +1,6 @@
 package com.example.railtracker.service;
 
+import com.example.railtracker.dto.JourneyOptionDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -406,6 +407,187 @@ public class BrevoEmailService {
             );
 
         return sendEmail(toEmail, username, subject, htmlContent);
+    }
+
+    /**
+     * Sends a detailed journey itinerary memo.
+     */
+    public boolean sendJourneyItineraryEmail(
+            String toEmail,
+            String recipientName,
+            String travelDate,
+            JourneyOptionDto journey) {
+
+        if (journey == null) return false;
+
+        String origin = journey.originStationCode();
+        String dest = journey.destinationStationCode();
+        String subject = "🚆 RailTrack Travel Memo: %s ➔ %s (%s)".formatted(
+                origin,
+                dest,
+                journey.firstTrainNumber()
+        );
+
+        String trackUrl = (frontendUrl != null ? frontendUrl.split(",")[0].trim() : "https://railtrack.in")
+                + "/trains/" + journey.firstTrainNumber();
+
+        int totalHours = journey.totalDurationMinutes() != null ? journey.totalDurationMinutes() / 60 : 0;
+        int totalMins = journey.totalDurationMinutes() != null ? journey.totalDurationMinutes() % 60 : 0;
+        String durationStr = totalHours + "h " + totalMins + "m";
+
+        StringBuilder legsHtml = new StringBuilder();
+
+        // First Leg
+        legsHtml.append("""
+            <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
+                <span style="font-size: 15px; font-weight: 800; color: #818cf8;">Train #%s</span>
+                <span style="font-size: 13px; font-weight: 600; color: #cbd5e1;">%s</span>
+              </div>
+              <table style="width: 100%%; font-size: 13px; color: #94a3b8;">
+                <tr>
+                  <td style="padding: 4px 0;"><strong>Departure:</strong></td>
+                  <td style="color: #f8fafc; font-weight: 600;">%s from %s (%s)</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;"><strong>Arrival:</strong></td>
+                  <td style="color: #f8fafc; font-weight: 600;">%s at %s (%s)</td>
+                </tr>
+              </table>
+            </div>
+            """.formatted(
+                journey.firstTrainNumber(),
+                journey.firstTrainName() != null ? journey.firstTrainName() : "Express",
+                journey.originDepartureTime() != null ? journey.originDepartureTime().toString() : "--:--",
+                journey.originStationName(),
+                journey.originStationCode(),
+                journey.direct() ? (journey.destinationArrivalTime() != null ? journey.destinationArrivalTime().toString() : "--:--") : (journey.transferArrivalTime() != null ? journey.transferArrivalTime().toString() : "--:--"),
+                journey.direct() ? journey.destinationStationName() : journey.transferStationName(),
+                journey.direct() ? journey.destinationStationCode() : journey.transferStationCode()
+        ));
+
+        // If connecting journey
+        if (!journey.direct() && journey.secondTrainNumber() != null) {
+            legsHtml.append("""
+                <div style="background-color: #451a03; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin-bottom: 14px; font-size: 13px; color: #fde68a;">
+                  🔄 <strong>Transit at %s (%s):</strong> %d mins layover %s
+                </div>
+                """.formatted(
+                    journey.transferStationName(),
+                    journey.transferStationCode(),
+                    journey.layoverMinutes() != null ? journey.layoverMinutes() : 0,
+                    journey.layoverWarning() != null ? "• " + journey.layoverWarning() : ""
+            ));
+
+            legsHtml.append("""
+                <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px; margin-bottom: 14px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
+                    <span style="font-size: 15px; font-weight: 800; color: #818cf8;">Train #%s</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #cbd5e1;">%s</span>
+                  </div>
+                  <table style="width: 100%%; font-size: 13px; color: #94a3b8;">
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Departure:</strong></td>
+                      <td style="color: #f8fafc; font-weight: 600;">%s from %s (%s)</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Final Arrival:</strong></td>
+                      <td style="color: #f8fafc; font-weight: 600;">%s at %s (%s)</td>
+                    </tr>
+                  </table>
+                </div>
+                """.formatted(
+                    journey.secondTrainNumber(),
+                    journey.secondTrainName() != null ? journey.secondTrainName() : "Express",
+                    journey.transferDepartureTime() != null ? journey.transferDepartureTime().toString() : "--:--",
+                    journey.transferStationName(),
+                    journey.transferStationCode(),
+                    journey.destinationArrivalTime() != null ? journey.destinationArrivalTime().toString() : "--:--",
+                    journey.destinationStationName(),
+                    journey.destinationStationCode()
+            ));
+        }
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+                .container { max-width: 580px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+                .header { background: linear-gradient(135deg, #4f46e5 0%%, #3b82f6 100%%); padding: 28px 24px; text-align: center; }
+                .header h1 { margin: 0; color: #ffffff; font-size: 22px; font-weight: 800; }
+                .header p { margin: 6px 0 0; color: #e0e7ff; font-size: 14px; font-weight: 500; }
+                .content { padding: 30px 24px; }
+                .greeting { font-size: 16px; color: #e2e8f0; margin-bottom: 12px; }
+                .route-summary { background-color: #0f172a; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; text-align: center; border: 1px solid #334155; }
+                .route-codes { font-size: 22px; font-weight: 800; color: #818cf8; letter-spacing: 1px; }
+                .route-names { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+                .meta-tags { margin-top: 10px; display: inline-flex; gap: 8px; font-size: 11px; font-weight: 700; }
+                .tag { background-color: #1e293b; padding: 3px 10px; border-radius: 9999px; color: #cbd5e1; border: 1px solid #334155; }
+                .btn-container { text-align: center; margin: 26px 0 16px; }
+                .button { background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff !important; padding: 13px 30px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block; }
+                .footer { background-color: #0f172a; padding: 18px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>🚆 RailTrack Journey Itinerary</h1>
+                  <p>Your Confirmed Travel Memo & Schedule</p>
+                </div>
+                <div class="content">
+                  <div class="greeting">Hello %s,</div>
+                  <div style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+                    Here is your travel itinerary from <strong>%s</strong> to <strong>%s</strong>%s.
+                  </div>
+
+                  <div class="route-summary">
+                    <div class="route-codes">%s ➔ %s</div>
+                    <div class="route-names">%s to %s</div>
+                    <div class="meta-tags">
+                      <span class="tag">⏱️ Total: %s</span>
+                      <span class="tag">%s</span>
+                      %s
+                    </div>
+                  </div>
+
+                  <h3 style="font-size: 14px; font-weight: 700; color: #cbd5e1; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Train Schedule Details</h3>
+                  %s
+
+                  <div class="btn-container">
+                    <a href="%s" class="button">Track Train Live on RailTrack</a>
+                  </div>
+
+                  <div style="background-color: #0f172a; border-radius: 6px; padding: 14px 18px; font-size: 12px; color: #64748b; line-height: 1.5; margin-top: 20px;">
+                    💡 <strong>Traveler Checklist:</strong> Confirm live platform numbers and train delays before heading to the station. Have your ticket & ID ready for TTE inspection.
+                  </div>
+                </div>
+                <div class="footer">
+                  Generated by RailTrack India • Live Train Telemetry & Intelligence<br/>
+                  © 2026 RailTrack India • All Rights Reserved
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                recipientName != null ? recipientName : "Passenger",
+                journey.originStationName(),
+                journey.destinationStationName(),
+                travelDate != null && !travelDate.isBlank() ? " scheduled for " + travelDate : "",
+                origin,
+                dest,
+                journey.originStationName(),
+                journey.destinationStationName(),
+                durationStr,
+                journey.direct() ? "Direct Route" : "Connecting Route",
+                travelDate != null && !travelDate.isBlank() ? "<span class=\"tag\">📅 " + travelDate + "</span>" : "",
+                legsHtml.toString(),
+                trackUrl
+            );
+
+        return sendEmail(toEmail, recipientName, subject, htmlContent);
     }
 }
 
