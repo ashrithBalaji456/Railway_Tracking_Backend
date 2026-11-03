@@ -1,5 +1,6 @@
 package com.example.railtracker.service;
 
+import com.example.railtracker.dto.FoodGuideEmailRequest.FoodStopDto;
 import com.example.railtracker.dto.JourneyOptionDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -1407,6 +1408,144 @@ public class BrevoEmailService {
                 divertedHtml,
                 effectiveNotice,
                 altUrl,
+                trackUrl
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
+
+    /**
+     * Sends a formatted Food on Track & Journey Meal Planner guide email via Brevo.
+     */
+    public boolean sendRouteFoodGuideEmail(
+            String toEmail,
+            String username,
+            String trainNumber,
+            String trainName,
+            List<FoodStopDto> stops) {
+
+        String recipient = (username != null && !username.isBlank()) ? username : "Foodie Traveler";
+        String effectiveTrainName = (trainName != null && !trainName.isBlank()) ? trainName : "Express";
+
+        String subject = "🍱 Food on Track: Route Platform Delicacy & Meal Planner • Train %s (%s)".formatted(
+                trainNumber,
+                effectiveTrainName
+        );
+
+        String trackUrl = "%s/trains/%s".formatted(
+                frontendUrl != null ? frontendUrl.replaceAll("/$", "") : "http://localhost:5173",
+                trainNumber
+        );
+
+        StringBuilder stopsHtml = new StringBuilder();
+        if (stops != null && !stops.isEmpty()) {
+            for (FoodStopDto stop : stops) {
+                int halt = stop.haltMinutes() != null ? stop.haltMinutes() : 5;
+                boolean isSafeHalt = halt >= 10;
+                String haltBadge = isSafeHalt
+                        ? "<span style=\"background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;\">%d min halt (Safe Step-Out)</span>".formatted(halt)
+                        : "<span style=\"background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px; font-size: 11px;\">%d min quick stop</span>".formatted(halt);
+
+                String mealPhaseBadge = stop.mealPhase() != null
+                        ? "<span style=\"background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase;\">%s</span>".formatted(stop.mealPhase())
+                        : "";
+
+                stopsHtml.append("""
+                    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                          <strong style="color: #ffffff; font-size: 15px;">%s (%s)</strong>
+                          <span style="color: #94a3b8; font-size: 12px; margin-left: 6px;">&bull; Arr %s</span>
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                          %s
+                          %s
+                        </div>
+                      </div>
+                      <div style="font-size: 14px; font-weight: 800; color: #38bdf8; margin-bottom: 4px;">
+                        %s %s
+                      </div>
+                      <div style="font-size: 12px; color: #cbd5e1; line-height: 1.4;">
+                        <strong>📍 Best Stall:</strong> %s
+                      </div>
+                      %s
+                    </div>
+                """.formatted(
+                        stop.stationName() != null ? stop.stationName() : stop.stationCode(),
+                        stop.stationCode(),
+                        stop.arrivalTime() != null ? stop.arrivalTime() : "--:--",
+                        mealPhaseBadge,
+                        haltBadge,
+                        stop.badgeEmoji() != null ? stop.badgeEmoji() : "🍲",
+                        stop.delicacyTitle() != null ? stop.delicacyTitle() : "Platform Delicacy",
+                        stop.bestPlatformOrStall() != null ? stop.bestPlatformOrStall() : "Platform 1 IRCTC Kiosk",
+                        stop.mustTryItems() != null && !stop.mustTryItems().isBlank()
+                                ? "<div style=\"font-size: 11px; color: #a5b4fc; margin-top: 4px;\"><strong>✨ Must Try:</strong> %s</div>".formatted(stop.mustTryItems())
+                                : ""
+                ));
+            }
+        } else {
+            stopsHtml.append("<div style=\"color: #94a3b8; text-align: center; padding: 20px;\">No specific gastronomy stops listed for this segment.</div>");
+        }
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
+                .container { max-width: 640px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+                .header { background: linear-gradient(135deg, #1e1b4b 0%%, #312e81 50%%, #4338ca 100%%); padding: 28px 24px; text-align: center; }
+                .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0,0,0,0.4); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 8px; }
+                .title { margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; }
+                .subtitle { margin-top: 6px; font-size: 13px; color: #c7d2fe; }
+                .content { padding: 24px; }
+                .tips { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 14px; margin-top: 20px; font-size: 12px; color: #fef3c7; line-height: 1.5; }
+                .btn { display: block; text-align: center; background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff; padding: 14px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; margin-top: 20px; }
+                .footer { padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="badge">🍱 FOOD ON TRACK • JOURNEY GASTRONOMY GUIDE</div>
+                  <h1 class="title">Train %s • %s</h1>
+                  <div class="subtitle">Curated Platform Specialties & Meal Schedule</div>
+                </div>
+                <div class="content">
+                  <p style="font-size: 14px; color: #cbd5e1; margin-top: 0;">
+                    Hello %s, here is your authentic route food guide and meal schedule for your trip on Train <strong>%s (%s)</strong>.
+                  </p>
+
+                  <div style="margin-top: 20px;">
+                    %s
+                  </div>
+
+                  <div class="tips">
+                    <strong>💡 Trackside Food Safety & Travel Tips:</strong>
+                    <ul style="margin: 6px 0 0; padding-left: 18px;">
+                      <li>Only step down to platform stalls if the scheduled halt is <strong>10 minutes or more</strong>. Keep an ear out for the conductor whistle.</li>
+                      <li>Always ask vendors for the printed <strong>IRCTC authorized MRP</strong>.</li>
+                      <li>For heavy meals, IRCTC e-Catering delivers directly to your coach berth at major junctions.</li>
+                    </ul>
+                  </div>
+
+                  <a href="%s" class="btn">View Live Train GPS Tracking & Platform Halts</a>
+                </div>
+                <div class="footer">
+                  Indian Railways Culinary Intelligence &bull; &copy; 2026 RailTrack Telemetry
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                trainNumber,
+                effectiveTrainName,
+                recipient,
+                trainNumber,
+                effectiveTrainName,
+                stopsHtml.toString(),
                 trackUrl
             );
 

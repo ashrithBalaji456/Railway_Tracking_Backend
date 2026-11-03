@@ -18,17 +18,20 @@ public class TrainController {
     private final TrainRepository trainRepository;
     private final StationRepository stationRepository;
     private final DataInitializer dataInitializer;
+    private final com.example.railtracker.service.BrevoEmailService brevoEmailService;
 
     @org.springframework.beans.factory.annotation.Autowired
     public TrainController(
             TrainService trainService,
             TrainRepository trainRepository,
             StationRepository stationRepository,
-            @org.springframework.beans.factory.annotation.Autowired(required = false) DataInitializer dataInitializer) {
+            @org.springframework.beans.factory.annotation.Autowired(required = false) DataInitializer dataInitializer,
+            com.example.railtracker.service.BrevoEmailService brevoEmailService) {
         this.trainService = trainService;
         this.trainRepository = trainRepository;
         this.stationRepository = stationRepository;
         this.dataInitializer = dataInitializer;
+        this.brevoEmailService = brevoEmailService;
     }
 
     @GetMapping("/count")
@@ -121,5 +124,31 @@ public class TrainController {
             @RequestParam("destination") String destination) {
         TrainFareDTO fare = trainService.getTrainFare(trainNumber, source, destination);
         return ResponseEntity.ok(ApiResponse.success("Train fare retrieved successfully", fare));
+    }
+
+    @PostMapping("/{trainNumber}/food-guide/email")
+    public ResponseEntity<ApiResponse<Boolean>> emailFoodGuide(
+            @PathVariable("trainNumber") String trainNumber,
+            @jakarta.validation.Valid @RequestBody com.example.railtracker.dto.FoodGuideEmailRequest request,
+            java.security.Principal principal) {
+        String username = (principal != null) ? principal.getName() : "Traveler";
+        boolean sent = brevoEmailService.sendRouteFoodGuideEmail(
+                request.email(),
+                username,
+                trainNumber,
+                request.trainName(),
+                request.stops()
+        );
+
+        if (sent) {
+            return ResponseEntity.ok(ApiResponse.success(
+                    "Food on Track journey meal guide sent to " + request.email() + "!",
+                    true
+            ));
+        } else {
+            return ResponseEntity.status(500).body(ApiResponse.error(
+                    "Failed to dispatch food guide email. Please check your Brevo configuration or recipient email."
+            ));
+        }
     }
 }

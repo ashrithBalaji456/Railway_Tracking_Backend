@@ -2866,3 +2866,23 @@ The RailTrack India notification suite is engineered to solve critical real-worl
 * **Execution Flow:**
   * `POST /api/v1/auth/forgot-password` generates cryptographic OTP and invokes `BrevoEmailService.sendPasswordResetOtpEmail(...)`.
   * `POST /api/v1/auth/signup` registers user and invokes `BrevoEmailService.sendWelcomeEmail(...)`.
+
+
+---
+
+### 11. 🍱 Food on Track — Route Platform Delicacies & Safe Meal Schedule Guide
+* **What is the use of this notification service:**
+  * Delivers a curated, timetable-synchronized gastronomic itinerary directly to the passenger's inbox for long-distance journeys.
+  * Solves the classic Indian Railways catering dilemma: which stations serve authentic GI-tagged regional delicacies (e.g. Agra Petha, Ratlam Sev, Mathura Peda, Nagpur Oranges), which stations have $\ge 10$ minute halts safe for platform food pick-up without missing train departure, and what to eat for Breakfast, Lunch, Evening Snacks, and Dinner based on scheduled station arrival times.
+* **How the user uses it (Step-by-Step):**
+  1. Open any train's live tracking or schedule page (e.g., Train 12952 Mumbai Rajdhani or 12626 Kerala Express).
+  2. Click the **"🍱 Food on Track"** button located in the action bar.
+  3. Browse the modal breakdown:
+     * **Meal Timeline:** Categorized chronologically by Breakfast (07:00–10:30), Lunch (12:00–15:00), Evening Snacks (16:30–19:00), and Dinner (19:30–22:30).
+     * **Safe Halt Safety Badges:** Stations with $\ge 10$ min halt display an emerald badge *"Safe to Step Out (~X min halt)"*. Stations under 10 min display an amber caution *"Quick Halt — Vendor at Doorway only"*.
+  4. In the email dispatch card, enter or verify recipient email address and click **"Send Food Itinerary to Email"**.
+  5. An IRCTC-styled HTML gastronomic guide is sent to the inbox formatted for offline access during travel.
+* **Execution Flow:**
+  * Client sends `POST /api/v1/trains/{trainNumber}/food-guide/email` with `FoodGuideEmailRequest` containing recipient email, train details, and structured `MealPhaseInfo` items.
+  * Controller delegates to `BrevoEmailService.sendRouteFoodGuideEmail(...)`.
+  * Brevo Transactional API compiles and delivers the dark-mode responsive email.
