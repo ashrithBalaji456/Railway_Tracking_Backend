@@ -28,3 +28,4 @@ public record FoodGuideEmailRequest(
         String mustTryItems
     ) {}
 }
+
