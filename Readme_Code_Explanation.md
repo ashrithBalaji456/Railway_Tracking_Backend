@@ -2886,3 +2886,19 @@ The RailTrack India notification suite is engineered to solve critical real-worl
   * Client sends `POST /api/v1/trains/{trainNumber}/food-guide/email` with `FoodGuideEmailRequest` containing recipient email, train details, and structured `MealPhaseInfo` items.
   * Controller delegates to `BrevoEmailService.sendRouteFoodGuideEmail(...)`.
   * Brevo Transactional API compiles and delivers the dark-mode responsive email.
+
+
+---
+
+### 12. 🚨 Dual-Channel Live Train Delay Alert System (Push + Email Brevo Dispatcher)
+* **What is the use of this notification service:**
+  * Coordinates real-time delay telemetry across both urgent native device push channels and archival Brevo transactional emails.
+  * When a train's delay exceeds a passenger's sensitivity threshold (15m, 30m, or 60m), the client instantly fires a native lock-screen push and Web Audio chime, while `TrainDelayAlertScheduler` delivers the HTML delay advisory email.
+* **Architecture & Flow:**
+  * **Threshold Configuration:** `POST /api/v1/alerts/threshold` persists user threshold into PostgreSQL table `alerts`.
+  * **Real-time SSE Stream:** `GET /api/v1/live-updates/{trainNumber}` feeds live delay telemetry to active frontend listeners.
+  * **Backend Cooldown & Scheduler:** `TrainDelayAlertScheduler.java` runs every 5 minutes (`@Scheduled(fixedRate = 300000)`), checks `liveStatus.delayMinutes() >= threshold`, suppresses duplicate alerts within 60 minutes (unless delay worsens by $\ge 15$m), and invokes `BrevoEmailService.sendTrainDelayAlertEmail(...)`.
+* **Execution Flow:**
+  1. Client sets threshold via `POST /api/v1/alerts/threshold`.
+  2. If client is active or in background, `webNotificationService` delivers native OS banner and in-app toast.
+  3. If client is offline, `TrainDelayAlertScheduler` delivers the backup Brevo email alert.
