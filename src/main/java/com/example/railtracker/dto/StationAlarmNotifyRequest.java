@@ -26,3 +26,4 @@ public record StationAlarmNotifyRequest(
 
     String platform
 ) {}
+

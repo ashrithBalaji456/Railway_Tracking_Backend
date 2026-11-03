@@ -961,5 +961,167 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }
+
+    /**
+     * Sends a real-time Station Live Board Timetable snapshot via Brevo.
+     */
+    public boolean sendStationBoardSnapshotEmail(
+            String toEmail,
+            String username,
+            com.example.railtracker.dto.LiveStationBoardResponse boardData) {
+
+        if (toEmail == null || toEmail.isBlank() || boardData == null || boardData.station() == null) {
+            return false;
+        }
+
+        String stationCode = boardData.station().code();
+        String stationName = boardData.station().name() != null ? boardData.station().name() : stationCode;
+        Integer hours = boardData.window() != null && boardData.window().hours() != null ? boardData.window().hours() : 4;
+        String windowText = (boardData.window() != null && boardData.window().from() != null && boardData.window().to() != null)
+                ? boardData.window().from() + " - " + boardData.window().to()
+                : "Next " + hours + " Hours";
+
+        String subject = "📊 Station Live Board: " + stationName + " (" + stationCode + ") - Next " + hours + " Hours";
+        String stationUrl = frontendUrl + "/stations?code=" + stationCode;
+
+        StringBuilder tableRows = new StringBuilder();
+        var trains = boardData.trains();
+        int displayCount = trains != null ? Math.min(trains.size(), 20) : 0;
+
+        if (trains == null || trains.isEmpty()) {
+            tableRows.append("""
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 18px; color: #94a3b8; font-style: italic;">
+                    No trains scheduled in this %d-hour window.
+                  </td>
+                </tr>
+            """.formatted(hours));
+        } else {
+            for (int i = 0; i < displayCount; i++) {
+                var t = trains.get(i);
+                String trainNum = t.trainNumber() != null ? t.trainNumber() : "---";
+                String trainName = t.trainName() != null ? t.trainName() : "Express";
+                String src = t.source() != null && t.source().code() != null ? t.source().code() : "";
+                String dest = t.destination() != null && t.destination().code() != null ? t.destination().code() : "";
+                String route = (!src.isBlank() && !dest.isBlank()) ? src + " &rarr; " + dest : "En Route";
+
+                String schTime = t.scheduledArrival() != null ? t.scheduledArrival() : (t.scheduledDeparture() != null ? t.scheduledDeparture() : "--:--");
+                String expTime = t.expectedArrival() != null ? t.expectedArrival() : (t.expectedDeparture() != null ? t.expectedDeparture() : schTime);
+
+                Integer delay = t.delayMinutes() != null ? t.delayMinutes() : 0;
+                String delayBadge;
+                if (delay <= 0) {
+                    delayBadge = "<span style=\"color: #34d399; font-weight: 700;\">On Time</span>";
+                } else if (delay < 30) {
+                    delayBadge = "<span style=\"color: #fbbf24; font-weight: 700;\">+" + delay + "m Late</span>";
+                } else {
+                    delayBadge = "<span style=\"color: #f87171; font-weight: 700;\">+" + delay + "m Late</span>";
+                }
+
+                String pf = (t.platform() != null && !t.platform().isBlank()) ? "PF " + t.platform() : "TBD";
+
+                tableRows.append("""
+                    <tr style="border-bottom: 1px solid #1e293b;">
+                      <td style="padding: 10px 8px; font-weight: 700; color: #f1f5f9;">
+                        %s<br/><span style="font-size: 11px; color: #94a3b8; font-weight: 500;">%s</span>
+                      </td>
+                      <td style="padding: 10px 8px; font-size: 12px; color: #cbd5e1; font-weight: 600;">%s</td>
+                      <td style="padding: 10px 8px; font-family: monospace; font-size: 12px; color: #e2e8f0;">
+                        <span style="color: #94a3b8; text-decoration: line-through;">%s</span><br/>
+                        <strong style="color: #38bdf8;">%s</strong>
+                      </td>
+                      <td style="padding: 10px 8px; font-size: 12px;">%s</td>
+                      <td style="padding: 10px 8px; text-align: center;">
+                        <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; background: #0f172a; border: 1px solid #38bdf8; color: #38bdf8; font-weight: 800; font-size: 11px;">
+                          %s
+                        </span>
+                      </td>
+                    </tr>
+                """.formatted(trainNum, trainName, route, schTime, expTime, delayBadge, pf));
+            }
+        }
+
+        String recipient = (username != null && !username.isBlank()) ? username : "Passenger";
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
+                .container { max-width: 680px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+                .header { background: linear-gradient(135deg, #1e1b4b 0%%, #312e81 50%%, #4338ca 100%%); padding: 26px 24px; text-align: center; }
+                .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #a5b4fc; border: 1px solid rgba(165, 180, 252, 0.3); margin-bottom: 8px; }
+                .title { margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; }
+                .subtitle { margin-top: 6px; font-size: 13px; color: #c7d2fe; }
+                .content { padding: 24px; }
+                .meta-bar { display: flex; justify-content: space-between; align-items: center; background: #1e293b; border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; border: 1px solid #334155; }
+                table { width: 100%%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+                th { text-align: left; padding: 10px 8px; background: #1e293b; color: #94a3b8; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #334155; }
+                .btn { display: block; text-align: center; background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff; padding: 14px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; margin-top: 24px; }
+                .footer { padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="badge">📊 LIVE STATION DEPARTURE & ARRIVAL BOARD</div>
+                  <h1 class="title">%s (%s)</h1>
+                  <div class="subtitle">Live Timetable Snapshot &bull; %s</div>
+                </div>
+                <div class="content">
+                  <p style="font-size: 14px; color: #cbd5e1; margin-top: 0;">
+                    Hello %s, here is your requested live timetable snapshot for <strong>%s (%s)</strong>.
+                  </p>
+
+                  <div class="meta-bar">
+                    <span><strong>Coverage Window:</strong> %s (%d Hours)</span>
+                    <span style="color: #38bdf8; font-weight: 700;">Showing %d Upcoming Trains</span>
+                  </div>
+
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Train</th>
+                        <th>Route</th>
+                        <th>Sch / Exp</th>
+                        <th>Status</th>
+                        <th style="text-align: center;">Platform</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      %s
+                    </tbody>
+                  </table>
+
+                  <a href="%s" class="btn">View Real-Time Interactive Board</a>
+
+                  <p style="font-size: 11px; color: #94a3b8; margin-top: 18px; text-align: center; line-height: 1.5;">
+                    💡 <em>Note: Platform numbers are subject to dynamic station master operational changes. Please verify station audio announcements upon arrival.</em>
+                  </p>
+                </div>
+                <div class="footer">
+                  Automated Station Intelligence &bull; &copy; 2026 RailTrack Telemetry
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                stationName,
+                stationCode,
+                windowText,
+                recipient,
+                stationName,
+                stationCode,
+                windowText,
+                hours,
+                displayCount,
+                tableRows.toString(),
+                stationUrl
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 
