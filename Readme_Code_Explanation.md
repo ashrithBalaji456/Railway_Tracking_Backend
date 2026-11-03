@@ -2905,3 +2905,23 @@ The RailTrack India notification suite is engineered to solve critical real-worl
   1. Client sets threshold via `POST /api/v1/alerts/threshold`.
   2. If client is active or in background, `webNotificationService` delivers native OS banner and in-app toast.
   3. If client is offline, `TrainDelayAlertScheduler` delivers the backup Brevo email alert.
+
+---
+
+### 13. 🌅 Dynamic Departure Wake-Up Alarm & Telemetry Scheduler (Early Morning Protection)
+* **What is the use of this service:**
+  * Eliminates the traditional limitation of static 06:00 AM alarms by providing dynamic, telemetry-synchronized wake-up alerts for early morning trains (e.g. 05:15 AM departure) and automatic schedule shifting when a train is delayed.
+  * **Dynamic Delay Shift Protection:** If a passenger's train scheduled at 05:00 AM is running 3 hours late (expected 08:00 AM), the scheduler dynamically moves the alert from 02:30 AM to 05:30 AM, allowing the passenger uninterrupted rest.
+  * **Multi-Station Support:** Calculates departure time and alerts relative to the user's exact boarding station rather than only the origin station.
+* **Architecture & Flow:**
+  * **Model & Persistence:** `TravelReminder.java` stores `boardingStation`, `departureTime`, `advanceMinutes` (default 150m = 2.5 hours), and `platform`.
+  * **Dynamic 15-Minute Poller:** `TravelReminderScheduler.java` runs a cron every 15 minutes (`@Scheduled(cron = "${app.reminder.dynamic-cron:0 */15 * * * *}", zone = "Asia/Kolkata")`), evaluating:
+    $$\text{Alert Target Time} = (\text{Scheduled Departure} + \text{Live Delay}) - \text{Advance Warning Minutes}$$
+  * **Brevo HTML Wake-Up Dispatcher:** `BrevoEmailService.sendDepartureWakeUpEmail(...)` renders a high-contrast amber/gold early-morning email featuring:
+    * Clear Delay Shift Banner (Scheduled vs Live Expected time)
+    * Boarding Station & Expected Platform allocation
+    * Pre-departure government ID and packing checklist
+    * Direct buttons for Live Train GPS and Station Platform Boards.
+* **API Endpoints:**
+  * `POST /api/v1/pnr/reminder`: Schedules or updates dynamic departure reminder.
+  * `POST /api/v1/pnr/reminder/test`: Immediately dispatches sample wake-up email with live telemetry simulation.

@@ -1553,5 +1553,171 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }
+
+    /**
+     * Sends a Dynamic Departure Wake-Up Alarm email via Brevo.
+     * Fires dynamically in advance of the scheduled/delayed departure at the passenger's boarding station.
+     */
+    public boolean sendDepartureWakeUpEmail(
+            String toEmail,
+            String username,
+            String pnr,
+            String trainNumber,
+            String trainName,
+            java.time.LocalDate travelDate,
+            String boardingStation,
+            String platform,
+            String scheduledTime,
+            String expectedTime,
+            Integer delayMinutes,
+            Integer advanceMinutes) {
+
+        if (toEmail == null || toEmail.isBlank()) {
+            return false;
+        }
+
+        String trainLabel = (trainName != null && !trainName.isBlank()) ? trainName : "Express";
+        String stationLabel = (boardingStation != null && !boardingStation.isBlank()) ? boardingStation : "Boarding Station";
+        String platformText = (platform != null && !platform.isBlank() && !platform.equalsIgnoreCase("TBA"))
+                ? "Platform " + platform
+                : "Check Live Station Displays";
+
+        int advance = (advanceMinutes != null && advanceMinutes > 0) ? advanceMinutes : 150;
+        String advanceHoursText = (advance >= 60)
+                ? (advance / 60) + "h " + (advance % 60 > 0 ? (advance % 60) + "m" : "")
+                : advance + " minutes";
+
+        String subject = "🌅 WAKE-UP ALARM: Train " + trainNumber + " departing from " + stationLabel + " in ~" + advanceHoursText.trim() + "!";
+
+        String baseUrl = (frontendUrl != null ? frontendUrl.split(",")[0].trim() : "https://railtrack.in");
+        String trackUrl = baseUrl + "/trains/" + trainNumber;
+        String stationsUrl = baseUrl + "/stations";
+
+        String delayBanner;
+        if (delayMinutes != null && delayMinutes > 0) {
+            int delayHours = delayMinutes / 60;
+            int delayMins = delayMinutes % 60;
+            String delayDuration = (delayHours > 0) ? delayHours + "h " + delayMins + "m" : delayMinutes + " mins";
+            delayBanner = """
+                <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; text-align: center;">
+                  <strong style="color: #fbbf24; font-size: 15px;">⚠️ Dynamic Delay Shift: Train is running %s late</strong><br/>
+                  <span style="font-size: 13px; color: #fde68a;">Scheduled: %s &bull; Updated Departure: <strong style="color: #38bdf8;">%s</strong></span><br/>
+                  <span style="font-size: 11px; color: #cbd5e1; margin-top: 4px; display: inline-block;">✅ Your wake-up alarm dynamically moved forward so you enjoyed extra sleep!</span>
+                </div>
+                """.formatted(delayDuration, scheduledTime != null ? scheduledTime : "As per schedule", expectedTime != null ? expectedTime : "Delayed");
+        } else {
+            delayBanner = """
+                <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; text-align: center;">
+                  <strong style="color: #34d399; font-size: 15px;">✅ Running On Time</strong><br/>
+                  <span style="font-size: 13px; color: #a7f3d0;">Scheduled Departure: <strong>%s</strong> from %s</span>
+                </div>
+                """.formatted(scheduledTime != null ? scheduledTime : "On Schedule", stationLabel);
+        }
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
+                .container { max-width: 620px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 2px solid #f59e0b; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.35); }
+                .header { background: linear-gradient(135deg, #b45309 0%%, #d97706 50%%, #ea580c 100%%); padding: 28px 24px; text-align: center; }
+                .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #fef08a; border: 1px solid rgba(254, 240, 138, 0.4); margin-bottom: 10px; }
+                .title { margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
+                .content { padding: 28px 24px; }
+                .card { background: #1e293b; border-radius: 14px; padding: 18px 20px; margin: 18px 0; border: 1px solid #334155; }
+                .table-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #334155; font-size: 14px; }
+                .table-label { color: #94a3b8; font-weight: 500; }
+                .table-val { color: #ffffff; font-weight: 700; text-align: right; }
+                .pnr-badge { background-color: #1e1b4b; border: 1px solid #6366f1; color: #a5b4fc; font-family: monospace; font-size: 13px; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
+                .btn-group { display: flex; gap: 12px; margin: 24px 0 10px 0; }
+                .btn-primary { flex: 1; display: block; text-align: center; background: linear-gradient(135deg, #f59e0b 0%%, #d97706 100%%); color: #ffffff !important; padding: 14px 18px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; }
+                .btn-secondary { flex: 1; display: block; text-align: center; background: #1e293b; color: #cbd5e1 !important; padding: 14px 18px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px; border: 1px solid #475569; }
+                .checklist { background: rgba(245, 158, 11, 0.08); border-radius: 12px; padding: 16px; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 12px; color: #cbd5e1; line-height: 1.7; margin-top: 20px; }
+                .footer { padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="badge">⏰ WAKE-UP ALARM &bull; DEPARTURE ADVANCE NOTICE</div>
+                  <h1 class="title">🌅 Good Morning! Time to Get Ready</h1>
+                </div>
+                <div class="content">
+                  %s
+
+                  <p style="font-size: 14px; color: #cbd5e1; margin-top: 0; line-height: 1.6;">
+                    Hello %s, your smart departure alarm has triggered! Train <strong>%s (%s)</strong> is scheduled to depart from <strong>%s</strong> in approximately <strong>%s</strong>.
+                  </p>
+
+                  <div class="card">
+                    <div class="table-row">
+                      <span class="table-label">PNR Number:</span>
+                      <span class="pnr-badge">%s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Train Number:</span>
+                      <span class="table-val">%s - %s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Boarding Station:</span>
+                      <span class="table-val" style="color: #fbbf24;">%s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Expected Platform:</span>
+                      <span class="table-val" style="color: #38bdf8;">%s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Departure Time:</span>
+                      <span class="table-val">%s</span>
+                    </div>
+                    <div class="table-row" style="border-bottom: none;">
+                      <span class="table-label">Journey Date:</span>
+                      <span class="table-val">%s</span>
+                    </div>
+                  </div>
+
+                  <div class="btn-group">
+                    <a href="%s" class="btn-primary">Track Train Live GPS</a>
+                    <a href="%s" class="btn-secondary">Station Platform Board</a>
+                  </div>
+
+                  <div class="checklist">
+                    <strong style="color: #fbbf24; font-size: 13px;">✈️ Pre-Departure Reminder Checklist:</strong><br/>
+                    &bull; Keep a valid original Government ID proof (Aadhaar, Voter ID, Passport, DL).<br/>
+                    &bull; Ensure your luggage is packed and phone battery charged for travel.<br/>
+                    &bull; Plan to reach %s at least 30-40 minutes before departure.<br/>
+                    &bull; If running late, check the live map to verify the rake location on the track.
+                  </div>
+                </div>
+                <div class="footer">
+                  Have a comfortable and safe journey!<br/>
+                  &copy; 2026 RailTrack India &bull; Smart Travel Telemetry & Departure Wake-Up Service
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                delayBanner,
+                username != null ? username : "Passenger",
+                trainNumber,
+                trainLabel,
+                stationLabel,
+                advanceHoursText,
+                pnr != null ? pnr : "N/A",
+                trainNumber,
+                trainLabel,
+                stationLabel,
+                platformText,
+                expectedTime != null ? expectedTime : (scheduledTime != null ? scheduledTime : "As Scheduled"),
+                travelDate != null ? travelDate.toString() : "Today",
+                trackUrl,
+                stationsUrl,
+                stationLabel
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 

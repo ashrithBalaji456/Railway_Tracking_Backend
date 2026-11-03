@@ -33,6 +33,18 @@ public class TravelReminder {
     @Column(length = 50)
     private String username;
 
+    @Column(name = "boarding_station", length = 100)
+    private String boardingStation;
+
+    @Column(name = "advance_minutes")
+    private Integer advanceMinutes = 150;
+
+    @Column(name = "departure_time", length = 20)
+    private String departureTime;
+
+    @Column(length = 20)
+    private String platform;
+
     @Column(name = "reminder_sent", nullable = false)
     private Boolean reminderSent = false;
 
@@ -72,9 +84,16 @@ public class TravelReminder {
     public void setEmail(String email) { this.email = email; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+    public String getBoardingStation() { return boardingStation; }
+    public void setBoardingStation(String boardingStation) { this.boardingStation = boardingStation; }
+    public Integer getAdvanceMinutes() { return advanceMinutes; }
+    public void setAdvanceMinutes(Integer advanceMinutes) { this.advanceMinutes = advanceMinutes; }
+    public String getDepartureTime() { return departureTime; }
+    public void setDepartureTime(String departureTime) { this.departureTime = departureTime; }
+    public String getPlatform() { return platform; }
+    public void setPlatform(String platform) { this.platform = platform; }
     public Boolean getReminderSent() { return reminderSent; }
     public void setReminderSent(Boolean reminderSent) { this.reminderSent = reminderSent; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
-

@@ -63,6 +63,15 @@ public class PnrReminderController {
         reminder.setTravelDate(request.travelDate());
         reminder.setEmail(request.email().trim().toLowerCase());
         reminder.setUsername(username);
+        if (request.boardingStation() != null && !request.boardingStation().isBlank()) {
+            reminder.setBoardingStation(request.boardingStation().trim());
+        }
+        if (request.advanceMinutes() != null && request.advanceMinutes() > 0) {
+            reminder.setAdvanceMinutes(request.advanceMinutes());
+        }
+        if (request.departureTime() != null && !request.departureTime().isBlank()) {
+            reminder.setDepartureTime(request.departureTime().trim());
+        }
         reminder.setReminderSent(false);
 
         TravelReminder saved = reminderRepository.save(reminder);
@@ -75,7 +84,11 @@ public class PnrReminderController {
                 saved.getTravelDate(),
                 saved.getEmail(),
                 saved.getReminderSent(),
-                saved.getCreatedAt()
+                saved.getCreatedAt(),
+                saved.getBoardingStation(),
+                saved.getAdvanceMinutes(),
+                saved.getDepartureTime(),
+                saved.getPlatform()
         );
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -121,7 +134,11 @@ public class PnrReminderController {
                         r.getTravelDate(),
                         r.getEmail(),
                         r.getReminderSent(),
-                        r.getCreatedAt()
+                        r.getCreatedAt(),
+                        r.getBoardingStation(),
+                        r.getAdvanceMinutes(),
+                        r.getDepartureTime(),
+                        r.getPlatform()
                 ))
                 .collect(Collectors.toList());
 

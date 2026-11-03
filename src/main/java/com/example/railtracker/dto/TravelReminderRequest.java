@@ -24,6 +24,11 @@ public record TravelReminderRequest(
     @Email(message = "Invalid email format")
     String email,
 
-    String username
-) {}
+    String username,
 
+    String boardingStation,
+
+    Integer advanceMinutes,
+
+    String departureTime
+) {}
