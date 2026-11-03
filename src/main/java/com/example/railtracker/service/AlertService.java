@@ -11,4 +11,6 @@ public interface AlertService {
     List<AlertDto> getActiveAlerts(String username);
 
     void removeAlert(String username, Long alertId);
+
+    void sendTestAlert(String username, Long alertId);
 }

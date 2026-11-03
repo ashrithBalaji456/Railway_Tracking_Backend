@@ -40,4 +40,12 @@ public class AlertController {
         alertService.removeAlert(principal.getName(), id);
         return ResponseEntity.ok(ApiResponse.success("Alert settings removed successfully"));
     }
+
+    @PostMapping("/{id}/test")
+    public ResponseEntity<ApiResponse<String>> testAlert(
+            Principal principal,
+            @PathVariable Long id) {
+        alertService.sendTestAlert(principal.getName(), id);
+        return ResponseEntity.ok(ApiResponse.success("Test delay alert email sent to your inbox", "Email dispatched via Brevo"));
+    }
 }

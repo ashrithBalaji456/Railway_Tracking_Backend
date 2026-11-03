@@ -34,6 +34,9 @@ public class BrevoEmailService {
     @Value("${brevo.from-name:${BREVO_FROM_NAME:RailTrack Alerts}}")
     private String fromName;
 
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
     public BrevoEmailService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
@@ -200,6 +203,122 @@ public class BrevoEmailService {
             </body>
             </html>
             """.formatted(username != null ? username : "Passenger");
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
+
+    /**
+     * Sends a rich train delay alert notification.
+     */
+    public boolean sendTrainDelayAlertEmail(
+            String toEmail,
+            String username,
+            String trainNumber,
+            String trainName,
+            int delayMinutes,
+            int thresholdMinutes,
+            String currentStationName,
+            String nextStationName,
+            String runStatus,
+            String lastLocationInfo) {
+
+        String subject = "⚠️ RailTrack Alert: Train %s (%s) is Delayed by %d Mins".formatted(
+                trainNumber,
+                trainName != null ? trainName : "Express",
+                delayMinutes);
+
+        String trackUrl = (frontendUrl != null ? frontendUrl.split(",")[0].trim() : "https://railtrack.in")
+                + "/trains/" + trainNumber;
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+                .container { max-width: 580px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+                .header { background: linear-gradient(135deg, #f59e0b 0%%, #d97706 100%%); padding: 24px; text-align: center; }
+                .header h1 { margin: 0; color: #0f172a; font-size: 22px; font-weight: 800; }
+                .header p { margin: 4px 0 0; color: #1e293b; font-size: 14px; font-weight: 600; }
+                .content { padding: 30px 24px; }
+                .greeting { font-size: 16px; color: #e2e8f0; margin-bottom: 14px; }
+                .alert-card { background-color: #0f172a; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 16px 20px; margin-bottom: 24px; }
+                .alert-title { font-size: 18px; font-weight: 700; color: #fbbf24; margin-bottom: 6px; }
+                .alert-desc { font-size: 13px; color: #94a3b8; }
+                .details-table { width: 100%%; border-collapse: collapse; margin-bottom: 24px; }
+                .details-table td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid #334155; }
+                .label { color: #94a3b8; width: 40%%; font-weight: 500; }
+                .value { color: #f8fafc; font-weight: 600; }
+                .delay-badge { background-color: #dc2626; color: #ffffff; padding: 3px 8px; border-radius: 4px; font-weight: 700; }
+                .btn-container { text-align: center; margin: 28px 0 16px; }
+                .button { background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff !important; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block; }
+                .tip { background-color: #0f172a; border-radius: 6px; padding: 14px 18px; font-size: 12px; color: #64748b; line-height: 1.5; }
+                .footer { background-color: #0f172a; padding: 16px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>🚆 RailTrack Live Alert</h1>
+                  <p>Train Delay Notification</p>
+                </div>
+                <div class="content">
+                  <div class="greeting">Hello %s,</div>
+                  <div class="alert-card">
+                    <div class="alert-title">Train Delay Exceeded Your Alert Threshold</div>
+                    <div class="alert-desc">Your alert threshold was set for %d mins delay.</div>
+                  </div>
+
+                  <table class="details-table">
+                    <tr>
+                      <td class="label">Train</td>
+                      <td class="value"><strong>%s - %s</strong></td>
+                    </tr>
+                    <tr>
+                      <td class="label">Current Delay</td>
+                      <td class="value"><span class="delay-badge">+%d minutes</span></td>
+                    </tr>
+                    <tr>
+                      <td class="label">Status</td>
+                      <td class="value">%s</td>
+                    </tr>
+                    <tr>
+                      <td class="label">Current Location</td>
+                      <td class="value">%s</td>
+                    </tr>
+                    <tr>
+                      <td class="label">Next Station</td>
+                      <td class="value">%s</td>
+                    </tr>
+                  </table>
+
+                  <div class="btn-container">
+                    <a href="%s" class="button">Track Train Live on RailTrack</a>
+                  </div>
+
+                  <div class="tip">
+                    💡 <strong>Traveler Tip:</strong> Station platforms may adjust dynamically for delayed trains. Please verify platform display boards upon arrival at the station.
+                  </div>
+                </div>
+                <div class="footer">
+                  You received this email because you subscribed to delay alerts on RailTrack India.<br/>
+                  © 2026 RailTrack India • Live Train Intelligence & Tracking
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                username != null ? username : "Passenger",
+                thresholdMinutes,
+                trainNumber,
+                trainName != null ? trainName : "Express",
+                delayMinutes,
+                runStatus != null ? runStatus : "RUNNING",
+                currentStationName != null && !currentStationName.isBlank() ? currentStationName : (lastLocationInfo != null ? lastLocationInfo : "En Route"),
+                nextStationName != null && !nextStationName.isBlank() ? nextStationName : "Upcoming Station",
+                trackUrl
+            );
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }

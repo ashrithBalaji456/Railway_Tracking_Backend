@@ -28,6 +28,12 @@ public class Alert {
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
+    @Column(name = "last_alert_sent_at")
+    private java.time.LocalDateTime lastAlertSentAt;
+
+    @Column(name = "last_alerted_delay")
+    private Integer lastAlertedDelay;
+
     public Alert() {
     }
 
@@ -84,5 +90,21 @@ public class Alert {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public java.time.LocalDateTime getLastAlertSentAt() {
+        return lastAlertSentAt;
+    }
+
+    public void setLastAlertSentAt(java.time.LocalDateTime lastAlertSentAt) {
+        this.lastAlertSentAt = lastAlertSentAt;
+    }
+
+    public Integer getLastAlertedDelay() {
+        return lastAlertedDelay;
+    }
+
+    public void setLastAlertedDelay(Integer lastAlertedDelay) {
+        this.lastAlertedDelay = lastAlertedDelay;
     }
 }

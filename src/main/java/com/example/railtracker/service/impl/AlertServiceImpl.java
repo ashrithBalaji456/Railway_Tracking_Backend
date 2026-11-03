@@ -28,11 +28,17 @@ public class AlertServiceImpl implements AlertService {
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
     private final RailwayDataProvider railwayDataProvider;
+    private final com.example.railtracker.service.BrevoEmailService brevoEmailService;
 
-    public AlertServiceImpl(AlertRepository alertRepository, UserRepository userRepository, RailwayDataProvider railwayDataProvider) {
+    public AlertServiceImpl(
+            AlertRepository alertRepository,
+            UserRepository userRepository,
+            RailwayDataProvider railwayDataProvider,
+            com.example.railtracker.service.BrevoEmailService brevoEmailService) {
         this.alertRepository = alertRepository;
         this.userRepository = userRepository;
         this.railwayDataProvider = railwayDataProvider;
+        this.brevoEmailService = brevoEmailService;
     }
 
     @Override
@@ -124,5 +130,58 @@ public class AlertServiceImpl implements AlertService {
         }
 
         alertRepository.delete(alert);
+    }
+
+    @Override
+    @Transactional
+    public void sendTestAlert(String username, Long alertId) {
+        logger.info("User '{}' requested manual test delay alert email for alert ID {}", username, alertId);
+
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert setting not found"));
+
+        if (!alert.getUser().getUsername().equalsIgnoreCase(username)) {
+            throw new BadRequestException("You do not have permission for this alert");
+        }
+
+        TrainLiveStatusDto liveStatus = null;
+        try {
+            liveStatus = railwayDataProvider.getTrainLiveStatus(alert.getTrainNumber());
+        } catch (Exception e) {
+            logger.warn("Could not retrieve live status for train {}: {}", alert.getTrainNumber(), e.getMessage());
+        }
+
+        int currentDelay = (liveStatus != null && liveStatus.delayMinutes() != null && liveStatus.delayMinutes() > 0)
+                ? liveStatus.delayMinutes()
+                : (alert.getThresholdMinutes() + 15); // Friendly realistic fallback if train is on time
+
+        String currentStation = (liveStatus != null && liveStatus.currentStationName() != null)
+                ? liveStatus.currentStationName()
+                : "En Route";
+
+        String nextStation = (liveStatus != null && liveStatus.nextStationName() != null)
+                ? liveStatus.nextStationName()
+                : "Upcoming Station";
+
+        String runStatus = (liveStatus != null && liveStatus.runStatus() != null)
+                ? liveStatus.runStatus()
+                : "RUNNING";
+
+        String lastLocation = (liveStatus != null && liveStatus.lastLocationInfo() != null)
+                ? liveStatus.lastLocationInfo()
+                : "Live tracking active";
+
+        brevoEmailService.sendTrainDelayAlertEmail(
+                alert.getUser().getEmail(),
+                alert.getUser().getUsername(),
+                alert.getTrainNumber(),
+                alert.getTrainName(),
+                currentDelay,
+                alert.getThresholdMinutes(),
+                currentStation,
+                nextStation,
+                runStatus,
+                lastLocation
+        );
     }
 }
