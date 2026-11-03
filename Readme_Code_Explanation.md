@@ -2529,3 +2529,58 @@ The core service orchestrates all transactional and automated notification templ
   - `POST /api/stations/{stationCode}/live/email`: Dispatches a real-time timetable snapshot for the requested station and time window.
 
 
+
+---
+
+## 18. 🛡️ User Notification & Alert Preferences Center
+
+### 18.1. Architectural Overview & Design Motivation
+As the RailTrack ecosystem grew with diverse automated communications—including Live Delay Alerts, the Weekly Blog Gazette, Morning Travel Reminders, Station Approaching Night Alarms, and Station Live Board Snapshots—passengers required a centralized cockpit to govern when, how, and where they receive notifications.
+
+The Notification Preferences Center unifies user communication preferences across channels (Email and WhatsApp) and enables users to customize alerting sensitivity, pause recurring digests, and inspect or cancel active upcoming travel alarms and reminders.
+
+### 18.2. Entity & Data Persistence (`UserNotificationPreferences.java`)
+File path: `src/main/java/com/example/railtracker/entity/UserNotificationPreferences.java`
+
+* **Table:** `user_notification_preferences`
+* **Key Fields:**
+  * `id` (`Long`, Auto-increment Primary Key).
+  * `email` (`String`, Unique, Case-Insensitive Index): The primary recipient identity.
+  * `username` (`String`, Optional): Correlated user handle when authenticated.
+  * `whatsappPhone` (`String`, Optional): Normalized E.164-compatible mobile number used for autofilling 1-tap WhatsApp alert templates.
+  * `weeklyDigestEnabled` (`Boolean`, default: `true`): Governs whether the user receives the Monday/Sunday morning RailTrack Gazette.
+  * `delayAlertThresholdMinutes` (`Integer`, default: `15`): Threshold filter (15, 30, or 60 minutes) to suppress minor schedule variations.
+  * `travelReminderEnabled` (`Boolean`, default: `true`): Toggles the automated 06:00 AM IST travel morning briefing for upcoming PNR journeys.
+  * `stationWakeUpAlarmEnabled` (`Boolean`, default: `true`): Toggles the station proximity sleep guardian alert system.
+  * `updatedAt` (`LocalDateTime`): Auditing timestamp automatically refreshed via `@PrePersist` and `@PreUpdate`.
+
+### 18.3. Repository Layer (`UserNotificationPreferencesRepository.java`)
+File path: `src/main/java/com/example/railtracker/repository/UserNotificationPreferencesRepository.java`
+
+Extends Spring Data's `JpaRepository<UserNotificationPreferences, Long>` with specialized query methods:
+* `Optional<UserNotificationPreferences> findByEmailIgnoreCase(String email)`
+* `Optional<UserNotificationPreferences> findByUsernameIgnoreCase(String username)`
+
+### 18.4. DTO Transfer Objects
+* **`NotificationPreferencesRequest.java`:** Validated request payload containing updated channel handles (`email`, `whatsappPhone`) and boolean/integer preference toggles.
+* **`NotificationPreferencesResponse.java`:** Normalized response payload returning current active settings or sensible fallback defaults for newly registered or guest emails.
+
+### 18.5. REST API Controller (`NotificationPreferencesController.java`)
+File path: `src/main/java/com/example/railtracker/controller/NotificationPreferencesController.java`
+
+* **`GET /api/v1/notifications/preferences`:**
+  - Queries user preferences by email parameter or Spring Security `Principal`.
+  - If a user record does not exist yet, returns graceful default values without throwing 404 errors, providing a zero-friction UI experience.
+* **`PUT /api/v1/notifications/preferences`:**
+  - Performs an upsert (insert or update) of user notification settings, synchronizing email, WhatsApp mobile number, delay thresholds, and feature flags.
+* **`GET /api/v1/notifications/active-reminders`:**
+  - Queries `TravelReminderRepository` for active upcoming PNR travel morning reminders scheduled for the user's email address.
+* **`DELETE /api/v1/notifications/reminders/{id}`:**
+  - Cancels an upcoming scheduled travel reminder by ID with email ownership verification.
+
+### 18.6. Security Configuration (`SecurityConfig.java`)
+Added explicit permit rules for `/api/v1/notifications/**` in the Spring Security filter chain:
+```java
+.requestMatchers("/api/v1/notifications/**").permitAll()
+```
+This enables both authenticated members and session-based passengers to query, customize, and persist their preferred notification thresholds seamlessly.
