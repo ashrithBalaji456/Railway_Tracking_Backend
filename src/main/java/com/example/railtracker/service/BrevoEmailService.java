@@ -829,5 +829,137 @@ public class BrevoEmailService {
 
         return sendEmail(toEmail, username, subject, htmlContent);
     }
+
+    /**
+     * Sends an urgent Station Approaching & Wake-Up alarm email via Brevo.
+     */
+    public boolean sendStationApproachingAlarmEmail(
+            String toEmail,
+            String username,
+            String trainNumber,
+            String trainName,
+            String stationCode,
+            String stationName,
+            Integer etaMinutes,
+            Integer distanceKm,
+            String platform) {
+
+        if (toEmail == null || toEmail.isBlank()) {
+            return false;
+        }
+
+        String trainLabel = (trainName != null && !trainName.isBlank()) ? trainName : "Express";
+        String stationLabel = (stationName != null && !stationName.isBlank()) ? stationName : stationCode;
+        String etaText = (etaMinutes != null && etaMinutes > 0) ? etaMinutes + " minutes" : "Very soon (under 15 mins)";
+        String distText = (distanceKm != null && distanceKm > 0) ? distanceKm + " km away" : "Approaching outer limits";
+        String platformText = (platform != null && !platform.isBlank()) ? "Platform " + platform : "Check Station Indicators";
+
+        String subject = "🚨 WAKE-UP ALARM: Train " + trainNumber + " is approaching " + stationLabel + " (" + stationCode + ") in ~" + etaText + "!";
+
+        String trackUrl = frontendUrl + "/trains/" + trainNumber;
+        String stationUrl = frontendUrl + "/stations/" + stationCode;
+
+        String htmlContent = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
+                .container { max-width: 620px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 2px solid #ef4444; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.35); }
+                .header { background: linear-gradient(135deg, #7f1d1d 0%%, #991b1b 50%%, #b91c1c 100%%); padding: 28px 24px; text-align: center; }
+                .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #fef08a; border: 1px solid rgba(254, 240, 138, 0.4); margin-bottom: 10px; }
+                .title { margin: 0; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
+                .content { padding: 28px 24px; }
+                .urgent-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; text-align: center; }
+                .card { background: #1e293b; border-radius: 14px; padding: 18px 20px; margin: 18px 0; border: 1px solid #334155; }
+                .table-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #334155; font-size: 14px; }
+                .table-label { color: #94a3b8; font-weight: 500; }
+                .table-val { color: #ffffff; font-weight: 700; text-align: right; }
+                .btn-group { display: flex; gap: 12px; margin: 24px 0 10px 0; }
+                .btn-primary { flex: 1; display: block; text-align: center; background: #dc2626; color: #ffffff; padding: 14px 18px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; }
+                .btn-secondary { flex: 1; display: block; text-align: center; background: #1e293b; color: #cbd5e1; padding: 14px 18px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px; border: 1px solid #475569; }
+                .luggage-box { background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 14px 16px; margin-top: 20px; font-size: 13px; color: #fbbf24; line-height: 1.6; }
+                .footer { padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <div class="badge">⏰ WAKE-UP CALL &bull; ARRIVAL IMMINENT</div>
+                  <h1 class="title">Approaching %s</h1>
+                </div>
+                <div class="content">
+                  <div class="urgent-banner">
+                    <strong style="color: #fca5a5; font-size: 16px;">Train %s (%s) is arriving in ~%s!</strong><br/>
+                    <span style="font-size: 12px; color: #fecaca;">Distance remaining: %s &bull; Expected Platform: %s</span>
+                  </div>
+
+                  <p style="font-size: 14px; color: #cbd5e1; margin-top: 0; line-height: 1.6;">
+                    Hello %s, your station approaching alarm has triggered! Please wake up, double-check your belongings beneath the berth, and prepare for deboarding.
+                  </p>
+
+                  <div class="card">
+                    <div class="table-row">
+                      <span class="table-label">Destination Station:</span>
+                      <span class="table-val" style="color: #f87171;">%s (%s)</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Train Number:</span>
+                      <span class="table-val">%s - %s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Estimated Time to Arrival:</span>
+                      <span class="table-val" style="color: #fde047;">~%s</span>
+                    </div>
+                    <div class="table-row">
+                      <span class="table-label">Distance to Station:</span>
+                      <span class="table-val">%s</span>
+                    </div>
+                    <div class="table-row" style="border-bottom: none;">
+                      <span class="table-label">Assigned Platform:</span>
+                      <span class="table-val" style="color: #38bdf8;">%s</span>
+                    </div>
+                  </div>
+
+                  <div class="btn-group">
+                    <a href="%s" class="btn-primary">View Live Train Coordinates</a>
+                    <a href="%s" class="btn-secondary">Station Live Board</a>
+                  </div>
+
+                  <div class="luggage-box">
+                    <strong>🧳 Deboarding Checklist:</strong><br/>
+                    &bull; Check under the berth for bags, shoes, and chargers.<br/>
+                    &bull; Collect personal electronics, glasses, and wallet/purse.<br/>
+                    &bull; Move toward the coach vestibule / door before the train completely halts.
+                  </div>
+                </div>
+                <div class="footer">
+                  Safe travels &bull; Automated Night Alarm by RailTrack Telemetry
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                stationLabel,
+                trainNumber,
+                trainLabel,
+                etaText,
+                distText,
+                platformText,
+                username != null && !username.isBlank() ? username : "Passenger",
+                stationLabel,
+                stationCode,
+                trainNumber,
+                trainLabel,
+                etaText,
+                distText,
+                platformText,
+                trackUrl,
+                stationUrl
+            );
+
+        return sendEmail(toEmail, username, subject, htmlContent);
+    }
 }
 

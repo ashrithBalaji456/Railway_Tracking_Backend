@@ -26,3 +26,4 @@ public record TravelReminderRequest(
 
     String username
 ) {}
+

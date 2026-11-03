@@ -17,3 +17,4 @@ public interface TravelReminderRepository extends JpaRepository<TravelReminder, 
 
     Optional<TravelReminder> findByPnrAndEmail(String pnr, String email);
 }
+

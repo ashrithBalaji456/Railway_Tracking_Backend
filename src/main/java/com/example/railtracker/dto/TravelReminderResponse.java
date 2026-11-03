@@ -13,3 +13,4 @@ public record TravelReminderResponse(
     Boolean reminderSent,
     LocalDateTime createdAt
 ) {}
+
