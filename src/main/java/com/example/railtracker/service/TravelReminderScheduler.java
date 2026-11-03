@@ -112,8 +112,9 @@ public class TravelReminderScheduler {
             TrainLiveStatusDto liveStatus = railwayDataProvider.getTrainLiveStatus(reminder.getTrainNumber());
             if (liveStatus != null && liveStatus.delayMinutes() != null) {
                 delayMinutes = Math.max(0, liveStatus.delayMinutes());
-                if (liveStatus.platform() != null && !liveStatus.platform().isBlank()) {
-                    reminder.setPlatform(liveStatus.platform());
+                String extractedPlatform = extractPlatformForStation(liveStatus, reminder.getBoardingStation());
+                if (extractedPlatform != null && !extractedPlatform.isBlank()) {
+                    reminder.setPlatform(extractedPlatform);
                 }
             }
         } catch (Exception ignored) {
@@ -138,8 +139,9 @@ public class TravelReminderScheduler {
             TrainLiveStatusDto liveStatus = railwayDataProvider.getTrainLiveStatus(reminder.getTrainNumber());
             if (liveStatus != null) {
                 delay = liveStatus.delayMinutes() != null ? liveStatus.delayMinutes() : 0;
-                if (liveStatus.platform() != null && !liveStatus.platform().isBlank()) {
-                    platform = liveStatus.platform();
+                String extractedPlatform = extractPlatformForStation(liveStatus, reminder.getBoardingStation());
+                if (extractedPlatform != null && !extractedPlatform.isBlank()) {
+                    platform = extractedPlatform;
                     reminder.setPlatform(platform);
                 }
                 if (liveStatus.currentStationName() != null) {
@@ -206,8 +208,9 @@ public class TravelReminderScheduler {
             TrainLiveStatusDto liveStatus = railwayDataProvider.getTrainLiveStatus(request.trainNumber());
             if (liveStatus != null) {
                 delay = liveStatus.delayMinutes() != null ? liveStatus.delayMinutes() : 0;
-                if (liveStatus.platform() != null && !liveStatus.platform().isBlank()) {
-                    platform = liveStatus.platform();
+                String extractedPlatform = extractPlatformForStation(liveStatus, request.boardingStation());
+                if (extractedPlatform != null && !extractedPlatform.isBlank()) {
+                    platform = extractedPlatform;
                 }
                 if (liveStatus.currentStationName() != null) {
                     liveLocation = "Near " + liveStatus.currentStationName();
@@ -245,6 +248,26 @@ public class TravelReminderScheduler {
                 expectedTime,
                 delay,
                 advanceMinutes);
+    }
+
+    private String extractPlatformForStation(TrainLiveStatusDto liveStatus, String boardingStation) {
+        if (liveStatus == null) {
+            return null;
+        }
+        if (liveStatus.stations() != null && boardingStation != null && !boardingStation.isBlank()) {
+            String query = boardingStation.trim().toUpperCase();
+            for (TrainLiveStatusDto.StationStatusDto stop : liveStatus.stations()) {
+                if (stop.platform() != null && !stop.platform().isBlank() && !stop.platform().equalsIgnoreCase("null")) {
+                    if (stop.stationCode() != null && query.contains(stop.stationCode().toUpperCase())) {
+                        return stop.platform();
+                    }
+                    if (stop.stationName() != null && query.contains(stop.stationName().toUpperCase())) {
+                        return stop.platform();
+                    }
+                }
+            }
+        }
+        return liveStatus.platform();
     }
 
     private LocalTime parseTimeSafe(String timeStr) {

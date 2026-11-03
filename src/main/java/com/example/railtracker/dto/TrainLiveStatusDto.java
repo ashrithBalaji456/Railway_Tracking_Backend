@@ -84,6 +84,27 @@ public record TrainLiveStatusDto(
              false, false, false, null, List.of(), null);
     }
 
+    /**
+     * Convenience method to extract platform of current or upcoming station.
+     */
+    public String platform() {
+        if (stations != null) {
+            for (StationStatusDto s : stations) {
+                if (s.platform() != null && !s.platform().isBlank() && !s.platform().equalsIgnoreCase("null")) {
+                    if (currentStationCode != null && currentStationCode.equalsIgnoreCase(s.stationCode())) {
+                        return s.platform();
+                    }
+                }
+            }
+            for (StationStatusDto s : stations) {
+                if (s.platform() != null && !s.platform().isBlank() && !s.platform().equalsIgnoreCase("null")) {
+                    return s.platform();
+                }
+            }
+        }
+        return null;
+    }
+
     public record StationStatusDto(
         String stationCode,
         String stationName,
