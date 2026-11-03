@@ -1226,11 +1226,13 @@ public class BrevoEmailService {
                     <strong>📌 Important Next Steps for Passengers:</strong>
                     <ul style="margin: 8px 0 0; padding-left: 18px;">
                       <li>Check your confirmed <strong>Coach (e.g. B3) and Berth (e.g. 47 LB)</strong> on IRCTC or at the station charting board.</li>
+                      <li><strong>+20-Minute Upload Buffer:</strong> Dispatched 20 minutes after official charting commenced to ensure the manifest is fully processed and viewable on IRCTC servers.</li>
                       <li>For waitlisted e-tickets that remain fully unconfirmed after Chart 2, tickets are auto-cancelled with 100%% refund.</li>
                       <li>Current Booking counter remains open until 30 minutes prior to departure for any unallocated berths.</li>
                     </ul>
                   </div>
 
+                  <a href="https://www.irctc.co.in/online-charts/" class="btn" style="background: linear-gradient(135deg, #059669 0%%, #10b981 100%%); margin-bottom: 10px;">Check Coach & Berth on IRCTC Online Charts</a>
                   <a href="%s" class="btn">View Live Train GPS Tracking & Platform</a>
 
                   <p style="text-align: center; margin-top: 14px;">

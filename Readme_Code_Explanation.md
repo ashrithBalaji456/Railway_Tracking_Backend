@@ -2769,18 +2769,19 @@ The RailTrack India notification suite is engineered to solve critical real-worl
 
 ---
 
-### 4. 🎫 IRCTC Chart Preparation Notification
+### 4. 🎫 IRCTC Chart Preparation Notification (+20-Minute Server Upload Buffer)
 * **What is the use of this notification:**
   * Waitlisted (`WL`) and `RAC` passengers need to know the exact moment IRCTC chart preparation locks so they can view their allocated coach and berth number (e.g., `B3, 47 LB`) or plan alternative travel if unconfirmed.
+  * **+20-Minute IRCTC Server Upload Buffer:** While statutory charting starts at 8:00 PM (or 10h prior), PRS servers typically take 15–20 minutes to finalize and publish the passenger manifest. All notifications and countdown milestones include a +20-minute buffer (e.g. 08:20 PM) to ensure that when passengers click the notification, the official IRCTC portal displays their coach & berth immediately without "Chart under preparation" errors.
 * **How the user uses it (Step-by-Step):**
   1. Open **PNR Status** (`/pnr`).
   2. View the **Smart PNR Predictor & Charting Countdown Clock**.
-  3. Review the live ticking timer counting down to Chart 1 (applying official IRCTC rules: 8:00 PM previous night for 5 AM–2 PM trains, 10 hours prior for afternoon/night trains).
+  3. Review the live ticking timer counting down to Chart 1 (applying official IRCTC rules: 8:00 PM previous night for 5 AM–2 PM trains, 10 hours prior for afternoon/night trains, plus the +20-minute upload buffer).
   4. Enter your email and click **"Arm Chart Alert"**.
-  5. Click **"Test Email"** to preview the layout immediately.
+  5. Click **"Test Email"** or **"Test Push Alert"** to preview the layout and lock-screen notification immediately.
 * **Execution Flow:**
   * `POST /api/v1/pnr/chart-alert` registers the alert request and saves a `TravelReminder` record in the database.
-  * When the charting milestone arrives, `BrevoEmailService.sendChartPreparationEmail(...)` dispatches the alert detailing PNR, travel date, confirmation forecast, coach checking steps, and automatic refund rules.
+  * When the charting milestone arrives (+20m buffer), `BrevoEmailService.sendChartPreparationEmail(...)` dispatches the email, and the client `webNotificationService` delivers an instant OS lock-screen push and audio chime linking directly to `https://www.irctc.co.in/online-charts/`.
 
 ---
 
