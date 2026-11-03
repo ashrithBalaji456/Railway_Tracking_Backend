@@ -2671,3 +2671,198 @@ File path: `src/main/java/com/example/railtracker/controller/TrainDisruptionCont
   - Registers passenger email alerts for a specific disrupted train, ensuring passengers receive updates if the diversion route is updated or services resume.
 * **`POST /api/v1/disruptions/alert/test`:**
   - Dispatches an instant sample advisory email via Brevo to the passenger's inbox for immediate layout preview and verification.
+
+---
+
+## 21. 📘 Master Step-by-Step Notification & Email Services Guide
+
+### 21.1. Overview & Architectural Philosophy
+The RailTrack India notification suite is engineered to solve critical real-world friction points in Indian Railways travel. By utilizing Brevo's high-deliverability transactional SMTP API combined with localized Spring Boot schedulers and Web Audio API hardware triggers, the system delivers proactive intelligence without requiring expensive messaging gateways or complex mobile apps.
+
+---
+
+### 21.2. Complete Service-by-Service Handbook & Operational Flows
+
+```
++----------------------------------------------------------------------------------------------------+
+|                                    MASTER NOTIFICATION ARCHITECTURE                                |
++----------------------------------------------------------------------------------------------------+
+|                                                                                                    |
+|  [CRON SCHEDULER]                 [EVENT TRIGGER]                 [ON-DEMAND REQUEST]              |
+|  - 06:00 AM: Travel Reminder      - Proximity: Wake-Up Alarm      - Live Station Board Snapshot    |
+|  - Every 15m: Delay Monitor       - IRCTC Chart Finalization      - Journey Itinerary Email Memo   |
+|  - Sun 09:00 AM: Weekly Gazette   - Route Cancellation/Diversion  - Sample Verification Tests      |
+|           |                               |                               |                        |
+|           +-------------------------------+-------------------------------+                        |
+|                                           |                                                        |
+|                                           v                                                        |
+|                       [SPRING BOOT 3 CONTROLLER & SERVICE LAYER]                                   |
+|                       - TravelReminderScheduler.java                                               |
+|                       - DelayAlertScheduler.java                                                   |
+|                       - NotificationPreferencesController.java                                     |
+|                       - BrevoEmailService.java (Java 17 HttpClient)                                |
+|                                           |                                                        |
+|                                           v                                                        |
+|                       [BREVO TRANSACTIONAL EMAIL API (v3)]                                         |
+|                       - https://api.brevo.com/v3/smtp/email                                        |
+|                       - Dark-themed responsive HTML templates with inline actions                  |
+|                                           |                                                        |
+|                                           v                                                        |
+|                       [PASSENGER & FAMILY MEMBER INBOX]                                            |
+|                       - Instant 1-tap live tracking, platform links & TDR refund guides            |
++----------------------------------------------------------------------------------------------------+
+```
+
+---
+
+### 1. 🚆 Travel Day Morning Reminder (06:00 AM IST Cron)
+* **What is the use of this notification:**
+  * Indian train journeys often commence in early morning or afternoon hours. Passengers need an automated wake-up briefing on their day of travel containing their confirmed PNR, locomotive service, live tracking link, and station arrival platform.
+* **How the user uses it (Step-by-Step):**
+  1. Open the **PNR Status** page (`/pnr`).
+  2. Enter the 10-digit PNR number (e.g. `4521849021`) and 5-digit train number (e.g. `12951`).
+  3. Under the **"Travel Day Morning Reminder"** section, pick the scheduled travel date.
+  4. Enter the recipient email address (auto-filled from profile/localStorage).
+  5. Click **"Schedule Morning Reminder"**.
+  6. *(Optional)* Click **"Send Sample Email"** to immediately test and preview the layout in your inbox.
+* **Execution Flow:**
+  * `User Form Submission` ➔ `POST /api/v1/pnr/reminder` ➔ `TravelReminderRepository.save(reminder)` with `reminderSent = false`.
+  * Every morning at **06:00 AM IST**, `TravelReminderScheduler.checkAndSendReminders()` wakes up via `@Scheduled(cron = "0 0 6 * * *", zone = "Asia/Kolkata")`.
+  * The scheduler queries `findByTravelDateAndReminderSentFalse(LocalDate.now())`.
+  * For each pending trip, calls `BrevoEmailService.sendTravelDayReminderEmail(...)`.
+  * Upon HTTP 201 from Brevo, marks `reminderSent = true` and persists audit log.
+
+---
+
+### 2. 📊 Station Live Board Departure / Arrival Snapshot
+* **What is the use of this notification:**
+  * When family members or cab drivers head to a junction to pick up or drop off passengers, they need an offline or inbox-ready snapshot of all incoming trains for the next 2 to 8 hours, including platform numbers and delayed statuses.
+* **How the user uses it (Step-by-Step):**
+  1. Navigate to **Station Explorer** (`/stations`).
+  2. Search for any junction (e.g., `NDLS`, `BCT`, `HWH`, `SC`).
+  3. On the **Live Board** tab, choose the time window (e.g. `Next 4 Hours`).
+  4. Click the **"Email Board"** button in the control bar.
+  5. Confirm recipient email and click **"Dispatch Snapshot"**.
+* **Execution Flow:**
+  * `User clicks Email Board` ➔ `POST /api/stations/{stationCode}/live/email`.
+  * Controller queries `StationBoardService` for real-time train schedules, filtering departed trains and sorting by expected arrival.
+  * `BrevoEmailService.sendStationBoardSnapshotEmail(...)` builds an HTML table displaying Train #, Route, Scheduled/Expected Time, Delay Badge, and Platform number.
+  * Dispatches email and returns instantaneous confirmation to the frontend.
+
+---
+
+### 3. ⏰ Station Approaching & Wake-Up Alarm (Night Travel Sleep Guardian)
+* **What is the use of this notification:**
+  * Sleeping past one's destination on an overnight journey is a major fear for solo rail travelers. This feature provides physical multi-sensory alarms (Web Audio oscillators, hardware vibration, screen wake-lock, spoken voice synthesis) plus an emergency backup email alert dispatched 15 to 45 minutes before destination arrival.
+* **How the user uses it (Step-by-Step):**
+  1. Open **Live Train Details** (`/trains/{trainNumber}`).
+  2. In the route timetable list, locate your target destination or wake-up halt station.
+  3. Click the **"Set Alarm"** bell button next to that station.
+  4. Select your alarm window (**15m**, **30m**, **45m**, or **60m** prior to arrival).
+  5. Choose an audio ringtone (`Digital Clock`, `Emergency Siren`, `Train Horn`) and click **"Test Tone"** to verify volume.
+  6. Provide an optional backup email address and click **"Arm Alarm"**.
+* **Execution Flow:**
+  * The frontend arms a `WakeLockSentinel` preventing device sleep and stores alarm configuration in `localStorage.getItem('rail_armed_alarm')`.
+  * As the train's live GPS coordinates advance, `TrainDetails.tsx` computes expected minutes to arrival (`diffMinutes`).
+  * When `diffMinutes <= triggerMinutes`, native Web Audio oscillators fire, continuous vibration pulses start, and a background request hits `POST /api/v1/alarm/approaching`.
+  * `BrevoEmailService.sendStationApproachingAlarmEmail(...)` sends an urgent high-priority wake-up alert with luggage checklists and expected deboarding platform.
+
+---
+
+### 4. 🎫 IRCTC Chart Preparation Notification
+* **What is the use of this notification:**
+  * Waitlisted (`WL`) and `RAC` passengers need to know the exact moment IRCTC chart preparation locks so they can view their allocated coach and berth number (e.g., `B3, 47 LB`) or plan alternative travel if unconfirmed.
+* **How the user uses it (Step-by-Step):**
+  1. Open **PNR Status** (`/pnr`).
+  2. View the **Smart PNR Predictor & Charting Countdown Clock**.
+  3. Review the live ticking timer counting down to Chart 1 (applying official IRCTC rules: 8:00 PM previous night for 5 AM–2 PM trains, 10 hours prior for afternoon/night trains).
+  4. Enter your email and click **"Arm Chart Alert"**.
+  5. Click **"Test Email"** to preview the layout immediately.
+* **Execution Flow:**
+  * `POST /api/v1/pnr/chart-alert` registers the alert request and saves a `TravelReminder` record in the database.
+  * When the charting milestone arrives, `BrevoEmailService.sendChartPreparationEmail(...)` dispatches the alert detailing PNR, travel date, confirmation forecast, coach checking steps, and automatic refund rules.
+
+---
+
+### 5. 🚨 Route Disruption & Weather Safety Advisory Alert
+* **What is the use of this notification:**
+  * When Indian Railways cancels, diverts, or slows down trains due to winter fog, monsoon floods, or track repairs, passengers need immediate advice on diverted routes, alternate trains, and how to get a 100% fare refund.
+* **How the user uses it (Step-by-Step):**
+  1. Open the **Disruptions** page (`/disruptions`) or view any live train with an active disruption banner.
+  2. Click the **"Email Advisory"** button on the disrupted train card.
+  3. Review the diverted route, cancellation notice, and IRCTC TDR refund guidelines.
+  4. Enter your email and click **"Arm Disruption Alert"** (or **"Send Sample Email"** for instant verification).
+* **Execution Flow:**
+  * `POST /api/v1/disruptions/alert` logs the subscription.
+  * `POST /api/v1/disruptions/alert/test` triggers `BrevoEmailService.sendDisruptionAdvisoryEmail(...)`.
+  * Dispatches a responsive email featuring severity badges, diverted intermediate station paths, TDR 100% refund rules, and direct links to live alternate trains.
+
+---
+
+### 6. ⚠️ Automated Live Train Delay Alerts (Scheduler-Driven)
+* **What is the use of this notification:**
+  * Commuters and frequent travelers who favorite a train want automatic email notifications whenever that train suffers a significant delay exceeding their sensitivity threshold.
+* **How the user uses it (Step-by-Step):**
+  1. Open **Live Train Details** (`/trains/{trainNumber}`) and click the **Heart (Favorite)** button.
+  2. Open the **Alerts & Notification Preferences Center** (`🔔` in navigation).
+  3. Under **Live Delay Alert Sensitivity**, pick your threshold (**15 mins**, **30 mins**, or **60 mins**).
+  4. Save preferences.
+* **Execution Flow:**
+  * `DelayAlertScheduler.java` runs on a recurring background cadence.
+  * Inspects user favorite trains from database.
+  * Compares latest live delay (`delayMinutes`) against passenger threshold.
+  * If delay exceeds threshold and has not been notified within the cool-down window, `BrevoEmailService.sendDelayAlertEmail(...)` dispatches an alert.
+
+---
+
+### 7. 🗺️ Journey Planner Itinerary Travel Memo
+* **What is the use of this notification:**
+  * When planning multi-leg train journeys across India, passengers need a consolidated, printable travel memo detailing connecting trains, layover durations, and transfer stations.
+* **How the user uses it (Step-by-Step):**
+  1. Navigate to **Journey Planner** (`/journey`).
+  2. Enter Origin and Destination stations, pick journey date, and click **"Find Routes"**.
+  3. Select any direct or connecting route option.
+  4. Click **"Email Itinerary"**, enter recipient address, and dispatch.
+* **Execution Flow:**
+  * `POST /api/v1/journey/email-itinerary` receives route stops, transfer layovers, and train numbers.
+  * `BrevoEmailService.sendJourneyItineraryEmail(...)` formats an HTML travel memo with chronological timeline steps and dispatches to user inbox.
+
+---
+
+### 8. 📬 Smart Rotating Weekly RailTrack Gazette
+* **What is the use of this notification:**
+  * Keeps railway enthusiasts and travelers engaged every week with network analytics, Vande Bharat route launches, scenic heritage train stories, and safety advisories without repeating articles.
+* **How the user uses it (Step-by-Step):**
+  1. Open the **Alerts & Notification Preferences Center** (`🔔` in navigation) or **Rail Stories** (`/blogs`).
+  2. Toggle **Weekly Rail Gazette** to **ON** (active).
+  3. To pause notifications during vacations, toggle to **Paused / OFF**.
+* **Execution Flow:**
+  * Every Sunday at 09:00 AM IST, `WeeklyBlogDigestScheduler.java` executes.
+  * `BlogDigestRotatorService.java` applies an LRU deduplication cache across subscribers to pick distinct non-repeating article combinations.
+  * `BrevoEmailService.sendWeeklyBlogDigestEmail(...)` compiles and delivers the gazette edition.
+
+---
+
+### 9. 🛡️ User Notification & Alert Preferences Center (Cockpit)
+* **What is the use of this notification service:**
+  * Acts as the single central control cockpit where passengers can manage all alerting rules, adjust sensitivity sliders, inspect scheduled PNR reminders, and disarm active station alarms.
+* **How the user uses it (Step-by-Step):**
+  1. Click the **"Alerts" (`🔔`)** icon in the desktop navbar (or mobile navigation drawer).
+  2. **Tab 1: Rules & Channels:** Update your primary email, WhatsApp number, weekly gazette toggle, morning reminder toggle, night guardian toggle, and 15m/30m/60m delay slider. Click **"Save All Preferences"**.
+  3. **Tab 2: Active Reminders & Alarms:** Inspect all scheduled 06:00 AM PNR reminders (with a 1-click **Cancel** button) and see currently armed station night alarms (with an instant **Disarm** button).
+* **Execution Flow:**
+  * Updates sync immediately to browser `localStorage` (`email`, `whatsapp_phone`) and persist to PostgreSQL via `PUT /api/v1/notifications/preferences`.
+  * All input fields across `PnrStatus.tsx`, `TrainDetails.tsx`, and `StationExplorer.tsx` automatically inherit the updated contact handles.
+
+---
+
+### 10. 🔐 Authentication OTP Verification & Welcome Guide
+* **What is the use of this notification:**
+  * Secure credential recovery with 6-digit numeric OTPs and interactive platform introduction for newly registered members.
+* **How the user uses it (Step-by-Step):**
+  1. On the login screen, click **"Forgot Password?"**.
+  2. Enter registered email address to receive an instant 6-digit OTP valid for 15 minutes.
+  3. Enter the OTP and your new password to restore account access.
+* **Execution Flow:**
+  * `POST /api/v1/auth/forgot-password` generates cryptographic OTP and invokes `BrevoEmailService.sendPasswordResetOtpEmail(...)`.
+  * `POST /api/v1/auth/signup` registers user and invokes `BrevoEmailService.sendWelcomeEmail(...)`.

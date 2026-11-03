@@ -26,3 +26,4 @@ public record DisruptionAlertRequest(
     @Email(message = "Invalid email format")
     String email
 ) {}
+
