@@ -1,8 +1,10 @@
 package com.example.railtracker.controller;
 
 import com.example.railtracker.dto.ApiResponse;
+import com.example.railtracker.dto.ForgotPasswordRequest;
 import com.example.railtracker.dto.JwtAuthenticationResponse;
 import com.example.railtracker.dto.LoginRequest;
+import com.example.railtracker.dto.ResetPasswordRequest;
 import com.example.railtracker.dto.SignupRequest;
 import com.example.railtracker.entity.Role;
 import com.example.railtracker.entity.User;
@@ -11,6 +13,7 @@ import com.example.railtracker.repository.RoleRepository;
 import com.example.railtracker.repository.UserRepository;
 import com.example.railtracker.security.JwtTokenProvider;
 import com.example.railtracker.security.UserDetailsImpl;
+import com.example.railtracker.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,18 +37,21 @@ public class AuthController {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final PasswordResetService passwordResetService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            JwtTokenProvider tokenProvider) {
+            JwtTokenProvider tokenProvider,
+            PasswordResetService passwordResetService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/signin")
@@ -111,5 +117,17 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(ApiResponse.success("User registered successfully", null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.sendResetOtp(request.email());
+        return ResponseEntity.ok(ApiResponse.success("Password reset code has been sent to your email", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.email(), request.otp(), request.newPassword());
+        return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully. You can now login.", null));
     }
 }

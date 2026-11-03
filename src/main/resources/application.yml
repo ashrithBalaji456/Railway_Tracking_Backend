@@ -36,6 +36,11 @@ app:
     base-url: ${RAILRADAR_BASE_URL:https://api.railradar.in/v1}
     trust-all-ssl: ${RAILRADAR_TRUST_ALL_SSL:true}
 
+brevo:
+  api-key: ${BREVO_API_KEY:}
+  from-email: ${BREVO_FROM_EMAIL:support@railtrack.com}
+  from-name: ${BREVO_FROM_NAME:RailTrack Alerts}
+
 management:
   health:
     redis:
