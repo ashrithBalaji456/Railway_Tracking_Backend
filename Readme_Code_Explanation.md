@@ -2925,3 +2925,50 @@ The RailTrack India notification suite is engineered to solve critical real-worl
 * **API Endpoints:**
   * `POST /api/v1/pnr/reminder`: Schedules or updates dynamic departure reminder.
   * `POST /api/v1/pnr/reminder/test`: Immediately dispatches sample wake-up email with live telemetry simulation.
+
+
+---
+
+### 14. 🛰️ Deep-Dive: Dynamic Wake-Up Alarm Engine, Slack Time Dynamics & Technical Q&A
+
+#### 14.1. Core Architectural Flow (Backend Telemetry & Dynamic Delay Shifting)
+
+```mermaid
+flowchart TD
+    User["Passenger Configures Wake-Up Alarm<br/>(e.g., 2.5h before NDLS departure)"] --> SaveDB["POST /api/v1/pnr/reminder<br/>Saved in PostgreSQL (TravelReminder)"]
+    
+    Cron["Periodic 15-Minute Scheduler<br/>(TravelReminderScheduler.java)"] --> Poll["Query Reminders for Today (reminderSent = false)"]
+    Poll --> LiveStatus["Fetch Live Telemetry from RailwayDataProvider<br/>(Live Expected Arrival + Current Delay)"]
+    
+    LiveStatus --> Math["Evaluate Dynamic Alert Time:<br/>Target = (Scheduled Departure + Live Delay) - Advance Warning"]
+    Math --> Trigger{"Is Target Time <= Now?"}
+    
+    Trigger -- Yes --> Brevo["BrevoEmailService.sendDepartureWakeUpEmail(...)<br/>HTML Alert with Updated Delay & Platform"]
+    Brevo --> Mark["reminder.setReminderSent(true)"]
+    
+    Trigger -- No --> Wait["Skip & Recheck Next 15-Min Cycle"]
+```
+
+#### 14.2. Operational Mechanics & Technical Q&A
+
+##### Q1: How does an alarm trigger when a user sets it for "1 hour before arrival"?
+* **Client Monitoring:** Frontend tracks live train GPS/NTES telemetry and computes:
+  $$\text{diffMinutes} = \text{Expected Arrival} - \text{Current Time}$$
+* When $\text{diffMinutes} \le 60$, the alarm triggers continuous audio, Android foreground wake-up services, and full-screen notifications.
+* **Backend Redundancy:** If the passenger closes the app or goes offline, `TravelReminderScheduler.java` runs dynamic checks and delivers the reminder alert via Brevo Transactional Email.
+
+##### Q2: In Indian Railways, slack time makes 3-hour delays vanish between stations. How does our app prevent waking passengers at the wrong time?
+* Indian Railways intentionally inserts scheduled buffer time (slack time) before major junctions and terminals. A train running 3 hours late may recover 1 to 2 hours of delay along a slack stretch.
+* **Our Protection:** The system does **not** rely on static schedules or fixed delay offsets. It continuously fetches **dynamic expected arrival** from the live feed. If the train makes up time, the expected arrival dynamically moves earlier, automatically recalibrating the wake-up alarm to the true real-time arrival.
+
+##### Q3: Does "1 station away" consider non-stopping passing stations or scheduled commercial stops? What happens when a train runs 300 to 400 km non-stop?
+* The route timetable strictly consists of **scheduled commercial halts**. Intermediate passing stations (where trains pass through at 120 km/h without stopping) are not listed as passenger stops.
+* On long-distance non-stop stretches (e.g., New Delhi $\rightarrow$ Kanpur Central, **440 km non-stop, ~4.5 hours**), Kanpur is sequence #2 and New Delhi is sequence #1.
+* **Safety Clamp:** The system implements a **Proximity Safety Guard** (`stopsDifference === 1` ONLY if distance $\le 35\text{ km}$ OR dynamic ETA $\le 45\text{ mins}$). This prevents alarms from firing prematurely right as the train departs New Delhi.
+
+##### Q4: How does it calculate when a user chooses 3 hours? A train doesn't take 3 hours to cross 35 km — does the 35 km limit block a 3-hour alarm?
+* **No, the 35 km limit does not block a 3-hour alarm.**
+* When a user selects 3 hours (180 mins), **Check 1 (Dynamic Live ETA)** triggers directly:
+  $$\text{diffMinutes} \le 180$$
+  At 3 hours prior to arrival, the train is ~200–260 km away. Check 1 evaluates to true and rings the alarm immediately at the 3-hour mark.
+* The 35 km limit is strictly a safeguard for the sequence fallback (preventing 15–30 minute alarms from firing 400 km away).
