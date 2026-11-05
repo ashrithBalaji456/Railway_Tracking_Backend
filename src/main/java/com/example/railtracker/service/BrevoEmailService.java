@@ -9,10 +9,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -411,7 +417,93 @@ public class BrevoEmailService {
     }
 
     /**
-     * Sends a detailed journey itinerary memo.
+     * Converts LocalTime to 12-hour AM/PM format (e.g. 04:50 -> 4:50 AM, 19:55 -> 7:55 PM).
+     */
+    private String formatTimeTo12Hour(LocalTime time) {
+        if (time == null) return "--:--";
+        int hour = time.getHour();
+        int minute = time.getMinute();
+        String ampm = hour >= 12 ? "PM" : "AM";
+        int h12 = hour % 12;
+        if (h12 == 0) h12 = 12;
+        return String.format("%d:%02d %s", h12, minute, ampm);
+    }
+
+    /**
+     * Formats duration into human-readable hours and minutes (e.g. 399 mins -> 6h 39m).
+     */
+    private String formatDurationHoursMinutes(Integer minutes) {
+        if (minutes == null || minutes <= 0) return "0m";
+        int days = minutes / 1440;
+        int rem = minutes % 1440;
+        int hours = rem / 60;
+        int mins = rem % 60;
+        if (days > 0) {
+            return days + " day" + (days > 1 ? "s " : " ") + (hours > 0 ? hours + "h " : "") + (mins > 0 ? mins + "m" : "");
+        }
+        if (hours > 0) {
+            return mins > 0 ? hours + "h " + mins + "m" : hours + "h";
+        }
+        return mins + "m";
+    }
+
+    /**
+     * Generates a pre-filled 1-click Google Calendar add link.
+     */
+    private String generateGoogleCalendarUrl(JourneyOptionDto journey, String travelDate) {
+        try {
+            LocalDate startDate;
+            if (travelDate != null && !travelDate.isBlank()) {
+                try {
+                    startDate = LocalDate.parse(travelDate.trim());
+                } catch (Exception e) {
+                    startDate = LocalDate.now();
+                }
+            } else {
+                startDate = LocalDate.now();
+            }
+
+            LocalTime depTime = journey.originDepartureTime() != null ? journey.originDepartureTime() : LocalTime.of(8, 0);
+            LocalDateTime startDt = LocalDateTime.of(startDate, depTime);
+            int durationMins = journey.totalDurationMinutes() != null ? journey.totalDurationMinutes() : 180;
+            LocalDateTime endDt = startDt.plusMinutes(durationMins);
+
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
+            String datesParam = startDt.format(fmt) + "/" + endDt.format(fmt);
+
+            String title = "🚆 Train: " + journey.originStationCode() + " to " + journey.destinationStationCode()
+                    + " (" + journey.firstTrainNumber() + (journey.direct() ? "" : " + " + journey.secondTrainNumber()) + ")";
+
+            StringBuilder details = new StringBuilder();
+            details.append("Train: ").append(journey.firstTrainNumber()).append(" - ").append(journey.firstTrainName()).append("\n");
+            details.append("Departure: ").append(formatTimeTo12Hour(journey.originDepartureTime()))
+                   .append(" from ").append(journey.originStationName()).append(" (").append(journey.originStationCode()).append(")\n");
+            if (!journey.direct() && journey.secondTrainNumber() != null) {
+                details.append("Transfer: ").append(journey.transferStationName()).append(" (").append(journey.transferStationCode()).append(")\n");
+                details.append("Layover: ").append(formatDurationHoursMinutes(journey.layoverMinutes())).append("\n");
+                details.append("Connecting Train: ").append(journey.secondTrainNumber()).append(" - ").append(journey.secondTrainName()).append("\n");
+            }
+            details.append("Arrival: ").append(formatTimeTo12Hour(journey.destinationArrivalTime()))
+                   .append(" at ").append(journey.destinationStationName()).append(" (").append(journey.destinationStationCode()).append(")\n\n");
+            details.append("Track Train Live: ").append(frontendUrl != null ? frontendUrl.split(",")[0].trim() : "https://railtrack.in")
+                   .append("/trains/").append(journey.firstTrainNumber());
+
+            String location = journey.originStationName() + " (" + journey.originStationCode() + ") to "
+                    + journey.destinationStationName() + " (" + journey.destinationStationCode() + ")";
+
+            return "https://calendar.google.com/calendar/render?action=TEMPLATE"
+                    + "&text=" + URLEncoder.encode(title, StandardCharsets.UTF_8)
+                    + "&dates=" + datesParam
+                    + "&details=" + URLEncoder.encode(details.toString(), StandardCharsets.UTF_8)
+                    + "&location=" + URLEncoder.encode(location, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.warn("Failed to generate Google Calendar URL: {}", e.getMessage());
+            return "https://calendar.google.com";
+        }
+    }
+
+    /**
+     * Sends a detailed journey itinerary memo with 12-hour clock, layover in hours, checklist, and Google Calendar button.
      */
     public boolean sendJourneyItineraryEmail(
             String toEmail,
@@ -431,79 +523,77 @@ public class BrevoEmailService {
 
         String trackUrl = (frontendUrl != null ? frontendUrl.split(",")[0].trim() : "https://railtrack.in")
                 + "/trains/" + journey.firstTrainNumber();
+        String gCalUrl = generateGoogleCalendarUrl(journey, travelDate);
 
-        int totalHours = journey.totalDurationMinutes() != null ? journey.totalDurationMinutes() / 60 : 0;
-        int totalMins = journey.totalDurationMinutes() != null ? journey.totalDurationMinutes() % 60 : 0;
-        String durationStr = totalHours + "h " + totalMins + "m";
+        String durationStr = formatDurationHoursMinutes(journey.totalDurationMinutes());
 
         StringBuilder legsHtml = new StringBuilder();
 
-        // First Leg
+        // First Leg (12-hour AM/PM times, clear train number and name separation)
         legsHtml.append("""
             <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px; margin-bottom: 14px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
-                <span style="font-size: 15px; font-weight: 800; color: #818cf8;">Train #%s</span>
-                <span style="font-size: 13px; font-weight: 600; color: #cbd5e1;">%s</span>
+                <span style="font-size: 15px; font-weight: 800; color: #818cf8;">Train #%s &nbsp;•&nbsp; <span style="font-size: 13px; font-weight: 600; color: #cbd5e1;">%s</span></span>
               </div>
               <table style="width: 100%%; font-size: 13px; color: #94a3b8;">
                 <tr>
-                  <td style="padding: 4px 0;"><strong>Departure:</strong></td>
-                  <td style="color: #f8fafc; font-weight: 600;">%s from %s (%s)</td>
+                  <td style="padding: 4px 0; width: 100px;"><strong>Departure:</strong></td>
+                  <td style="color: #f8fafc; font-weight: 700;">%s from %s (%s)</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0;"><strong>Arrival:</strong></td>
-                  <td style="color: #f8fafc; font-weight: 600;">%s at %s (%s)</td>
+                  <td style="color: #f8fafc; font-weight: 700;">%s at %s (%s)</td>
                 </tr>
               </table>
             </div>
             """.formatted(
                 journey.firstTrainNumber(),
                 journey.firstTrainName() != null ? journey.firstTrainName() : "Express",
-                journey.originDepartureTime() != null ? journey.originDepartureTime().toString() : "--:--",
+                formatTimeTo12Hour(journey.originDepartureTime()),
                 journey.originStationName(),
                 journey.originStationCode(),
-                journey.direct() ? (journey.destinationArrivalTime() != null ? journey.destinationArrivalTime().toString() : "--:--") : (journey.transferArrivalTime() != null ? journey.transferArrivalTime().toString() : "--:--"),
+                formatTimeTo12Hour(journey.direct() ? journey.destinationArrivalTime() : journey.transferArrivalTime()),
                 journey.direct() ? journey.destinationStationName() : journey.transferStationName(),
                 journey.direct() ? journey.destinationStationCode() : journey.transferStationCode()
         ));
 
-        // If connecting journey
+        // If connecting journey (Convert layover to hours and minutes, e.g. 6h 39m layover)
         if (!journey.direct() && journey.secondTrainNumber() != null) {
+            String layoverDuration = formatDurationHoursMinutes(journey.layoverMinutes());
             legsHtml.append("""
                 <div style="background-color: #451a03; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin-bottom: 14px; font-size: 13px; color: #fde68a;">
-                  🔄 <strong>Transit at %s (%s):</strong> %d mins layover %s
+                  🔄 <strong>Transit at %s (%s):</strong> %s layover %s
                 </div>
                 """.formatted(
                     journey.transferStationName(),
                     journey.transferStationCode(),
-                    journey.layoverMinutes() != null ? journey.layoverMinutes() : 0,
-                    journey.layoverWarning() != null ? "• " + journey.layoverWarning() : ""
+                    layoverDuration,
+                    journey.layoverWarning() != null ? "• " + journey.layoverWarning() : "• safe connection"
             ));
 
             legsHtml.append("""
                 <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px; margin-bottom: 14px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
-                    <span style="font-size: 15px; font-weight: 800; color: #818cf8;">Train #%s</span>
-                    <span style="font-size: 13px; font-weight: 600; color: #cbd5e1;">%s</span>
+                    <span style="font-size: 15px; font-weight: 800; color: #818cf8;">Train #%s &nbsp;•&nbsp; <span style="font-size: 13px; font-weight: 600; color: #cbd5e1;">%s</span></span>
                   </div>
                   <table style="width: 100%%; font-size: 13px; color: #94a3b8;">
                     <tr>
-                      <td style="padding: 4px 0;"><strong>Departure:</strong></td>
-                      <td style="color: #f8fafc; font-weight: 600;">%s from %s (%s)</td>
+                      <td style="padding: 4px 0; width: 100px;"><strong>Departure:</strong></td>
+                      <td style="color: #f8fafc; font-weight: 700;">%s from %s (%s)</td>
                     </tr>
                     <tr>
                       <td style="padding: 4px 0;"><strong>Final Arrival:</strong></td>
-                      <td style="color: #f8fafc; font-weight: 600;">%s at %s (%s)</td>
+                      <td style="color: #f8fafc; font-weight: 700;">%s at %s (%s)</td>
                     </tr>
                   </table>
                 </div>
                 """.formatted(
                     journey.secondTrainNumber(),
                     journey.secondTrainName() != null ? journey.secondTrainName() : "Express",
-                    journey.transferDepartureTime() != null ? journey.transferDepartureTime().toString() : "--:--",
+                    formatTimeTo12Hour(journey.transferDepartureTime()),
                     journey.transferStationName(),
                     journey.transferStationCode(),
-                    journey.destinationArrivalTime() != null ? journey.destinationArrivalTime().toString() : "--:--",
+                    formatTimeTo12Hour(journey.destinationArrivalTime()),
                     journey.destinationStationName(),
                     journey.destinationStationCode()
             ));
@@ -527,8 +617,12 @@ public class BrevoEmailService {
                 .route-names { font-size: 13px; color: #94a3b8; margin-top: 4px; }
                 .meta-tags { margin-top: 10px; display: inline-flex; gap: 8px; font-size: 11px; font-weight: 700; }
                 .tag { background-color: #1e293b; padding: 3px 10px; border-radius: 9999px; color: #cbd5e1; border: 1px solid #334155; }
-                .btn-container { text-align: center; margin: 26px 0 16px; }
-                .button { background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff !important; padding: 13px 30px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block; }
+                .btn-container { text-align: center; margin: 26px 0 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+                .button-cal { background-color: #2563eb; color: #ffffff !important; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+                .button-live { background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff !important; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+                .checklist-card { background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px 20px; margin-top: 24px; }
+                .checklist-title { font-size: 13px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0; }
+                .checklist-table { width: 100%%; font-size: 12.5px; color: #cbd5e1; line-height: 1.6; }
                 .footer { background-color: #0f172a; padding: 18px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; }
               </style>
             </head>
@@ -558,11 +652,43 @@ public class BrevoEmailService {
                   %s
 
                   <div class="btn-container">
-                    <a href="%s" class="button">Track Train Live on RailTrack</a>
+                    <a href="%s" class="button-cal" target="_blank">📅 Add to Google Calendar</a>
+                    <a href="%s" class="button-live" target="_blank">🚆 Track Train Live on RailTrack</a>
+                  </div>
+
+                  <!-- Mandatory Traveler Checklist -->
+                  <div class="checklist-card">
+                    <div class="checklist-title">🧳 Mandatory Journey Checklist — Items You Must Carry</div>
+                    <table class="checklist-table">
+                      <tr>
+                        <td style="padding: 3px 6px 3px 0; vertical-align: top; width: 22px; color: #38bdf8; font-weight: bold;">☑</td>
+                        <td style="padding: 3px 0;"><strong>Valid Government Photo ID:</strong> Original Aadhaar Card, Voter ID, Driving License, or Passport (strictly required by TTE).</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 3px 6px 3px 0; vertical-align: top; width: 22px; color: #38bdf8; font-weight: bold;">☑</td>
+                        <td style="padding: 3px 0;"><strong>Ticket / E-Reservation Slip (ERS):</strong> Digital copy on mobile (IRCTC app / SMS confirmation) or printed copy.</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 3px 6px 3px 0; vertical-align: top; width: 22px; color: #38bdf8; font-weight: bold;">☑</td>
+                        <td style="padding: 3px 0;"><strong>Mobile Charger & Power Bank:</strong> Critical for continuous battery backup and offline journey access.</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 3px 6px 3px 0; vertical-align: top; width: 22px; color: #38bdf8; font-weight: bold;">☑</td>
+                        <td style="padding: 3px 0;"><strong>Personal Medications & First-Aid:</strong> Motion sickness, headache, prescription medicines, and disinfectant wipes.</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 3px 6px 3px 0; vertical-align: top; width: 22px; color: #38bdf8; font-weight: bold;">☑</td>
+                        <td style="padding: 3px 0;"><strong>Water Bottle & Quick Snacks:</strong> Stay hydrated and keep light snacks handy during intermediate station layovers.</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 3px 6px 3px 0; vertical-align: top; width: 22px; color: #38bdf8; font-weight: bold;">☑</td>
+                        <td style="padding: 3px 0;"><strong>Luggage Chain & Padlock:</strong> Recommended for securing bags under lower berths on overnight expresses.</td>
+                      </tr>
+                    </table>
                   </div>
 
                   <div style="background-color: #0f172a; border-radius: 6px; padding: 14px 18px; font-size: 12px; color: #64748b; line-height: 1.5; margin-top: 20px;">
-                    💡 <strong>Traveler Checklist:</strong> Confirm live platform numbers and train delays before heading to the station. Have your ticket & ID ready for TTE inspection.
+                    💡 <strong>Traveler Reminder:</strong> Confirm live platform numbers and train delays before heading to the station. Reach the platform at least 20 minutes before scheduled departure.
                   </div>
                 </div>
                 <div class="footer">
@@ -585,6 +711,7 @@ public class BrevoEmailService {
                 journey.direct() ? "Direct Route" : "Connecting Route",
                 travelDate != null && !travelDate.isBlank() ? "<span class=\"tag\">📅 " + travelDate + "</span>" : "",
                 legsHtml.toString(),
+                gCalUrl,
                 trackUrl
             );
 
