@@ -2972,3 +2972,22 @@ flowchart TD
   $$\text{diffMinutes} \le 180$$
   At 3 hours prior to arrival, the train is ~200–260 km away. Check 1 evaluates to true and rings the alarm immediately at the 3-hour mark.
 * The 35 km limit is strictly a safeguard for the sequence fallback (preventing 15–30 minute alarms from firing 400 km away).
+
+---
+
+##### Q5: Origin Departure Safety Guard in Live Feed Polling & Delay Propagation
+* When a train is delayed at the origin/source terminal, downstream stations experience shifted departure/arrival times:
+  $$\text{Expected Arrival} = \text{Scheduled Arrival} + \text{Origin Source Delay}$$
+* Backend telemetry and `JourneyServiceImpl.java` reflect live origin delay propagation so that downstream stations calculate accurate live arrival projections rather than relying on stale timetable departures.
+
+##### Q6: Distance Calculation & Arrival Time Sorting in Multi-City and Direct Journey Planning
+* In `JourneyServiceImpl.java`:
+  - `JourneyOptionDto.java` now carries both `totalDistance` and individual `legDistances` computed dynamically from the timetable station records.
+  - Results are sorted by arrival time at destination station by default, offering passenger-centric schedule clarity.
+
+##### Q7: Indian Railways Fare Structure and Itemized Calculation Formulas
+* **Formulas:**
+  $$\text{Base Fare} = \text{Distance (km)} \times \text{Rate per km (by Class)}$$
+  $$\text{Subtotal} = \text{Base Fare} + \text{Reservation Fee} + \text{Superfast Surcharge}$$
+  $$\text{GST (AC Only)} = \begin{cases} 0.05 \times \text{Subtotal} & \text{if Class } \in \{1A, 2A, 3A, 3E, CC, EC\} \\ 0 & \text{if Class } \in \{SL, 2S\} \end{cases}$$
+  $$\text{Total Fare} = \text{Subtotal} + \text{GST} + \text{Tatkal Premium} + \text{Catering}$$

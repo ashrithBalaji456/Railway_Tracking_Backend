@@ -83,6 +83,11 @@ public class JourneyServiceImpl implements JourneyService {
                             dHalt.getArrivalTime(), dHalt.getArrivalDay()
                     );
 
+                    double dist = Math.abs((dHalt.getDistance() != null ? dHalt.getDistance() : 0.0) - (sHalt.getDistance() != null ? sHalt.getDistance() : 0.0));
+                    if (dist <= 0) {
+                        dist = Math.round((duration / 60.0) * 55.0 * 10.0) / 10.0;
+                    }
+
                     options.add(new JourneyOptionDto(
                             true,
                             sHalt.getTrain().getTrainNumber(),
@@ -97,7 +102,10 @@ public class JourneyServiceImpl implements JourneyService {
                             0, null,
                             duration,
                             sHalt.getTrain().getRunningDays(),
-                            null
+                            null,
+                            dist,
+                            null,
+                            dist
                     ));
                 }
             }
@@ -154,6 +162,14 @@ public class JourneyServiceImpl implements JourneyService {
 
                                 int totalDuration = firstLeg + layover + secondLeg;
 
+                                double dist1 = Math.abs((hA.getDistance() != null ? hA.getDistance() : 0.0) - (sHalt.getDistance() != null ? sHalt.getDistance() : 0.0));
+                                if (dist1 <= 0) dist1 = Math.round((firstLeg / 60.0) * 55.0 * 10.0) / 10.0;
+
+                                double dist2 = Math.abs((dHalt.getDistance() != null ? dHalt.getDistance() : 0.0) - (hB.getDistance() != null ? hB.getDistance() : 0.0));
+                                if (dist2 <= 0) dist2 = Math.round((secondLeg / 60.0) * 55.0 * 10.0) / 10.0;
+
+                                double totalDist = Math.round((dist1 + dist2) * 10.0) / 10.0;
+
                                 // Layover warnings resolution
                                 String warning = null;
                                 if (layover < 45) {
@@ -182,7 +198,10 @@ public class JourneyServiceImpl implements JourneyService {
                                         warning,
                                         totalDuration,
                                         sHalt.getTrain().getRunningDays(),
-                                        hB.getTrain().getRunningDays()
+                                        hB.getTrain().getRunningDays(),
+                                        dist1,
+                                        dist2,
+                                        totalDist
                                 ));
                             }
                         }
@@ -206,6 +225,7 @@ public class JourneyServiceImpl implements JourneyService {
                             
                     for (TrainBetweenStationsDto t : trains) {
                         saveTrainIfMissing(t);
+                        double dist = Math.round((t.durationMinutes() / 60.0) * 55.0 * 10.0) / 10.0;
                         options.add(new JourneyOptionDto(
                                 true,
                                 t.trainNumber(),
@@ -220,7 +240,10 @@ public class JourneyServiceImpl implements JourneyService {
                                 0, null,
                                 t.durationMinutes(),
                                 t.runningDays(),
-                                null
+                                null,
+                                dist,
+                                null,
+                                dist
                         ));
                     }
                 }
@@ -229,10 +252,14 @@ public class JourneyServiceImpl implements JourneyService {
             }
         }
 
-        // Sort journeys: direct options first, then sort by total duration
+        // Sort journeys: direct options first, then sort by arrival time (ascending)
         options.sort((o1, o2) -> {
             if (o1.direct() != o2.direct()) {
                 return o1.direct() ? -1 : 1;
+            }
+            if (o1.destinationArrivalTime() != null && o2.destinationArrivalTime() != null) {
+                int cmp = o1.destinationArrivalTime().compareTo(o2.destinationArrivalTime());
+                if (cmp != 0) return cmp;
             }
             return o1.totalDurationMinutes().compareTo(o2.totalDurationMinutes());
         });
