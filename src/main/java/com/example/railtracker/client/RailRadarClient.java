@@ -29,6 +29,10 @@ import com.example.railtracker.dto.TrainExceptionSummaryDTO;
 import com.example.railtracker.dto.TrainDelayReportDTO;
 import com.example.railtracker.dto.TrainFareDTO;
 import com.example.railtracker.dto.JourneyOverlayDTO;
+import com.example.railtracker.dto.JourneyOptionDto;
+import java.time.LocalTime;
+import java.util.Map;
+import java.util.HashMap;
 
 @Component
 public class RailRadarClient {
@@ -863,6 +867,196 @@ public class RailRadarClient {
         fares.add(new TrainFareDTO.ClassFare("1A", "AC First Class", b1A, tot1A));
 
         return fares;
+    }
+
+    
+    public List<JourneyOptionDto> planMultiStopJourneys(List<String> stations, String date, Integer maxTransfers) {
+        if (stations == null || stations.size() < 2) return List.of();
+
+        List<Map<String, Object>> stopsList = new ArrayList<>();
+        for (String s : stations) {
+            if (s != null && !s.isBlank()) {
+                Map<String, Object> stopObj = new HashMap<>();
+                stopObj.put("station", s.trim().toUpperCase());
+                stopsList.add(stopObj);
+            }
+        }
+        if (stopsList.size() < 2) return List.of();
+
+        Map<String, Object> reqBody = new HashMap<>();
+        reqBody.put("stops", stopsList);
+        if (date != null && !date.isBlank()) {
+            reqBody.put("date", date.trim());
+        }
+        reqBody.put("maxTransfers", maxTransfers != null ? maxTransfers : 1);
+        reqBody.put("minTransferMinutes", 30);
+        reqBody.put("maxItineraries", 20);
+
+        String path = "/journeys/plan";
+        logger.info("RailRadar multi-stop journey plan request: POST {}", path);
+        try {
+            JsonNode root = executePost(path, reqBody);
+            return mapJourneysPlanResponse(root);
+        } catch (Exception e) {
+            logger.warn("RailRadar /journeys/plan failed: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    private List<JourneyOptionDto> mapJourneysPlanResponse(JsonNode root) {
+        if (root == null || !root.has("success") || !root.get("success").asBoolean()) {
+            return List.of();
+        }
+        JsonNode data = root.get("data");
+        if (data == null || !data.has("segments")) {
+            return List.of();
+        }
+
+        List<JourneyOptionDto> result = new ArrayList<>();
+        JsonNode segments = data.get("segments");
+        if (!segments.isArray()) return List.of();
+
+        for (JsonNode seg : segments) {
+            JsonNode plan = seg.get("plan");
+            if (plan == null) continue;
+
+            // 1. Direct options
+            JsonNode directNode = plan.get("direct");
+            if (directNode != null && directNode.isArray()) {
+                for (JsonNode item : directNode) {
+                    JsonNode train = item.get("train");
+                    JsonNode from = item.get("from");
+                    JsonNode to = item.get("to");
+
+                    String trainNum = train != null ? text(train, "number") : null;
+                    String trainName = train != null ? text(train, "name") : null;
+                    String fromCode = from != null ? text(from, "code") : null;
+                    String fromName = from != null ? text(from, "name") : null;
+                    String depStr = from != null ? text(from, "departure") : null;
+                    String toCode = to != null ? text(to, "code") : null;
+                    String toName = to != null ? text(to, "name") : null;
+                    String arrStr = to != null ? text(to, "arrival") : null;
+                    Integer durMins = integer(item, "durationMinutes");
+                    Double distKm = doubleVal(item, "distanceKm");
+
+                    LocalTime depTime = parseLocalTime(depStr);
+                    LocalTime arrTime = parseLocalTime(arrStr);
+
+                    result.add(new JourneyOptionDto(
+                        true,
+                        trainNum,
+                        trainName,
+                        fromCode,
+                        fromName,
+                        depTime,
+                        toCode,
+                        toName,
+                        arrTime,
+                        null, null, null, null, null, null,
+                        0, null,
+                        durMins != null ? durMins : 0,
+                        "Daily", null,
+                        distKm, null, distKm
+                    ));
+                }
+            }
+
+            // 2. Itineraries (Connecting options)
+            JsonNode itinNode = plan.get("itineraries");
+            if (itinNode != null && itinNode.isArray()) {
+                for (JsonNode item : itinNode) {
+                    JsonNode legs = item.get("legs");
+                    JsonNode transfers = item.get("transfers");
+
+                    if (legs != null && legs.isArray() && legs.size() >= 2) {
+                        JsonNode leg1 = legs.get(0);
+                        JsonNode leg2 = legs.get(1);
+
+                        JsonNode t1Train = leg1.get("train");
+                        JsonNode t1From = leg1.get("from");
+                        JsonNode t1To = leg1.get("to");
+
+                        JsonNode t2Train = leg2.get("train");
+                        JsonNode t2From = leg2.get("from");
+                        JsonNode t2To = leg2.get("to");
+
+                        String firstNum = t1Train != null ? text(t1Train, "number") : null;
+                        String firstName = t1Train != null ? text(t1Train, "name") : null;
+                        String originCode = t1From != null ? text(t1From, "code") : null;
+                        String originName = t1From != null ? text(t1From, "name") : null;
+                        LocalTime originDep = parseLocalTime(t1From != null ? text(t1From, "departure") : null);
+
+                        String secondNum = t2Train != null ? text(t2Train, "number") : null;
+                        String secondName = t2Train != null ? text(t2Train, "name") : null;
+                        String destCode = t2To != null ? text(t2To, "code") : null;
+                        String destName = t2To != null ? text(t2To, "name") : null;
+                        LocalTime destArr = parseLocalTime(t2To != null ? text(t2To, "arrival") : null);
+
+                        // Transfer Station Details
+                        String transCode = t1To != null ? text(t1To, "code") : null;
+                        String transName = t1To != null ? text(t1To, "name") : null;
+                        LocalTime transArr = parseLocalTime(t1To != null ? text(t1To, "arrival") : null);
+                        LocalTime transDep = parseLocalTime(t2From != null ? text(t2From, "departure") : null);
+
+                        Integer waitMins = 0;
+                        String risk = null;
+                        if (transfers != null && transfers.isArray() && transfers.size() > 0) {
+                            JsonNode tr0 = transfers.get(0);
+                            waitMins = integer(tr0, "waitMinutes");
+                            risk = text(tr0, "risk");
+                        }
+
+                        Integer totalDur = integer(item, "totalDurationMinutes");
+                        Double totalDist = doubleVal(item, "totalDistanceKm");
+                        Double dist1 = doubleVal(leg1, "distanceKm");
+                        Double dist2 = doubleVal(leg2, "distanceKm");
+
+                        result.add(new JourneyOptionDto(
+                            false,
+                            firstNum,
+                            firstName,
+                            originCode,
+                            originName,
+                            originDep,
+                            destCode,
+                            destName,
+                            destArr,
+                            secondNum,
+                            secondName,
+                            transCode,
+                            transName,
+                            transArr,
+                            transDep,
+                            waitMins != null ? waitMins : 0,
+                            risk,
+                            totalDur != null ? totalDur : 0,
+                            "Daily", "Daily",
+                            dist1, dist2, totalDist
+                        ));
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private LocalTime parseLocalTime(String timeStr) {
+        if (timeStr == null || timeStr.isBlank()) return null;
+        try {
+            String clean = timeStr.trim();
+            if (clean.length() >= 5) {
+                return LocalTime.parse(clean.substring(0, 5));
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private Double doubleVal(JsonNode node, String field) {
+        if (node != null && node.has(field) && !node.get(field).isNull()) {
+            return node.get(field).asDouble();
+        }
+        return null;
     }
 
     public JourneyOverlayDTO getJourneyOverlay(Object requestBody) {

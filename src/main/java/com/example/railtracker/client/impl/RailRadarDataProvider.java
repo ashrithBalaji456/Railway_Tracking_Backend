@@ -668,4 +668,14 @@ public class RailRadarDataProvider implements RailwayDataProvider {
             throw new ResourceNotFoundException("Journey delay overlay unavailable");
         }
     }
+
+    @Override
+    public List<com.example.railtracker.dto.JourneyOptionDto> planMultiStopJourneys(List<String> stations, String date, Integer maxTransfers) {
+        try {
+            return client.planMultiStopJourneys(stations, date, maxTransfers);
+        } catch (Exception e) {
+            logger.warn("RailRadar planMultiStopJourneys failed for stations {}: {}", stations, e.getMessage());
+            return List.of();
+        }
+    }
 }

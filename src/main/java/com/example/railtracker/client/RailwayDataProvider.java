@@ -33,5 +33,7 @@ public interface RailwayDataProvider {
     TrainFareDTO getTrainFare(String trainNumber, String source, String destination);
 
     JourneyOverlayDTO getJourneyOverlay(Object requestBody);
+
+    List<JourneyOptionDto> planMultiStopJourneys(List<String> stations, String date, Integer maxTransfers);
 }
 

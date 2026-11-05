@@ -210,8 +210,23 @@ public class JourneyServiceImpl implements JourneyService {
         }
 
         // =========================================================================
-        // 2. Query RailRadar External Provider for Direct Trains
+        // 2. Query RailRadar External Multi-Stop Route Planner (/v1/journeys/plan) & Direct Trains
         // =========================================================================
+        try {
+            List<JourneyOptionDto> multiStopOptions = railwayDataProvider.planMultiStopJourneys(List.of(src, dst), date, 1);
+            if (multiStopOptions != null && !multiStopOptions.isEmpty()) {
+                for (JourneyOptionDto opt : multiStopOptions) {
+                    String key = opt.direct() ? opt.firstTrainNumber() : (opt.firstTrainNumber() + "_" + opt.transferStationCode() + "_" + opt.secondTrainNumber());
+                    if (key != null && !seenTrainKeys.contains(key)) {
+                        seenTrainKeys.add(key);
+                        options.add(opt);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("External RailRadar /v1/journeys/plan query between '{}' and '{}' failed: {}", src, dst, e.getMessage());
+        }
+
         try {
             List<TrainBetweenStationsDto> directTrains = railwayDataProvider.getTrainsBetweenStations(src, dst, date);
             if (directTrains != null && !directTrains.isEmpty()) {
