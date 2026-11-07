@@ -45,7 +45,8 @@ public class StationAlarmController {
                 request.stationName(),
                 request.etaMinutes(),
                 request.distanceKm(),
-                request.platform()
+                request.platform(),
+                request.action()
         );
 
         return ResponseEntity.ok(ApiResponse.success(

@@ -24,6 +24,22 @@ public record StationAlarmNotifyRequest(
 
     Integer distanceKm,
 
-    String platform
-) {}
+    String platform,
+
+    String action
+) {
+    public StationAlarmNotifyRequest(
+        String email,
+        String username,
+        String trainNumber,
+        String trainName,
+        String stationCode,
+        String stationName,
+        Integer etaMinutes,
+        Integer distanceKm,
+        String platform
+    ) {
+        this(email, username, trainNumber, trainName, stationCode, stationName, etaMinutes, distanceKm, platform, null);
+    }
+}
 

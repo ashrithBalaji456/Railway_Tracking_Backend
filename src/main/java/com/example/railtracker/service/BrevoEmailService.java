@@ -1002,6 +1002,20 @@ public class BrevoEmailService {
             Integer etaMinutes,
             Integer distanceKm,
             String platform) {
+        return sendStationApproachingAlarmEmail(toEmail, username, trainNumber, trainName, stationCode, stationName, etaMinutes, distanceKm, platform, null);
+    }
+
+    public boolean sendStationApproachingAlarmEmail(
+            String toEmail,
+            String username,
+            String trainNumber,
+            String trainName,
+            String stationCode,
+            String stationName,
+            Integer etaMinutes,
+            Integer distanceKm,
+            String platform,
+            String action) {
 
         if (toEmail == null || toEmail.isBlank()) {
             return false;
@@ -1013,7 +1027,49 @@ public class BrevoEmailService {
         String distText = (distanceKm != null && distanceKm > 0) ? distanceKm + " km away" : "Approaching outer limits";
         String platformText = (platform != null && !platform.isBlank()) ? "Platform " + platform : "Check Station Indicators";
 
-        String subject = "🚨 WAKE-UP ALARM: Train " + trainNumber + " is approaching " + stationLabel + " (" + stationCode + ") in ~" + etaText + "!";
+        String act = action != null ? action.trim().toUpperCase() : "APPROACHING";
+
+        String badgeText;
+        String subject;
+        String bannerHeadline;
+        String bannerSubline;
+        String headerGradient;
+        String bannerBgStyle;
+        String bannerTextColor;
+
+        if (act.equals("AWAKE") || act.equals("DISMISS") || act.equals("STOP")) {
+            badgeText = "✅ PASSENGER AWAKE • ALARM STOPPED";
+            subject = "✅ WAKE-UP CONFIRMED: Passenger Awake for Train " + trainNumber + " at " + stationLabel + " (" + stationCode + ")";
+            bannerHeadline = "Passenger Awake Confirmed • Train " + trainNumber + " (" + trainLabel + ")";
+            bannerSubline = "You acknowledged and stopped the wake-up alarm for " + stationLabel + ". Have a pleasant and safe journey!";
+            headerGradient = "background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);";
+            bannerBgStyle = "background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);";
+            bannerTextColor = "#6ee7b7";
+        } else if (act.equals("SNOOZE_5M") || act.equals("SNOOZE")) {
+            badgeText = "⏰ 5-MINUTE SNOOZE ACTIVE";
+            subject = "⏰ ALARM SNOOZED: 5-Minute Snooze Active for Train " + trainNumber + " at " + stationLabel + " (" + stationCode + ")";
+            bannerHeadline = "Alarm Snoozed for 5 Minutes • Train " + trainNumber + " (" + trainLabel + ")";
+            bannerSubline = "Your alarm has been snoozed and will sound again in 5 minutes for " + stationLabel + " (" + platformText + ").";
+            headerGradient = "background: linear-gradient(135deg, #78350f 0%, #92400e 50%, #b45309 100%);";
+            bannerBgStyle = "background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4);";
+            bannerTextColor = "#fde047";
+        } else if (act.equals("SNOOZE_ARRIVAL_5M") || act.equals("ARRIVAL_BUFFER")) {
+            badgeText = "⏰ FINAL ARRIVAL BUFFER (5M) ACTIVE";
+            subject = "⏰ FINAL ARRIVAL SNOOZE: 5m Warning Active for Train " + trainNumber + " at " + stationLabel + " (" + stationCode + ")";
+            bannerHeadline = "Snoozed until 5 Minutes Before Train Arrival • Train " + trainNumber + " (" + trainLabel + ")";
+            bannerSubline = "Alarm will ring dynamically 5 minutes before train pulls into " + stationLabel + " (" + platformText + ").";
+            headerGradient = "background: linear-gradient(135deg, #312e81 0%, #3730a3 50%, #4338ca 100%);";
+            bannerBgStyle = "background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4);";
+            bannerTextColor = "#a5b4fc";
+        } else {
+            badgeText = "⏰ WAKE-UP CALL • ARRIVAL IMMINENT";
+            subject = "🚨 WAKE-UP ALARM: Train " + trainNumber + " is approaching " + stationLabel + " (" + stationCode + ") in ~" + etaText + "!";
+            bannerHeadline = "Train " + trainNumber + " (" + trainLabel + ") is arriving in ~" + etaText + "!";
+            bannerSubline = "Distance remaining: " + distText + " • Expected Platform: " + platformText;
+            headerGradient = "background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%);";
+            bannerBgStyle = "background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4);";
+            bannerTextColor = "#fca5a5";
+        }
 
         String trackUrl = frontendUrl + "/trains/" + trainNumber;
         String stationUrl = frontendUrl + "/stations/" + stationCode;
@@ -1027,11 +1083,11 @@ public class BrevoEmailService {
               <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 12px 6px; }
                 .container { max-width: 620px; width: 100%%; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 2px solid #ef4444; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.35); }
-                .header { background: linear-gradient(135deg, #7f1d1d 0%%, #991b1b 50%%, #b91c1c 100%%); padding: 24px 18px; text-align: center; }
+                .header { %s padding: 24px 18px; text-align: center; }
                 .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #fef08a; border: 1px solid rgba(254, 240, 138, 0.4); margin-bottom: 10px; }
                 .title { margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
                 .content { padding: 20px 16px; }
-                .urgent-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; text-align: center; }
+                .urgent-banner { %s border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; text-align: center; }
                 .card { background: #1e293b; border-radius: 14px; padding: 16px 18px; margin: 16px 0; border: 1px solid #334155; }
                 .table-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #334155; font-size: 13px; }
                 .table-label { color: #94a3b8; font-weight: 500; }
@@ -1046,17 +1102,17 @@ public class BrevoEmailService {
             <body>
               <div class="container">
                 <div class="header">
-                  <div class="badge">⏰ WAKE-UP CALL &bull; ARRIVAL IMMINENT</div>
+                  <div class="badge">%s</div>
                   <h1 class="title">Approaching %s</h1>
                 </div>
                 <div class="content">
                   <div class="urgent-banner">
-                    <strong style="color: #fca5a5; font-size: 16px;">Train %s (%s) is arriving in ~%s!</strong><br/>
-                    <span style="font-size: 12px; color: #fecaca;">Distance remaining: %s &bull; Expected Platform: %s</span>
+                    <strong style="color: %s; font-size: 16px;">%s</strong><br/>
+                    <span style="font-size: 12px; color: #f1f5f9;">%s</span>
                   </div>
 
                   <p style="font-size: 14px; color: #cbd5e1; margin-top: 0; line-height: 1.6;">
-                    Hello %s, your station approaching alarm has triggered! Please wake up, review your travel checklists below, and prepare accordingly.
+                    Hello %s, your station alert status has been recorded. Review your station details and travel action checklists below.
                   </p>
 
                   <div class="card">
@@ -1116,12 +1172,13 @@ public class BrevoEmailService {
             </body>
             </html>
             """.formatted(
+                headerGradient,
+                bannerBgStyle,
+                badgeText,
                 stationLabel,
-                trainNumber,
-                trainLabel,
-                etaText,
-                distText,
-                platformText,
+                bannerTextColor,
+                bannerHeadline,
+                bannerSubline,
                 username != null && !username.isBlank() ? username : "Passenger",
                 stationLabel,
                 stationCode,
