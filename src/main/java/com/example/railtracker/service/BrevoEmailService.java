@@ -426,7 +426,38 @@ public class BrevoEmailService {
         String ampm = hour >= 12 ? "PM" : "AM";
         int h12 = hour % 12;
         if (h12 == 0) h12 = 12;
-        return String.format("%d:%02d %s", h12, minute, ampm);
+        return String.format("%02d:%02d %s", h12, minute, ampm);
+    }
+
+    /**
+     * Converts any time string (HH:mm, HH:mm:ss, ISO-8601 e.g. 2026-11-06T15:59:00+05:30)
+     * to a clean 12-hour AM/PM format (e.g. 03:59 PM).
+     */
+    public static String formatTimeStringTo12Hour(String rawTime) {
+        if (rawTime == null || rawTime.isBlank()) {
+            return "--:--";
+        }
+        String s = rawTime.trim();
+        if (s.equalsIgnoreCase("null") || s.equalsIgnoreCase("undefined") || s.equals("--:--")) {
+            return "--:--";
+        }
+        if (s.toUpperCase().contains("AM") || s.toUpperCase().contains("PM")) {
+            return s;
+        }
+
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?:T|\\s|^)(\\d{1,2}):(\\d{2})").matcher(s);
+            if (m.find()) {
+                int hour = Integer.parseInt(m.group(1));
+                int minute = Integer.parseInt(m.group(2));
+                String ampm = hour >= 12 ? "PM" : "AM";
+                int h12 = hour % 12;
+                if (h12 == 0) h12 = 12;
+                return String.format("%02d:%02d %s", h12, minute, ampm);
+            }
+        } catch (Exception ignored) {}
+
+        return s;
     }
 
     /**
@@ -992,23 +1023,24 @@ public class BrevoEmailService {
             <html>
             <head>
               <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
-                .container { max-width: 620px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 2px solid #ef4444; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.35); }
-                .header { background: linear-gradient(135deg, #7f1d1d 0%%, #991b1b 50%%, #b91c1c 100%%); padding: 28px 24px; text-align: center; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 12px 6px; }
+                .container { max-width: 620px; width: 100%%; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 2px solid #ef4444; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.35); }
+                .header { background: linear-gradient(135deg, #7f1d1d 0%%, #991b1b 50%%, #b91c1c 100%%); padding: 24px 18px; text-align: center; }
                 .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #fef08a; border: 1px solid rgba(254, 240, 138, 0.4); margin-bottom: 10px; }
-                .title { margin: 0; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
-                .content { padding: 28px 24px; }
-                .urgent-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; text-align: center; }
-                .card { background: #1e293b; border-radius: 14px; padding: 18px 20px; margin: 18px 0; border: 1px solid #334155; }
-                .table-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #334155; font-size: 14px; }
+                .title { margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
+                .content { padding: 20px 16px; }
+                .urgent-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; text-align: center; }
+                .card { background: #1e293b; border-radius: 14px; padding: 16px 18px; margin: 16px 0; border: 1px solid #334155; }
+                .table-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #334155; font-size: 13px; }
                 .table-label { color: #94a3b8; font-weight: 500; }
                 .table-val { color: #ffffff; font-weight: 700; text-align: right; }
-                .btn-group { display: flex; gap: 12px; margin: 24px 0 10px 0; }
-                .btn-primary { flex: 1; display: block; text-align: center; background: #dc2626; color: #ffffff; padding: 14px 18px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; }
-                .btn-secondary { flex: 1; display: block; text-align: center; background: #1e293b; color: #cbd5e1; padding: 14px 18px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px; border: 1px solid #475569; }
-                .luggage-box { background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 14px 16px; margin-top: 20px; font-size: 13px; color: #fbbf24; line-height: 1.6; }
-                .footer { padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+                .btn-group { display: flex; gap: 10px; margin: 20px 0 10px 0; }
+                .btn-primary { flex: 1; display: block; text-align: center; background: #dc2626; color: #ffffff; padding: 12px 14px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 13px; }
+                .btn-secondary { flex: 1; display: block; text-align: center; background: #1e293b; color: #cbd5e1; padding: 12px 14px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 13px; border: 1px solid #475569; }
+                .checklist-box { background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 16px; margin-top: 20px; font-size: 13px; color: #fbbf24; line-height: 1.6; }
+                .footer { padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
               </style>
             </head>
             <body>
@@ -1024,24 +1056,24 @@ public class BrevoEmailService {
                   </div>
 
                   <p style="font-size: 14px; color: #cbd5e1; margin-top: 0; line-height: 1.6;">
-                    Hello %s, your station approaching alarm has triggered! Please wake up, double-check your belongings beneath the berth, and prepare for deboarding.
+                    Hello %s, your station approaching alarm has triggered! Please wake up, review your travel checklists below, and prepare accordingly.
                   </p>
 
                   <div class="card">
                     <div class="table-row">
-                      <span class="table-label">Destination Station:</span>
+                      <span class="table-label">Station:</span>
                       <span class="table-val" style="color: #f87171;">%s (%s)</span>
                     </div>
                     <div class="table-row">
-                      <span class="table-label">Train Number:</span>
+                      <span class="table-label">Train:</span>
                       <span class="table-val">%s - %s</span>
                     </div>
                     <div class="table-row">
-                      <span class="table-label">Estimated Time to Arrival:</span>
+                      <span class="table-label">Estimated Time:</span>
                       <span class="table-val" style="color: #fde047;">~%s</span>
                     </div>
                     <div class="table-row">
-                      <span class="table-label">Distance to Station:</span>
+                      <span class="table-label">Distance:</span>
                       <span class="table-val">%s</span>
                     </div>
                     <div class="table-row" style="border-bottom: none;">
@@ -1055,11 +1087,26 @@ public class BrevoEmailService {
                     <a href="%s" class="btn-secondary">Station Live Board</a>
                   </div>
 
-                  <div class="luggage-box">
-                    <strong>🧳 Deboarding Checklist:</strong><br/>
-                    &bull; Check under the berth for bags, shoes, and chargers.<br/>
-                    &bull; Collect personal electronics, glasses, and wallet/purse.<br/>
-                    &bull; Move toward the coach vestibule / door before the train completely halts.
+                  <div class="checklist-box">
+                    <div style="font-weight: 800; font-size: 14px; color: #fde047; margin-bottom: 10px;">
+                      📋 Station Journey Action Checklists
+                    </div>
+
+                    <div style="margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(245, 158, 11, 0.25);">
+                      <strong style="color: #67e8f9; font-size: 13px;">🎒 Onboarding Checklist (If Boarding Here):</strong><br/>
+                      &bull; Check platform electronic coach indicator displays for coach position.<br/>
+                      &bull; Keep Government ID &amp; IRCTC ticket / PNR ready for TTE inspection.<br/>
+                      &bull; Verify train number &amp; coach (e.g. S4, B2, A1) before boarding.<br/>
+                      &bull; Keep water, essential medicines, and tickets in easy reach.
+                    </div>
+
+                    <div>
+                      <strong style="color: #fca5a5; font-size: 13px;">🧳 Deboarding Checklist (If Deboarding Here):</strong><br/>
+                      &bull; Check under the berth and charging pockets for bags, shoes, and chargers.<br/>
+                      &bull; Collect personal electronics, phone, wallet/purse, and glasses.<br/>
+                      &bull; Verify total luggage count before heading to the coach door.<br/>
+                      &bull; Move toward the coach vestibule safely only after the train slows down.
+                    </div>
                   </div>
                 </div>
                 <div class="footer">
@@ -1133,39 +1180,49 @@ public class BrevoEmailService {
                 String dest = t.destination() != null && t.destination().code() != null ? t.destination().code() : "";
                 String route = (!src.isBlank() && !dest.isBlank()) ? src + " &rarr; " + dest : "En Route";
 
-                String schTime = t.scheduledArrival() != null ? t.scheduledArrival() : (t.scheduledDeparture() != null ? t.scheduledDeparture() : "--:--");
-                String expTime = t.expectedArrival() != null ? t.expectedArrival() : (t.expectedDeparture() != null ? t.expectedDeparture() : schTime);
+                String rawSch = t.scheduledArrival() != null ? t.scheduledArrival() : (t.scheduledDeparture() != null ? t.scheduledDeparture() : "--:--");
+                String rawExp = t.expectedArrival() != null ? t.expectedArrival() : (t.expectedDeparture() != null ? t.expectedDeparture() : rawSch);
+
+                String schTime = formatTimeStringTo12Hour(rawSch);
+                String expTime = formatTimeStringTo12Hour(rawExp);
 
                 Integer delay = t.delayMinutes() != null ? t.delayMinutes() : 0;
-                String delayBadge;
-                if (delay <= 0) {
-                    delayBadge = "<span style=\"color: #34d399; font-weight: 700;\">On Time</span>";
-                } else if (delay < 30) {
-                    delayBadge = "<span style=\"color: #fbbf24; font-weight: 700;\">+" + delay + "m Late</span>";
+                String timeDisplay;
+                if (delay <= 0 || schTime.equalsIgnoreCase(expTime)) {
+                    timeDisplay = "<strong style=\"color: #38bdf8; font-size: 12px; white-space: nowrap;\">" + expTime + "</strong>";
                 } else {
-                    delayBadge = "<span style=\"color: #f87171; font-weight: 700;\">+" + delay + "m Late</span>";
+                    timeDisplay = "<span style=\"color: #94a3b8; text-decoration: line-through; font-size: 10px; white-space: nowrap;\">" + schTime + "</span><br/>"
+                                + "<strong style=\"color: #f87171; font-size: 12px; white-space: nowrap;\">" + expTime + "</strong>";
                 }
 
-                String pf = (t.platform() != null && !t.platform().isBlank()) ? "PF " + t.platform() : "TBD";
+                String delayBadge;
+                if (delay <= 0) {
+                    delayBadge = "<span style=\"display: inline-block; padding: 2px 6px; border-radius: 6px; background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; font-size: 11px; white-space: nowrap;\">✓ On Time</span>";
+                } else if (delay < 30) {
+                    delayBadge = "<span style=\"display: inline-block; padding: 2px 6px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700; font-size: 11px; white-space: nowrap;\">+" + delay + "m Late</span>";
+                } else {
+                    delayBadge = "<span style=\"display: inline-block; padding: 2px 6px; border-radius: 6px; background: rgba(239, 68, 68, 0.15); color: #f87171; font-weight: 700; font-size: 11px; white-space: nowrap;\">+" + delay + "m Late</span>";
+                }
+
+                String pf = (t.platform() != null && !t.platform().isBlank() && !t.platform().equalsIgnoreCase("null") && !t.platform().equalsIgnoreCase("undefined")) ? "PF " + t.platform() : "TBD";
 
                 tableRows.append("""
                     <tr style="border-bottom: 1px solid #1e293b;">
                       <td style="padding: 10px 8px; font-weight: 700; color: #f1f5f9;">
                         %s<br/><span style="font-size: 11px; color: #94a3b8; font-weight: 500;">%s</span>
                       </td>
-                      <td style="padding: 10px 8px; font-size: 12px; color: #cbd5e1; font-weight: 600;">%s</td>
-                      <td style="padding: 10px 8px; font-family: monospace; font-size: 12px; color: #e2e8f0;">
-                        <span style="color: #94a3b8; text-decoration: line-through;">%s</span><br/>
-                        <strong style="color: #38bdf8;">%s</strong>
+                      <td style="padding: 10px 8px; font-size: 11px; color: #cbd5e1; font-weight: 600; white-space: nowrap;">%s</td>
+                      <td style="padding: 10px 8px; font-family: monospace; font-size: 12px; color: #e2e8f0; white-space: nowrap;">
+                        %s
                       </td>
-                      <td style="padding: 10px 8px; font-size: 12px;">%s</td>
-                      <td style="padding: 10px 8px; text-align: center;">
-                        <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; background: #0f172a; border: 1px solid #38bdf8; color: #38bdf8; font-weight: 800; font-size: 11px;">
+                      <td style="padding: 10px 8px; font-size: 12px; white-space: nowrap;">%s</td>
+                      <td style="padding: 10px 8px; text-align: center; white-space: nowrap;">
+                        <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; background: #0f172a; border: 1px solid #38bdf8; color: #38bdf8; font-weight: 800; font-size: 11px; white-space: nowrap;">
                           %s
                         </span>
                       </td>
                     </tr>
-                """.formatted(trainNum, trainName, route, schTime, expTime, delayBadge, pf));
+                """.formatted(trainNum, trainName, route, timeDisplay, delayBadge, pf));
             }
         }
 
@@ -1176,19 +1233,21 @@ public class BrevoEmailService {
             <html>
             <head>
               <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px; }
-                .container { max-width: 680px; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-                .header { background: linear-gradient(135deg, #1e1b4b 0%%, #312e81 50%%, #4338ca 100%%); padding: 26px 24px; text-align: center; }
-                .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #a5b4fc; border: 1px solid rgba(165, 180, 252, 0.3); margin-bottom: 8px; }
-                .title { margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; margin: 0; padding: 12px 6px; }
+                .container { max-width: 680px; width: 100%%; margin: 0 auto; background: #0f172a; border-radius: 18px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+                .header { background: linear-gradient(135deg, #1e1b4b 0%%, #312e81 50%%, #4338ca 100%%); padding: 22px 16px; text-align: center; }
+                .badge { display: inline-block; padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(0, 0, 0, 0.4); color: #a5b4fc; border: 1px solid rgba(165, 180, 252, 0.3); margin-bottom: 8px; }
+                .title { margin: 0; font-size: 22px; font-weight: 900; color: #ffffff; }
                 .subtitle { margin-top: 6px; font-size: 13px; color: #c7d2fe; }
-                .content { padding: 24px; }
-                .meta-bar { display: flex; justify-content: space-between; align-items: center; background: #1e293b; border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; border: 1px solid #334155; }
-                table { width: 100%%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-                th { text-align: left; padding: 10px 8px; background: #1e293b; color: #94a3b8; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #334155; }
-                .btn { display: block; text-align: center; background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff; padding: 14px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; margin-top: 24px; }
-                .footer { padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
+                .content { padding: 16px 12px; }
+                .meta-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; background: #1e293b; border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; border: 1px solid #334155; }
+                .table-responsive { width: 100%%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 10px; }
+                table { width: 100%%; min-width: 460px; border-collapse: collapse; font-size: 12px; }
+                th { text-align: left; padding: 10px 8px; background: #1e293b; color: #94a3b8; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #334155; white-space: nowrap; }
+                .btn { display: block; text-align: center; background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 100%%); color: #ffffff; padding: 12px 18px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: 14px; margin-top: 20px; }
+                .footer { padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; background: #0b0f19; }
               </style>
             </head>
             <body>
@@ -1208,20 +1267,22 @@ public class BrevoEmailService {
                     <span style="color: #38bdf8; font-weight: 700;">Showing %d Upcoming Trains</span>
                   </div>
 
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Train</th>
-                        <th>Route</th>
-                        <th>Sch / Exp</th>
-                        <th>Status</th>
-                        <th style="text-align: center;">Platform</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      %s
-                    </tbody>
-                  </table>
+                  <div class="table-responsive">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Train</th>
+                          <th>Route</th>
+                          <th>Sch / Exp</th>
+                          <th>Status</th>
+                          <th style="text-align: center;">Platform</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        %s
+                      </tbody>
+                    </table>
+                  </div>
 
                   <a href="%s" class="btn">View Real-Time Interactive Board</a>
 
