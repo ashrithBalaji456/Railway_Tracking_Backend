@@ -3009,3 +3009,65 @@ flowchart TD
        - **MCI $\rightarrow$ KZJ:** Routes direct trains + connecting MEMU/Express via `CLE` (Chintalpalli) and `NKD` (Nekonda).
   3. **Quota Protection:**
      - Pre-indexes high-frequency transit corridors to ensure instantaneous responses while conserving the user's limited monthly RailRadar API quota.
+
+
+---
+
+##### Q9: Live Station Board Timetable Snapshot Email Formatting & Responsive Layout (`BrevoEmailService.java`)
+* **The Problem:**
+  - In Live Station Departure & Arrival snapshot emails, the **Status** column (`+42m Late`, `On Time`) and **Platform** column were cut off and hiding off the right edge of mobile screens.
+  - The Scheduled and Expected arrival times were formatted inconsistently: scheduled time followed 24-hour military clock (`15:17`), while expected time was dumped as a raw unparsed ISO-8601 timestamp with full date and timezone offset (`2026-11-06T15:59:00+05:30`).
+  - Because the ISO string was ~29 characters in monospace without spaces, it forced table cells to expand beyond 200px, pushing the Status column off mobile screens. Additionally, On Time trains displayed confusing strikethroughs across identical times.
+* **The Architectural Resolution:**
+  1. **Universal 12-Hour AM/PM Time Converter (`formatTimeStringTo12Hour`):**
+     - Automatically parses raw ISO-8601 strings, timestamp strings with seconds, and standard 24-hour times into uniform 12-hour clock format:
+       - `15:17` $\rightarrow$ **`03:17 PM`**
+       - `2026-11-06T15:59:00+05:30` $\rightarrow$ **`03:59 PM`**
+       - `04:20` $\rightarrow$ **`04:20 AM`**
+     - Employs regex matching `(?:T|\\s|^)(\\d{1,2}):(\\d{2})` to handle any combination of date-time strings gracefully.
+  2. **Mobile Viewport & Responsive Scroll Container:**
+     - Added `<meta name="viewport" content="width=device-width, initial-scale=1.0">` to ensure mobile email clients scale correctly.
+     - Wrapped the table in a responsive overflow wrapper (`<div class="table-responsive">` with `overflow-x: auto; -webkit-overflow-scrolling: touch;`).
+     - Added `white-space: nowrap;` to the **Status** badge, **Route**, and **Sch / Exp** cells so text never wraps or gets clipped.
+     - Reduced container padding on mobile from 48px to 12px, providing ample room for all 5 columns.
+  3. **Intelligent On-Time Formatting:**
+     - Trains running On Time display their expected time cleanly in emerald green (`04:20 PM`) without strikethroughs. Strikethrough is strictly reserved for delayed trains where the scheduled time differs from the dynamic live expected time.
+
+---
+
+##### Q10: Dual Station Journey Checklists in Emergency Wake-Up Alarm Emails
+* **The Problem:**
+  - Emergency station wake-up emails only displayed a **Deboarding Checklist**, leaving passengers who set alarms for their boarding/source station without boarding guidance.
+* **The Architectural Resolution:**
+  - Added dedicated **Onboarding** and **Deboarding** sections side-by-side in all wake-up emails:
+    - **🎒 Boarding / Onboarding Checklist (If Boarding Here):**
+      - Check platform electronic coach indicator displays for coach position.
+      - Keep Government ID & IRCTC ticket / PNR handy for TTE inspection.
+      - Confirm train number & coach (e.g. S4, B2, A1) before stepping onboard.
+      - Keep drinking water, tickets, and essential medicines in easy reach.
+    - **🧳 Deboarding Checklist (If Alighting / Exiting Here):**
+      - Check under the berth and charging pockets for bags, shoes, and chargers.
+      - Collect personal electronics, glasses, phone, and wallet/purse.
+      - Double-check total bag count before heading to the coach door.
+      - Move toward the coach vestibule safely only after the train slows down.
+
+---
+
+##### Q11: Action-Aware Station Alarm Notification API & Event-Triggered Emails (`StationAlarmController.java`)
+* **The Problem:**
+  - Previously, wake-up emails were sent once during initial alarm trigger. If the user interacted with the alarm (clicked "I AM AWAKE", "Snooze 5 Minutes", or "Wake 5m Before Train"), no acknowledgment email was dispatched to verify their action.
+* **The Architectural Resolution:**
+  1. **Extended DTO Schema (`StationAlarmNotifyRequest.java`):**
+     - Added an optional `String action` field supporting:
+       - `AWAKE` / `DISMISS`: Passenger acknowledged and dismissed the alarm.
+       - `SNOOZE_5M`: Fixed 5-minute clock snooze activated.
+       - `SNOOZE_ARRIVAL_5M`: 5-minute arrival warning buffer snooze activated.
+       - `null` / `APPROACHING`: Default initial wake-up alert.
+  2. **Dynamic Email Templates (`BrevoEmailService.java`):**
+     - Automatically renders action-specific styling, banners, and headers:
+       - **AWAKE:** Emerald Green theme (`#064e3b`) with subject `✅ WAKE-UP CONFIRMED: Passenger Awake for Train {no} at {station}`.
+       - **SNOOZE_5M:** Amber Gold theme (`#78350f`) with subject `⏰ ALARM SNOOZED: 5-Minute Snooze Active for Train {no} at {station}`.
+       - **SNOOZE_ARRIVAL_5M:** Indigo Purple theme (`#312e81`) with subject `⏰ FINAL ARRIVAL SNOOZE: 5m Warning Active for Train {no} at {station}`.
+       - **APPROACHING:** Crimson Red theme (`#7f1d1d`) with subject `🚨 WAKE-UP ALARM: Train {no} is approaching {station}`.
+  3. **Universal Dispatch:**
+     - Dispatched from both React web overlays and native Android receivers (including notification shade action buttons via `StopAlarmReceiver.java`).
