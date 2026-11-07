@@ -1,352 +1,520 @@
 # 🚆 RailTrack India — Comprehensive Backend Code Explanation & Architectural Workflow Guide
 
+Welcome to the **complete, line-by-line, annotation-by-annotation, and architectural deep-dive guide** to the **RailTrack India Backend**.
 
-
-Welcome to the **complete, line-by-line, and annotation-by-annotation explanation** of the **RailTrack India Backend**. 
-
-
-
-This guide is specifically designed for developers, students, or system administrators who want to understand **every architectural layer, design pattern, Java annotation, configuration parameter, and code file** from absolute first principles. Even if you have **zero prior knowledge of Spring Boot, Java, SQL, or Docker**, this document will guide you through the entire system step by step.
-
-
+This document is engineered for software engineers, systems architects, students, and DevOps specialists who need a first-principles, production-grade understanding of **every architectural layer, design pattern, Java annotation, configuration parameter, security flow, and source code file** in this project. Even if you have zero prior experience with Spring Boot, Java, SQL, reactive streams, or Docker, this guide will walk you through the entire backend infrastructure step by step.
 
 ---
-
-
 
 ## 📑 Master Table of Contents
 
-
-
 1. [High-Level Architecture & Request Flow](#1-high-level-architecture--request-flow)
-
-2. [Core Technology Stack & Why It Was Chosen](#2-core-technology-stack--why-it-was-chosen)
-
+   - 1.1. [Layered Architecture (N-Tier Pattern) Overview](#1-high-level-architecture--request-flow)
+   - 1.2. [The Life of an HTTP Request (Step-by-Step Traversal)](#the-life-of-an-http-request)
+   - 1.3. [Deep-Dive: SecurityContextHolder Mechanics, Downstream Filter Chain & ThreadLocal Lifecycle](#deep-dive-securitycontextholder-mechanics-downstream-filter-chain--threadlocal-lifecycle)
+   - 1.4. [End-to-End Architectural Request/Response Sequence Flowchart](#end-to-end-architectural-requestresponse-sequence-flowchart)
+2. [Core Technology Stack & Why It Was Chosen (25 Core Technologies Across 9 Architectural Domains)](#2-core-technology-stack--why-it-was-chosen)
+   - 2.1. [Language Runtime, JVM & Core Microservice Framework](#language-runtime-jvm--core-microservice-framework)
+   - 2.2. [Security, Authentication & Cryptography](#security-authentication--cryptography)
+   - 2.3. [Persistence, Relational Storage & Connection Pooling](#persistence-relational-storage--connection-pooling)
+   - 2.4. [High-Speed Caching & In-Memory Data Store](#high-speed-caching--in-memory-data-store)
+   - 2.5. [Reactive Networking & External Railway Integrations](#reactive-networking--external-railway-integrations)
+   - 2.6. [AI Reasoning & Large Language Model Tool Execution](#ai-reasoning--large-language-model-tool-execution)
+   - 2.7. [Real-Time Push Streaming & Transactional Communications](#real-time-push-streaming--transactional-communications)
+   - 2.8. [Validation, Serialization & Observability](#validation-serialization--observability)
+   - 2.9. [Build Automation, Testing & Containerization](#build-automation-testing--containerization)
 3. [Spring Boot Annotations & Design Patterns Cheatsheet](#3-spring-boot-annotations--design-patterns-cheatsheet)
-
+   - 3.1. [Master Spring Boot Annotations Reference Table (48 Annotations)](#31-master-spring-boot-annotations-reference-table)
+   - 3.2. [Enterprise Software Design Patterns Implemented in RailTrack Backend](#32-enterprise-software-design-patterns-implemented-in-railtrack-backend)
 4. [Master Configuration & Environment Files](#4-master-configuration--environment-files)
-
-   - 4.1. pom.xml (Maven Project Object Model)
-
-   - 4.2. src/main/resources/application.yml (Application Configuration)
-
-   - 4.3. .env.example (Environment Variables Specification)
-
-   - 4.4. Dockerfile (Container Build Definition)
-
-   - 4.5. docker-compose.yml (Multi-Container Orchestration)
-
+   - 4.1. [pom.xml (Maven Project Object Model & All Dependencies Explained)](#41-pomxml-maven-project-object-model)
+   - 4.2. [src/main/resources/application.yml (Application Configuration & Profiles)](#42-srcmainresourcesapplicationyml-application-configuration)
+   - 4.3. [.env.example (Environment Variables Specification & Security Matrix)](#43-envexample-environment-variables-specification)
+   - 4.4. [Dockerfile (Multi-Stage Production Container Build Definition)](#44-dockerfile-container-build-definition)
+   - 4.5. [docker-compose.yml (Multi-Container Local Dev Orchestration)](#45-docker-composeyml-multi-container-orchestration)
+   - 4.6. [Master Configuration Properties & Environment Variables Reference Table](#46-master-configuration-properties--environment-variables-reference-table)
 5. [Application Bootstrap & Entry Point](#5-application-bootstrap--entry-point)
-
-   - 5.1. RailtrackerApplication.java
-
+   - 5.1. [RailtrackerApplication.java & SpringApplication Lifecycle](#51-railtrackerapplicationjava)
 6. [Security, Authentication & Authorization Engine](#6-security-authentication--authorization-engine)
-
-   - 6.1. JwtTokenProvider.java
-
-   - 6.2. JwtAuthenticationFilter.java
-
-   - 6.3. UserDetailsImpl.java
-
-   - 6.4. UserDetailsServiceImpl.java
-
-   - 6.5. SecurityConfig.java
-
+   - 6.1. [JwtTokenProvider.java (Cryptographic Signing & Claim Extraction)](#61-jwttokenproviderjava)
+   - 6.2. [JwtAuthenticationFilter.java (Stateless Interception & Header Parsing)](#62-jwtauthenticationfilterjava)
+   - 6.3. [UserDetailsImpl.java (Spring Security Principal Adapter)](#63-userdetailsimpljava)
+   - 6.4. [UserDetailsServiceImpl.java (Database User Loader)](#64-userdetailsserviceimpljava)
+   - 6.5. [SecurityConfig.java (Filter Chain, CORS, CSRF & Route Protection)](#65-securityconfigjava)
+   - 6.6. [Master Route Security & Role Access Matrix Table](#66-master-route-security--role-access-matrix-table)
 7. [System Infrastructure & Configuration Layer](#7-system-infrastructure--configuration-layer)
-
-   - 7.1. WebClientConfig.java
-
-   - 7.2. CacheConfig.java
-
-   - 7.3. DataInitializer.java
-
+   - 7.1. [WebClientConfig.java (Reactive WebClient, Netty Timeouts & Buffers)](#71-webclientconfigjava)
+   - 7.2. [CacheConfig.java (Redis Serialization, Namespaces & TTL Policies)](#72-cacheconfigjava)
+   - 7.3. [DataInitializer.java (Database Seeding, Initial Roles & Station Data)](#73-datainitializerjava)
 8. [Domain Entity Layer (PostgreSQL / JPA Models)](#8-domain-entity-layer-postgresql--jpa-models)
-
-   - 8.1. User.java
-
-   - 8.2. Role.java
-
-   - 8.3. Train.java
-
-   - 8.4. Station.java
-
-   - 8.5. TrainStation.java
-
-   - 8.6. Favorite.java
-
-   - 8.7. Alert.java
-
-   - 8.8. SearchHistory.java
-
+   - 8.1. [User.java](#81-userjava)
+   - 8.2. [Role.java](#82-rolejava)
+   - 8.3. [Train.java](#83-trainjava)
+   - 8.4. [Station.java](#84-stationjava)
+   - 8.5. [TrainStation.java](#85-trainstationjava)
+   - 8.6. [Favorite.java](#86-favoritejava)
+   - 8.7. [Alert.java](#87-alertjava)
+   - 8.8. [SearchHistory.java](#88-searchhistoryjava)
+   - 8.9. [TravelReminder.java](#89-travelreminderjava)
+   - 8.10. [UserNotificationPreferences.java](#810-usernotificationpreferencesjava)
+   - 8.11. [TrainDisruption.java](#811-traindisruptionjava)
+   - 8.12. [BlogArticle.java & BlogTipDTO.java](#812-blogarticlejava--blogtipdtojava)
+   - 8.13. [Master Database Entities & Relational Schema Table](#813-master-database-entities--relational-schema-table)
 9. [Persistence Layer (Spring Data JPA Repositories)](#9-persistence-layer-spring-data-jpa-repositories)
-
-   - 9.1. UserRepository.java
-
-   - 9.2. RoleRepository.java
-
-   - 9.3. TrainRepository.java
-
-   - 9.4. StationRepository.java
-
-   - 9.5. TrainStationRepository.java
-
-   - 9.6. FavoriteRepository.java
-
-   - 9.7. AlertRepository.java
-
-   - 9.8. SearchHistoryRepository.java
-
+   - 9.1. [UserRepository.java](#91-userrepositoryjava)
+   - 9.2. [RoleRepository.java](#92-rolerepositoryjava)
+   - 9.3. [TrainRepository.java](#93-trainrepositoryjava)
+   - 9.4. [StationRepository.java](#94-stationrepositoryjava)
+   - 9.5. [TrainStationRepository.java](#95-trainstationrepositoryjava)
+   - 9.6. [FavoriteRepository.java](#96-favoriterepositoryjava)
+   - 9.7. [AlertRepository.java](#97-alertrepositoryjava)
+   - 9.8. [SearchHistoryRepository.java](#98-searchhistoryrepositoryjava)
+   - 9.9. [TravelReminderRepository.java & UserNotificationPreferencesRepository.java](#99-travelreminderrepositoryjava--usernotificationpreferencesrepositoryjava)
+   - 9.10. [Master Spring Data Repositories & Custom Query Derivation Table](#910-master-spring-data-repositories--custom-query-derivation-table)
 10. [Global Exception & Error Handling](#10-global-exception--error-handling)
-
-    - 10.1. GlobalExceptionHandler.java
-
-    - 10.2. ResourceNotFoundException.java
-
-    - 10.3. BadRequestException.java
-
-    - 10.4. ApiException.java
-
+    - 10.1. [GlobalExceptionHandler.java](#101-globalexceptionhandlerjava)
+    - 10.2. [ResourceNotFoundException.java](#102-resourcenotfoundexceptionjava)
+    - 10.3. [BadRequestException.java](#103-badrequestexceptionjava)
+    - 10.4. [ApiException.java](#104-apiexceptionjava)
+    - 10.5. [Master Error Codes & Exception Mapping Table](#105-master-error-codes--exception-mapping-table)
 11. [External Integration & AI Engine Layer](#11-external-integration--ai-engine-layer)
-
-    - 11.1. RailwayDataProvider.java (Interface)
-
-    - 11.2. RailRadarClient.java (External API Integration)
-
-    - 11.3. GeminiClient.java (Google Gemini AI Model Integration)
-
-    - 11.4. RailAiToolRegistry.java (AI Function Calling Definitions)
-
-    - 11.5. RailAiToolExecutor.java (AI Tool Invocation & Pipeline)
-
+    - 11.1. [RailwayDataProvider.java (Interface)](#111-railwaydataproviderjava-interface)
+    - 11.2. [RailRadarClient.java (External API Integration)](#112-railradarclientjava-external-api-client)
+    - 11.3. [GeminiClient.java (Google Gemini AI Model Integration)](#113-geminiclientjava-google-gemini-ai-model-integration)
+    - 11.4. [RailAiToolRegistry.java (AI Function Calling Definitions)](#114-railaitoolregistryjava-ai-function-calling-definitions)
+    - 11.5. [RailAiToolExecutor.java (AI Tool Invocation & Pipeline)](#115-railaitoolexecutorjava-ai-tool-invocation--pipeline)
 12. [Service Business Logic Layer](#12-service-business-logic-layer)
-
-    - 12.1. TrainService.java & TrainServiceImpl.java
-
-    - 12.2. StationService.java & StationServiceImpl.java
-
-    - 12.3. JourneyService.java & JourneyServiceImpl.java
-
-    - 12.4. RailAiService.java & RailAiServiceImpl.java
-
-    - 12.5. FavoriteService.java & FavoriteServiceImpl.java
-
-    - 12.6. AlertService.java & AlertServiceImpl.java
-
-    - 12.7. SearchHistoryService.java & SearchHistoryServiceImpl.java
-
+    - 12.1. [TrainService.java & TrainServiceImpl.java](#121-trainservicejava--trainserviceimpljava)
+    - 12.2. [StationService.java & StationServiceImpl.java](#122-stationservicejava--stationserviceimpljava)
+    - 12.3. [JourneyService.java & JourneyServiceImpl.java](#123-journeyservicejava--journeyserviceimpljava)
+    - 12.4. [RailAiService.java & RailAiServiceImpl.java](#124-railaiservicejava--railaiserviceimpljava)
+    - 12.5. [FavoriteService.java & FavoriteServiceImpl.java](#125-favoriteservicejava--favoriteserviceimpljava)
+    - 12.6. [AlertService.java & AlertServiceImpl.java](#126-alertservicejava--alertserviceimpljava)
+    - 12.7. [SearchHistoryService.java & SearchHistoryServiceImpl.java](#127-searchhistoryservicejava--searchhistoryserviceimpljava)
+    - 12.8. [TrainDisruptionService.java & TrainDisruptionServiceImpl.java](#128-traindisruptionservicejava--traindisruptionserviceimpljava)
+    - 12.9. [BlogService.java & BlogServiceImpl.java](#129-blogservicejava--blogserviceimpljava)
+    - 12.10. [PasswordResetService.java](#1210-passwordresetservicejava)
+    - 12.11. [BrevoEmailService.java](#1211-brevoemailservicejava)
 13. [Web REST Controller Layer (API Gateways)](#13-web-rest-controller-layer-api-gateways)
-
-    - 13.1. AuthController.java
-
-    - 13.2. TrainController.java
-
-    - 13.3. StationController.java
-
-    - 13.4. LiveStationBoardController.java
-
-    - 13.5. LiveUpdatesController.java (Server-Sent Events / SSE)
-
-    - 13.6. JourneyController.java
-
-    - 13.7. RailAiController.java
-
-    - 13.8. FavoriteController.java
-
-    - 13.9. AlertController.java
-
-    - 13.10. SearchHistoryController.java
-
-    - 13.11. HealthController.java
-
+    - 13.1. [AuthController.java (`/api/v1/auth`)](#131-authcontrollerjava-apiv1auth)
+    - 13.2. [TrainController.java (`/api/v1/trains`)](#132-traincontrollerjava-apiv1trains)
+    - 13.3. [StationController.java (`/api/v1/stations`)](#133-stationcontrollerjava-apiv1stations)
+    - 13.4. [LiveStationBoardController.java (`/api/v1/stations`)](#134-livestationboardcontrollerjava-apiv1stations)
+    - 13.5. [LiveUpdatesController.java (`/api/v1/updates` SSE)](#135-liveupdatescontrollerjava-apiv1updates)
+    - 13.6. [JourneyController.java (`/api/v1/journey`)](#136-journeycontrollerjava-apiv1journey)
+    - 13.7. [RailAiController.java (`/api/v1/railai`)](#137-railaicontrollerjava-apiv1railai)
+    - 13.8. [FavoriteController.java (`/api/v1/favorites`)](#138-favoritecontrollerjava-apiv1favorites)
+    - 13.9. [AlertController.java (`/api/v1/alerts`)](#139-alertcontrollerjava-apiv1alerts)
+    - 13.10. [SearchHistoryController.java (`/api/v1/history`)](#1310-searchhistorycontrollerjava-apiv1history)
+    - 13.11. [HealthController.java (`/api/v1/health`)](#1311-healthcontrollerjava-apiv1health)
+    - 13.12. [TrainDisruptionController.java (`/api/v1/disruptions`)](#1312-traindisruptioncontrollerjava-apiv1disruptions)
+    - 13.13. [BlogController.java (`/api/v1/blogs`)](#1313-blogcontrollerjava-apiv1blogs)
+    - 13.14. [StationAlarmController.java (`/api/v1/alarm`)](#1314-stationalarmcontrollerjava-apiv1alarm)
+    - 13.15. [PnrReminderController.java (`/api/v1/pnr`)](#1315-pnrremindercontrollerjava-apiv1pnr)
+    - 13.16. [NotificationPreferencesController.java (`/api/v1/notifications`)](#1316-notificationpreferencescontrollerjava-apiv1notifications)
+    - 13.17. [Master REST API Endpoints Catalog Table (16 Controllers)](#1317-master-rest-api-endpoints-catalog-table)
 14. [Data Transfer Objects (DTOs) & Contracts](#14-data-transfer-objects-dtos--contracts)
-
 15. [End-to-End Workflow Execution Walkthrough](#15-end-to-end-workflow-execution-walkthrough)
-
 16. [RailRadar API Integrations: Disruption Management, Punctuality & Fares](#16-railradar-api-integrations-disruption-management-punctuality--fares)
-
-    - 16.1. Train Disruptions Hub, Schedule Exceptions & Neon DB Auto-Injection
-
-    - 16.2. Live Train Disruption Awareness & Station Cancellation Telemetry
-
-    - 16.3. Average Delay & Punctuality Analysis
-
-    - 16.4. Ticket Fare Breakdown
-
-    - 16.5. Trains Between Stations (Alternative Trains Finder)
-
-    - 16.6. Multi-Leg Delay Overlay
-
-    - 16.19. Live Station Board Caching, N+1 Query Elimination & Instant Fast-Path Architecture
-
-    - 16.20. Rolling Time-Window Filtering & Robust Midnight-Crossing Date Reconciliation
-
-
-
----
-
-
+17. [📬 Brevo Email Communication & Real-Time Alert Engine](#17-brevo-email-communication--real-time-alert-engine)
+18. [🛡️ User Notification & Alert Preferences Center](#18-user-notification--alert-preferences-center)
+19. [📊 IRCTC Chart Preparation Alert & Notification Engine](#19-irctc-chart-preparation-alert--notification-engine)
+20. [🚨 Route Disruption & Safety Advisory Email Engine](#20-route-disruption--safety-advisory-email-engine)
+21. [📘 Master Step-by-Step Notification & Email Services Guide](#21-master-step-by-step-notification--email-services-guide)
 
 ## 1. High-Level Architecture & Request Flow
 
-
-
-The backend follows the **Layered Architecture (N-Tier Pattern)** standard in enterprise Spring Boot applications. This separates concerns so that presentation, business logic, persistence, and external communications never leak into each other:
-
-
+The backend follows the **Layered Architecture (N-Tier Pattern)** standard in enterprise Spring Boot applications. This architecture strictly separates concerns so that presentation, business logic, persistence, and external communications never leak into each other:
 
 ```
-
-[ Client Request ] (React Web / Android App / Swagger UI / Postman)
-
+[ Client Request ] (React Web / Android Capacitor App / Swagger UI / Postman / cURL)
        │
-
        ▼
-
-[ Security Filter Chain ] (JwtAuthenticationFilter -> extracts Bearer token, validates with JwtTokenProvider)
-
+[ Security Filter Chain ]
+  ├── CorsFilter (evaluates Origin: http://localhost:5173, Vercel, or https://localhost)
+  ├── CsrfFilter (disabled for stateless REST APIs using JWT)
+  ├── JwtAuthenticationFilter (extracts Bearer token, validates signature, sets SecurityContextHolder)
+  └── AuthorizationFilter (enforces URL patterns, checks isAuthenticated() & GrantedAuthorities)
        │
-
        ▼
-
+[ DispatcherServlet & Spring MVC Engine ]
+  ├── HandlerMapping (matches HTTP method & URL pattern to Controller method)
+  ├── HandlerAdapter (invokes HandlerMethodArgumentResolver for @PathVariable, @RequestParam, @RequestBody, @AuthenticationPrincipal)
+  └── GlobalExceptionHandler (@RestControllerAdvice intercepts any runtime/domain exceptions)
+       │
+       ▼
 [ REST Controller Layer ] (@RestController -> HTTP endpoints, input validation, request unpacking)
-
        │
-
        ▼
-
-[ Service Layer ] (@Service -> business rules, journey algorithms, AI orchestrator, cache lookups)
-
+[ Service Business Logic Layer ] (@Service -> business rules, journey algorithms, AI orchestrator, cache lookups)
        │
-
-   ┌───┴─────────────────────────────┐
-
-   ▼                                 ▼
-
-[ Persistence Layer ]       [ External Clients Layer ]
-
-(Spring Data JPA Repos)     (WebClient / HTTP)
-
-   │                                 │
-
-   ▼                                 ▼
-
-[ PostgreSQL / Neon DB ]    [ RailRadar API & Google Gemini AI ]
-
+   ┌───┴───────────────────────────────────────────────────────┐
+   ▼                                                           ▼
+[ Persistence Layer ]                               [ External Clients Layer ]
+(Spring Data JPA Repositories / HikariCP Pool)      (WebClient / Reactive HTTP & AI Engine)
+   │                                                           │
+   ▼                                                           ▼
+[ PostgreSQL / Neon Serverless DB ]                 [ RailRadar API & Google Gemini AI ]
+   │                                                           │
+   └───────────────────────────┬───────────────────────────────┘
+                               ▼
+             [ Redis 7 / Upstash Serverless Cache ]
+             (High-speed telemetry fast-path & rate-limit store)
 ```
 
-
+---
 
 ### The Life of an HTTP Request:
 
-1. **Client sends request:** E.g., `GET /api/v1/trains/12678/live`.
-
-2. **CORS & Security Check:** Spring Security interceptors evaluate the CORS origin (`http://localhost:5173`, Vercel URL, or `https://localhost` Capacitor app).
-
-3. **JWT Authentication:** If the route is secured, `JwtAuthenticationFilter` inspects the `Authorization: Bearer <token>` header, decodes the username, and places the user into Spring's `SecurityContextHolder`.
-
-4. **Controller Mapping:** `TrainController` matches the `@GetMapping("/{trainNumber}/live")` route.
-
-5. **Service Delegation:** Controller forwards parameters to `TrainService.getLiveStatus()`.
-
-6. **Data Provider Execution:** `RailRadarClient` checks Redis cache or fires an HTTPS request to RailRadar, decrypts/parses JSON into `TrainLiveStatusDto`.
-
-7. **Response Formatting:** Controller wraps the DTO inside `ResponseEntity.ok(ApiResponse.success(data))` and serializes it to JSON.
-
-
+1. **Client sends request:** E.g., `GET /api/v1/trains/12678/live` or `POST /api/v1/favorites`.
+2. **CORS & Security Check:** Spring Security interceptors evaluate the incoming HTTP `Origin` header against permitted origins (`http://localhost:5173`, `https://railway-tracking-frontend.vercel.app`, or `https://localhost` Capacitor Android app). If it's an HTTP `OPTIONS` pre-flight check, Spring returns `200 OK` with `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, and `Access-Control-Allow-Headers`.
+3. **JWT Authentication & Header Interception:** If the request is for a secured route or contains an `Authorization` header, `JwtAuthenticationFilter` intercepts the request before it reaches Spring MVC:
+   * It inspects the `Authorization: Bearer <token>` header.
+   * If present, it strips the `"Bearer "` prefix and calls `JwtTokenProvider.validateToken(token)`.
+   * It extracts the subject username: `String username = jwtTokenProvider.getUsernameFromToken(token);`.
+   * It loads user credentials and permissions: `UserDetails userDetails = userDetailsService.loadUserByUsername(username);`.
+   * It constructs an immutable token: `UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());`.
+   * It attaches request metadata (remote IP, session details): `authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));`.
+   * It registers the authenticated principal: `SecurityContextHolder.getContext().setAuthentication(authentication);`.
 
 ---
 
+### Deep-Dive: SecurityContextHolder Mechanics, Downstream Filter Chain & ThreadLocal Lifecycle
 
+A critical architectural question is: **Once `SecurityContextHolder.getContext().setAuthentication(authentication)` is called, what does `SecurityContextHolder` actually do next?**
+
+#### 1. ThreadLocal Isolation & Context Storage:
+`SecurityContextHolder` is Spring Security's central storage vault for authentication metadata. Internally, it defaults to the `MODE_THREADLOCAL` strategy (`ThreadLocalSecurityContextHolderStrategy`). When you call `SecurityContextHolder.getContext().setAuthentication(...)`:
+* The `Authentication` object is bound exclusively to the **exact worker thread** currently executing this HTTP request (e.g., Tomcat thread `http-nio-8080-exec-4`).
+* This ensures complete isolation between concurrent user requests—User A on thread 4 cannot see or overwrite the security credentials of User B executing concurrently on thread 7.
+
+#### 2. Downstream Filter Chain Traversal (`AuthorizationFilter` Enforcement):
+After `JwtAuthenticationFilter` finishes populating the context, it calls `filterChain.doFilter(request, response)`. The request flows downstream through the remaining security filters until it hits the **`AuthorizationFilter`** (the modern Spring Security 6 component that replaced the legacy `FilterSecurityInterceptor`):
+* The `AuthorizationFilter` queries `SecurityContextHolder.getContext().getAuthentication()`.
+* It evaluates the requested URI against the security rules declared in `SecurityConfig.java`:
+  * **Public Routes (`.permitAll()`):** E.g., `/api/v1/auth/**`, `/api/v1/trains/**`, `/api/v1/stations/**`, `/swagger-ui/**`. The filter permits the request to pass regardless of authentication status.
+  * **Secured Routes (`.authenticated()`):** E.g., `/api/v1/favorites/**`, `/api/v1/alerts/**`, `/api/v1/history/**`, `/api/v1/notifications/preferences/**`. The filter checks `authentication != null && authentication.isAuthenticated() == true`. If the user did not supply a valid JWT or the token expired, Spring Security halts filter progression immediately and calls the configured **`AuthenticationEntryPoint`** (`JwtAuthenticationEntryPoint`), which serializes an `HTTP 401 Unauthorized` JSON response (`{ "success": false, "message": "Full authentication is required to access this resource" }`).
+  * **Role-Restricted Routes (`.hasRole('ADMIN')`):** E.g., `/api/v1/admin/**`. The filter inspects `authentication.getAuthorities()` looking for `ROLE_ADMIN`. If the user has only `ROLE_USER`, Spring Security halts execution and invokes the **`AccessDeniedHandler`**, returning `HTTP 403 Forbidden` (`{ "success": false, "message": "Access Denied: Insufficient administrative privileges" }`).
+
+#### 3. Controller-Level Principal Injection (`@AuthenticationPrincipal`):
+Once the filter chain permits the request, it leaves the servlet filter layer and enters Spring MVC's **`DispatcherServlet`**:
+* The `DispatcherServlet` identifies the matching `@RestController` method.
+* Spring MVC's `HandlerMethodArgumentResolverComposite` resolves method parameters.
+* When a controller method has an argument annotated with `@AuthenticationPrincipal UserDetailsImpl currentUser`:
+  * Spring MVC automatically invokes `AuthenticationPrincipalArgumentResolver`.
+  * It queries `SecurityContextHolder.getContext().getAuthentication().getPrincipal()`.
+  * It safely casts the principal to `UserDetailsImpl` and injects it directly into the controller method! The controller receives the typed user entity without writing a single line of manual JWT parsing or database lookup.
+
+#### 4. Service-Level Tamper-Proof User Identification:
+Deep inside the business logic layer (e.g., `FavoriteServiceImpl`, `SearchHistoryServiceImpl`, `AlertServiceImpl`):
+* Instead of trusting untrusted user IDs sent from the client frontend in query parameters or request bodies (which could allow an attacker to delete or view someone else's favorites), the service retrieves the validated user identity directly from Spring:
+  ```java
+  Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+  String currentUsername = auth.getName();
+  User user = userRepository.findByUsername(currentUsername)
+      .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+  ```
+* This provides a **cryptographically proven, tamper-proof identity guarantee**.
+
+#### 5. Method-Level Security Guards (`@PreAuthorize` & `@Secured`):
+If a service method is annotated with method-level authorization:
+```java
+@PreAuthorize("hasRole('ADMIN') or #username == authentication.principal.username")
+public void deleteUserAccount(String username) { ... }
+```
+Spring's AOP (Aspect-Oriented Programming) proxy intercepts the method invocation *before* any Java code executes inside the method. The proxy queries `SecurityContextHolder`, evaluates the SpEL (Spring Expression Language) expression against the active `Authentication` object, and allows or blocks method execution.
+
+#### 6. End-of-Request Lifecycle & Mandatory ThreadLocal Cleanup (`SecurityContextHolder.clearContext()`):
+What happens after the controller returns the response?
+* Apache Tomcat uses an internal worker thread pool (`org.apache.tomcat.util.threads.ThreadPoolExecutor`) to minimize overhead. Rather than destroying a thread when an HTTP request finishes, Tomcat returns the thread (e.g., `http-nio-8080-exec-4`) back into the idle pool to handle future requests from *any* client.
+* **If `SecurityContextHolder` were not cleared, the next HTTP request handled by that same worker thread would automatically inherit the previous user's authenticated identity!** This is a critical security flaw known as **ThreadLocal State Bleed / Cross-Request Identity Leakage**.
+* To prevent this, Spring Security's `SecurityContextHolderFilter` (the outermost filter in the chain) executes in a `try ... finally` block:
+  ```java
+  try {
+      filterChain.doFilter(request, response);
+  } finally {
+      SecurityContextHolder.clearContext();
+  }
+  ```
+* When `SecurityContextHolder.clearContext()` runs, it completely deletes the `ThreadLocal` entry for the active thread. When the thread returns to Tomcat's pool, it is 100% clean and stateless, ensuring zero memory leaks and zero credential leakage.
+
+---
+
+### Continuation of the HTTP Request Lifecycle:
+
+4. **Controller Mapping:** `DispatcherServlet` delegates to `RequestMappingHandlerMapping`, matching `/api/v1/trains/12678/live` to `TrainController.getLiveStatus(@PathVariable String trainNumber)`.
+5. **Service Delegation:** Controller forwards parameters to `TrainService.getLiveStatus(trainNumber)`.
+6. **Data Provider Execution & Fast-Path Caching:** 
+   * `TrainServiceImpl` delegates to `RailRadarClient`.
+   * `RailRadarClient` checks the Upstash Redis cache using key `train:live:12678`.
+   * **Cache Hit:** If cached telemetry exists and is within TTL (60 seconds), it is returned immediately in under 10ms with zero external API latency.
+   * **Cache Miss:** `RailRadarClient` issues a non-blocking reactive HTTPS request via Spring WebFlux `WebClient` to RailRadar API (`https://api.railradar.in/v1/trains/12678/live`). The response is parsed, stored in Redis with a 60s TTL, and mapped to `TrainLiveStatusDto`.
+7. **Response Formatting & Serialization:** The controller wraps the DTO inside `ResponseEntity.ok(ApiResponse.success(data))`. Jackson `ObjectMapper` serializes the Java object to JSON, applies the `Content-Type: application/json` header, and Tomcat streams the HTTP 200 payload back to the client.
+
+---
+
+### End-to-End Architectural Request/Response Sequence Flowchart:
+
+```
+[CLIENT]        [CORS & SECURITY]   [SECURITY CONTEXT]    [DISPATCHER]   [CONTROLLER]   [SERVICE]      [REDIS]        [RAILRADAR]
+   │                    │                   │                  │              │             │              │              │
+   │─── HTTP GET ──────>│                   │                  │              │             │              │              │
+   │    (/live status)  │                   │                  │              │             │              │              │
+   │                    │── Validate JWT ──>│                  │              │             │              │              │
+   │                    │<── Valid (OK) ────│                  │              │             │              │              │
+   │                    │                   │                  │              │             │              │              │
+   │                    │── Store Token ───>│ (Set ThreadLocal)│              │             │              │              │
+   │                    │                   │                  │              │             │              │              │
+   │                    │── Check URL Auth ─│                  │              │             │              │              │
+   │                    │   (AuthorizationFilter permits)      │              │             │              │              │
+   │                    │                   │                  │              │             │              │              │
+   │                    │─────────────────────────────────────>│              │             │              │              │
+   │                    │                   │                  │── Route ────>│             │              │              │
+   │                    │                   │                  │              │── Invoke ──>│              │              │
+   │                    │                   │                  │              │             │── Check ────>│              │
+   │                    │                   │                  │              │             │   Cache      │              │
+   │                    │                   │                  │              │             │<── Miss ─────│              │
+   │                    │                   │                  │              │             │                             │
+   │                    │                   │                  │              │             │── Reactive WebClient Call ─>│
+   │                    │                   │                  │              │             │<── JSON Telemetry Data ─────│
+   │                    │                   │                  │              │             │                             │
+   │                    │                   │                  │              │             │── Set Cache (TTL 60s) ─────>│
+   │                    │                   │                  │              │<── Return ──│                             │
+   │                    │                   │                  │<── Wrap DTO ─│    DTO      │                             │
+   │                    │                   │                  │    (200 OK)  │             │                             │
+   │                    │                   │                  │              │             │                             │
+   │<── HTTP 200 JSON ──│───────────────────│──────────────────│              │             │                             │
+   │                    │                   │                                 │             │                             │
+   │                    │── clearContext() >│ (Purge ThreadLocal Memory)      │             │                             │
+```
 
 ## 2. Core Technology Stack & Why It Was Chosen
 
+RailTrack India's backend is constructed on a cloud-native, high-throughput enterprise Java architecture. Rather than relying on simple scripting or monolithic frameworks, each component was selected based on strict benchmarks for reliability, latency, memory safety, and thread concurrency across **25 core technologies spanning 9 architectural domains**:
 
+### 2.1. Language Runtime, JVM & Core Microservice Framework
 
-1. **Java 17 (LTS):** Modern language features including records, pattern matching, sealed classes, and high-performance garbage collectors (ZGC, Shenandoah).
-
-2. **Spring Boot 3.3.2:** Enterprise standard framework that eliminates boilerplate configuration via auto-configuration, starter POMs, and embedded Tomcat server.
-
-3. **Spring Data JPA & Hibernate 6:** Object-Relational Mapping (ORM) framework that converts database tables into Java classes (`@Entity`) and automatically generates SQL queries.
-
-4. **PostgreSQL 16 (Neon Serverless):** Industrial-grade ACID-compliant relational database, perfect for indexing train stations, user profiles, and favorites.
-
-5. **Redis 7 (Upstash Serverless):** In-memory key-value cache used to store transient train telemetry and reduce API quota consumption.
-
-6. **Spring WebFlux (`WebClient`):** Non-blocking, reactive HTTP client used for high-performance external API calls to Gemini and RailRadar.
-
-7. **JJWT (0.12.5):** Industry-standard Java library to cryptographically generate, sign (HMAC-SHA256), and verify JSON Web Tokens.
-
-8. **SpringDoc OpenAPI (2.5.0):** Automatically inspects code and renders interactive Swagger UI documentation at `/swagger-ui.html`.
-
-9. **Docker & Docker Compose:** Containerization tool allowing identical execution in development and production environments.
-
-
+1. **Java 17 (Long-Term Support - LTS):**
+   * *Version:* OpenJDK 17 (Eclipse Temurin build).
+   * *Role in Architecture:* Provides the core execution engine and bytecode runtime for the entire backend microservice.
+   * *Why Chosen over Alternatives:* Java 17 introduces modern features including immutable **Records** for clean DTOs, **Pattern Matching for `instanceof`**, sealed interfaces, and switch expressions. It offers drastically superior garbage collection performance via **ZGC** (sub-millisecond pause times) and Shenandoah, ensuring that heavy JSON parsing of multi-station train schedules never causes noticeable latency spikes.
+2. **Spring Boot 3.3.2:**
+   * *Version:* 3.3.2 (built on Spring Framework 6.1 and Jakarta EE 10).
+   * *Role in Architecture:* Primary application framework providing Inversion of Control (IoC), Dependency Injection (DI), and automated environment-specific bean configuration.
+   * *Why Chosen over Alternatives:* Eliminates thousands of lines of boilerplate XML and configuration code. Automatically provisions production-ready embedded web servers, connection pools, and database dialects. Spring Boot 3 natively enforces Jakarta EE 10 standards (`jakarta.persistence`, `jakarta.servlet`, `jakarta.validation`) and offers full readiness for native compilation and lightweight virtual threads.
+3. **Embedded Apache Tomcat 10.1:**
+   * *Version:* 10.1.26.
+   * *Role in Architecture:* High-performance embedded Servlet 6.0 container serving non-blocking HTTP/1.1 and HTTP/2 connections.
+   * *Why Chosen over Alternatives:* Packaged directly inside the executable fat JAR, eliminating the need to install and configure standalone application servers (like WebLogic, WildFly, or external Tomcat). Pre-configured with asynchronous NIO (Non-blocking I/O) connectors capable of managing thousands of concurrent WebSocket, SSE, and REST sessions with minimal memory footprint.
 
 ---
 
+### 2.2. Security, Authentication & Cryptography
 
+4. **Spring Security 6.3:**
+   * *Version:* 6.3.1.
+   * *Role in Architecture:* Comprehensive defense-in-depth framework managing authentication filters, authorization guards, CORS interceptors, and CSRF protection.
+   * *Why Chosen over Alternatives:* Replaces deprecated adapter classes (`WebSecurityConfigurerAdapter`) with modern, lambda-based component registration (`SecurityFilterChain` beans). Integrates seamlessly with Spring MVC method security and provides complete protection against session fixation, clickjacking, and header injection.
+5. **JJWT (Java JSON Web Token by io.jsonwebtoken):**
+   * *Version:* 0.12.5 (`jjwt-api`, `jjwt-impl`, `jjwt-jackson`).
+   * *Role in Architecture:* Generates, cryptographically signs, decodes, and verifies stateless authentication tokens.
+   * *Why Chosen over Alternatives:* Employs industry-standard **HMAC-SHA256 (`HS256`)** cryptographic algorithms backed by 256-bit secret keys. Completely stateless—user sessions require zero server memory or database lookups per request. The JJWT 0.12.5 fluent builder API offers strict type-safety, automatic expiration enforcement, and seamless integration with Jackson for claims parsing.
+6. **BCrypt Password Encoder:**
+   * *Version:* Standard Spring Security Cryptography module.
+   * *Role in Architecture:* One-way cryptographic salted hashing for user credentials stored in the `users` table.
+   * *Why Chosen over Alternatives:* Unlike MD5 or SHA-256 (which are vulnerable to rainbow table attacks and ASIC brute-forcing), BCrypt incorporates a 10-round configurable work factor (`cost = 10`) and generates a random 128-bit salt for every password. This mathematically prevents rainbow table lookups and ensures passwords remain uncompromised even if the database snapshot were exposed.
+
+---
+
+### 2.3. Persistence, Relational Storage & Connection Pooling
+
+7. **Spring Data JPA 3.3 & Hibernate 6.5:**
+   * *Version:* 3.3.2 / 6.5.2.Final.
+   * *Role in Architecture:* Object-Relational Mapping (ORM) and data access abstraction layer.
+   * *Why Chosen over Alternatives:* Eliminates repetitive JDBC plumbing. Allows writing expressive repository interfaces where Spring automatically derives complex SQL queries from method names (e.g., `findByTrainNumberAndStationCode`). Hibernate 6 introduces a rewritten query translator that compiles JPQL directly into optimized dialect-specific SQL with native subquery joins, dirty checking, and first-level caching.
+8. **PostgreSQL 16 (Neon Serverless Cloud Database):**
+   * *Version:* PostgreSQL 16.3 on Neon Serverless architecture.
+   * *Role in Architecture:* Master persistent ACID-compliant relational database storing user profiles, favorite trains, search history, alerts, travel reminders, disruptions, and static station catalog.
+   * *Why Chosen over Alternatives:* Highly reliable relational database with native support for composite foreign keys, B-Tree indexes, full-text search, and JSONB columns. Neon's serverless autoscaling architecture dynamically spins up compute resources during peak travel hours and scales to zero during idle periods, drastically reducing cloud operational costs.
+9. **HikariCP Connection Pooler:**
+   * *Version:* 5.1.0 (default embedded pooler in Spring Boot Data JPA).
+   * *Role in Architecture:* Manages a pre-warmed pool of persistent JDBC database connections (`max-pool-size = 10`, `idle-timeout = 30000ms`).
+   * *Why Chosen over Alternatives:* Recognized as the fastest, lightest connection pooler in the Java ecosystem (surpassing Tomcat JDBC, c3p0, and DBCP2). Uses byte-code generated micro-benchmarked lock-free data structures, reducing connection checkout latency to single-digit microseconds.
+
+---
+
+### 2.4. High-Speed Caching & In-Memory Data Store
+
+10. **Redis 7 (Upstash Serverless Cloud Cache):**
+    * *Version:* Redis 7.2.
+    * *Role in Architecture:* Low-latency distributed in-memory key-value cache storing transient train live telemetry, station arrival boards, and AI tool definitions.
+    * *Why Chosen over Alternatives:* Sub-5 millisecond response times. Protects third-party APIs (RailRadar) from quota exhaustion and rate-limiting. Storing live train GPS positions with a 60-second Time-To-Live (TTL) allows 50,000 mobile users tracking the same Vande Bharat Express to receive instant cached responses without triggering 50,000 outbound network calls.
+11. **Spring Data Redis & Lettuce Driver:**
+    * *Version:* 3.3.2 (Lettuce 6.3.2.RELEASE).
+    * *Role in Architecture:* Thread-safe, non-blocking Redis connection provider and caching abstraction.
+    * *Why Chosen over Alternatives:* Unlike Jedis (which requires thread-per-connection pools and blocks under heavy load), Lettuce is built on Netty's asynchronous event-driven I/O. A single Lettuce connection can be shared across multiple threads via pipelining, slashing socket overhead and memory usage.
+
+---
+
+### 2.5. Reactive Networking & External Railway Integrations
+
+12. **Spring WebFlux & Non-Blocking `WebClient`:**
+    * *Version:* 6.1.11 (`spring-boot-starter-webflux`).
+    * *Role in Architecture:* Asynchronous, non-blocking HTTP client used to fetch external live telemetry from RailRadar and AI responses from Google Gemini.
+    * *Why Chosen over Alternatives:* Replaces the legacy, synchronous `RestTemplate`. `WebClient` uses Netty event loops to handle external network calls without blocking the Tomcat servlet worker thread. While waiting for an external HTTP response, the worker thread is free to serve other incoming requests, yielding 10x higher throughput on I/O-bound microservices.
+13. **RailRadar External Telemetry API:**
+    * *Version:* v1 REST API.
+    * *Role in Architecture:* Primary source of truth for live Indian Railways GPS coordinates, delay minutes, platform updates, and schedule deviations.
+    * *Why Chosen over Alternatives:* Provides high-frequency telemetry updates across all 18 railway zones with clean JSON schemas, route geometry, and station-by-station running status.
+
+---
+
+### 2.6. AI Reasoning & Large Language Model Tool Execution
+
+14. **Google Gemini 1.5 Flash / Pro (Generative AI API):**
+    * *Version:* Gemini 1.5 Flash (`gemini-1.5-flash-latest`) & Pro REST APIs.
+    * *Role in Architecture:* Conversational engine powering **RailAI**—the natural language railway assistant that understands multi-turn queries in natural English and Indian languages.
+    * *Why Chosen over Alternatives:* Features an industry-leading 1-million-token context window, sub-second latency, and native support for **Tool Calling / Function Calling**. When a passenger asks "Is my train delayed?", Gemini dynamically calls the backend's internal `getTrainLiveStatus` and `calculateTicketFare` tools, retrieves live data, and synthesizes a fluent, context-aware answer.
+
+---
+
+### 2.7. Real-Time Push Streaming & Transactional Communications
+
+15. **Server-Sent Events (SSE) via Spring MVC `SseEmitter`:**
+    * *Version:* Servlet 3.1+ Async / Spring WebMVC.
+    * *Role in Architecture:* Unidirectional, real-time push streaming of live train location updates directly to connected browser and Android mobile clients.
+    * *Why Chosen over Alternatives:* Unlike WebSockets (which require bidirectional protocol upgrades, specialized load balancers, and complex reconnection handshakes), SSE runs over standard HTTP, natively supports automatic client reconnection, traverses firewalls effortlessly, and has minimal memory overhead per open stream.
+16. **Brevo (formerly Sendinblue) Transactional REST Email Service:**
+    * *Version:* v3 REST API (`https://api.brevo.com/v3/smtp/email`).
+    * *Role in Architecture:* High-deliverability transactional email dispatcher sending Travel Day Reminders, Live Station Board Snapshots, Wake-Up Alarms, IRCTC Chart Notices, and Route Disruption Alerts.
+    * *Why Chosen over Alternatives:* Direct REST API calls over HTTPS eliminate SMTP port 25/587 blocking common in cloud hosting providers (Render, Heroku, AWS). Provides responsive dark-themed HTML templates, detailed delivery analytics, and sub-3-second inbox delivery rates.
+
+---
+
+### 2.8. Validation, Serialization & Observability
+
+17. **Jakarta Bean Validation 3.0 & Hibernate Validator:**
+    * *Version:* 8.0.1.Final (`spring-boot-starter-validation`).
+    * *Role in Architecture:* Declarative request body validation using constraints (`@NotNull`, `@NotBlank`, `@Size`, `@Email`, `@Min`, `@Max`).
+    * *Why Chosen over Alternatives:* Validates input payloads before business logic executes. Protects the application against SQL injection, malformed email addresses, and payload tampering at the controller threshold.
+18. **Jackson Databind & JSR310 JavaTime Module:**
+    * *Version:* 2.17.2.
+    * *Role in Architecture:* High-performance bidirectional JSON serialization and deserialization.
+    * *Why Chosen over Alternatives:* Industrial standard for Java JSON processing. Configured with `JavaTimeModule` to natively serialize `Instant`, `LocalDate`, and `LocalDateTime` into ISO-8601 strings, preventing timezone conversion errors between client and server.
+19. **Spring Boot Actuator & Micrometer:**
+    * *Version:* 3.3.2.
+    * *Role in Architecture:* Production-grade application telemetry, health monitoring (`/actuator/health`), JVM metrics (`/actuator/metrics`), and memory diagnostics.
+    * *Why Chosen over Alternatives:* Provides instant integration with cloud health probes (Kubernetes liveness/readiness probes, Docker healthchecks, Render auto-restart) without writing custom monitoring endpoints.
+
+---
+
+### 2.9. Build Automation, Testing & Containerization
+
+20. **Apache Maven:**
+    * *Version:* 3.9.8.
+    * *Role in Architecture:* Dependency management, build lifecycle orchestration, and reproducible compilation.
+    * *Why Chosen over Alternatives:* Highly stable, declarative `pom.xml` architecture with deterministic transitive dependency resolution and official Spring Boot plugin support.
+21. **Spring Boot Maven Plugin:**
+    * *Version:* 3.3.2.
+    * *Role in Architecture:* Repackages compiled `.class` files and dependencies into an executable single fat JAR with an embedded classloader.
+22. **H2 In-Memory Database:**
+    * *Version:* 2.2.224.
+    * *Role in Architecture:* Embedded zero-configuration database used for rapid unit and integration testing slices (`@DataJpaTest`).
+    * *Why Chosen over Alternatives:* Executes tests in memory in milliseconds without requiring an external PostgreSQL instance or Docker container during test runs.
+23. **JUnit 5 (Jupiter), Mockito & Spring Security Test:**
+    * *Version:* 5.10.3 / 5.11.0.
+    * *Role in Architecture:* Test automation harness for testing controllers, service logic, repository queries, and JWT security mock contexts (`@WithMockUser`).
+24. **Docker & Multi-Stage Builds (Eclipse Temurin JRE Alpine):**
+    * *Version:* Docker Engine 24+ / Alpine Linux 3.19.
+    * *Role in Architecture:* Production container packaging that bundles the JRE runtime and fat JAR into an immutable, secure, 150MB micro-container.
+    * *Why Chosen over Alternatives:* Multi-stage build discards the 500MB Maven compiler and source code, resulting in a minimal attack surface, fast deployment pulls, and zero environment drift.
+25. **Docker Compose v2:**
+    * *Version:* Compose v2.27+.
+    * *Role in Architecture:* Local development orchestration defining the complete microservice stack: Spring Boot Backend, PostgreSQL 16 container, and Redis 7 container with health checks and shared networks.
+
+---
 
 ## 3. Spring Boot Annotations & Design Patterns Cheatsheet
 
+Annotations in Java and Spring Boot are **compiler metadata tags prefixed with `@`**. They instruct the Spring framework, Hibernate ORM, and the JVM to automatically configure components, bind URLs, enforce security rules, and manage database transactions without writing repetitive procedural code.
 
+### 3.1. Master Spring Boot Annotations Reference Table
 
-If you have never worked with Spring before, annotations are **metadata tags prefixed with `@`** that instruct the Spring framework to inject behaviors, manage objects, or map URLs automatically.
+The following master reference table documents **48 Spring Boot, Jakarta EE, and JPA annotations** used across the RailTrack India backend codebase:
 
-
-
-| Annotation | What it tells Spring Boot |
-
-|---|---|
-
-| `@SpringBootApplication` | Flags the primary entry class; enables Auto-Configuration, Component Scanning, and Configuration property binding. |
-
-| `@RestController` | Combines `@Controller` and `@ResponseBody`; tells Spring this class handles web requests and converts return objects directly to JSON. |
-
-| `@Service` | Marks a class as holding business logic; registers it as a singleton bean in Spring's ApplicationContext. |
-
-| `@Repository` | Marks a DAO (Data Access Object) interface; catches database exceptions and translates them into Spring DataAccessException hierarchy. |
-
-| `@Configuration` | Declares that a class defines `@Bean` factory methods that configure framework components. |
-
-| `@Bean` | Method-level annotation that tells Spring to register the returned object as a managed singleton bean. |
-
-| `@Autowired` | Automatically injects a dependency by matching its data type from Spring's IoC container. |
-
-| `@Entity` | Marks a Java class as an ORM database table in JPA/Hibernate. |
-
-| `@Table(name="...")` | Specifies the exact physical database table name. |
-
-| `@Id` & `@GeneratedValue` | Designates the primary key and assigns auto-increment identity strategy. |
-
-| `@Column(name="...", nullable=...)` | Customizes column name, nullability, uniqueness, and length. |
-
-| `@OneToMany`, `@ManyToOne`, `@ManyToMany` | Defines relational foreign key links between entities. |
-
-| `@RequestMapping("/api/v1/...")` | Specifies the base URL prefix for all endpoints inside a controller. |
-
-| `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping` | Maps standard HTTP verbs (`GET`, `POST`, `PUT`, `DELETE`) to specific Java methods. |
-
-| `@PathVariable` | Extracts dynamic path variables from the URL (e.g. `/trains/{trainNumber}`). |
-
-| `@RequestParam` | Extracts URL query parameters (e.g. `?date=2026-10-26&query=delhi`). |
-
-| `@RequestBody` | Reads the incoming JSON request payload and deserializes it into a Java DTO. |
-
-| `@Valid` | Triggers Bean Validation (`@NotBlank`, `@Size`, `@Email`) on incoming payloads. |
-
-| `@PreAuthorize` | Restricts method invocation based on user roles (`hasRole('ADMIN')`). |
-
-| `@CrossOrigin` | Configures Cross-Origin Resource Sharing headers for browser security. |
-
-| `@Transactional` | Wraps database queries in a database transaction; commits on success and rolls back on runtime exceptions. |
-
-| `@Value("${property.name}")` | Injects configuration values from `application.yml` or OS environment variables into fields. |
-
-
+| Annotation | Category | What It Tells Spring Boot / JVM | Concrete Usage in RailTrack India |
+| :--- | :--- | :--- | :--- |
+| `@SpringBootApplication` | Core Framework | Marks the master configuration class; enables Auto-Configuration, Component Scanning, and Property Binding. | Used on `RailtrackerApplication.java` to bootstrap the backend. |
+| `@Configuration` | Core Framework | Declares that a class defines `@Bean` factory methods for the Spring ApplicationContext. | Used on `SecurityConfig.java`, `WebClientConfig.java`, `CacheConfig.java`. |
+| `@Bean` | Core Framework | Method-level annotation registering the returned object instance as a managed singleton bean. | Used to register `SecurityFilterChain`, `PasswordEncoder`, `WebClient`, `RedisTemplate`. |
+| `@Component` | Core Framework | Generic stereotype annotation marking any Java class as a Spring-managed bean. | Used on `JwtTokenProvider.java`, `JwtAuthenticationFilter.java`, `DataInitializer.java`. |
+| `@Service` | Core Framework | Stereotype marking classes that encapsulate business logic, domain rules, and transaction boundaries. | Used on `TrainServiceImpl.java`, `JourneyServiceImpl.java`, `RailAiServiceImpl.java`. |
+| `@Repository` | Core Framework | Stereotype marking Data Access Object (DAO) interfaces; automatically catches database exceptions. | Used on `UserRepository.java`, `TrainRepository.java`, `StationRepository.java`. |
+| `@Autowired` | Dependency Injection | Injects a required collaborator bean into a constructor, setter, or field by matching its type. | Used in constructor injection across all Service and Controller classes. |
+| `@Value("${property.name}")` | Configuration | Injects externalized property values from `application.yml` or OS environment variables into fields. | Injects `jwt.secret`, `railradar.api-key`, and `gemini.api.key`. |
+| `@PostConstruct` | Lifecycle | Method-level callback executed by Spring immediately after dependency injection is complete. | Used in `DataInitializer.java` to seed default admin users and station catalogs. |
+| `@RestController` | Web / REST | Combines `@Controller` and `@ResponseBody`; tells Spring to serialize method returns directly to JSON. | Used on `TrainController.java`, `AuthController.java`, `RailAiController.java`. |
+| `@RequestMapping("/api/v1/...")` | Web / REST | Specifies the shared base URL path prefix for all endpoints defined inside a controller class. | Sets the route namespace (e.g., `@RequestMapping("/api/v1/trains")`). |
+| `@GetMapping` | Web / REST | Maps HTTP `GET` requests to a specific controller method (used for read-only lookups). | Maps `GET /api/v1/trains/{trainNumber}/live`. |
+| `@PostMapping` | Web / REST | Maps HTTP `POST` requests to a controller method (used for resource creation or actions). | Maps `POST /api/v1/auth/login`, `POST /api/v1/favorites`. |
+| `@PutMapping` | Web / REST | Maps HTTP `PUT` requests to a controller method (used for complete resource updates). | Maps `PUT /api/v1/notifications/preferences`. |
+| `@DeleteMapping` | Web / REST | Maps HTTP `DELETE` requests to a controller method (used for resource deletion). | Maps `DELETE /api/v1/favorites/{id}`. |
+| `@PathVariable` | Web / REST | Extracts dynamic variable values directly from the URL path pattern (e.g., `{trainNumber}`). | Extracts train numbers and station codes from URI paths. |
+| `@RequestParam` | Web / REST | Extracts query parameters from the URL string (e.g., `?date=2026-11-08&hours=4`). | Reads filtering, pagination, and date parameters in search endpoints. |
+| `@RequestBody` | Web / REST | Reads the incoming HTTP request body stream and deserializes JSON into a typed Java DTO. | Reads login payloads, registration forms, and alert requests. |
+| `@RequestHeader` | Web / REST | Extracts specific HTTP request headers (e.g., `Authorization`, `User-Agent`). | Reads custom authorization headers when needed. |
+| `@ResponseStatus` | Web / REST | Specifies the HTTP status code returned when a method completes or an exception is thrown. | Returns `HttpStatus.CREATED` (201) on successful entity creation. |
+| `@CrossOrigin` | Web / REST | Configures Cross-Origin Resource Sharing (CORS) headers on individual controller classes or methods. | Permits frontend web access from `localhost:5173` and production domains. |
+| `@EnableWebSecurity` | Security | Activates Spring Security's web security support and enables the custom filter chain. | Declared on `SecurityConfig.java` to establish the security architecture. |
+| `@EnableMethodSecurity` | Security | Enables method-level authorization annotations (`@PreAuthorize`, `@Secured`, `@RolesAllowed`). | Placed on `SecurityConfig.java` to enable fine-grained access control on methods. |
+| `@PreAuthorize` | Security | Evaluates a SpEL boolean expression before executing a method; throws `AccessDeniedException` on false. | Used to restrict admin-only endpoints: `@PreAuthorize("hasRole('ADMIN')")`. |
+| `@AuthenticationPrincipal` | Security | Injects the currently authenticated principal (`UserDetailsImpl`) from `SecurityContextHolder`. | Allows controllers to know who the logged-in user is without manual lookup. |
+| `@Entity` | JPA / Hibernate | Designates a Java class as a persistent relational database entity mapped to a table. | Applied to `User.java`, `Train.java`, `Station.java`, `Favorite.java`. |
+| `@Table(name="...")` | JPA / Hibernate | Configures the physical relational table name, schema, and unique database constraints. | Specifies `@Table(name = "users")`, `@Table(name = "trains")`. |
+| `@Id` | JPA / Hibernate | Designates the entity field that serves as the primary key. | Declared on the `id` field of every domain entity. |
+| `@GeneratedValue` | JPA / Hibernate | Configures the primary key generation strategy (e.g., `GenerationType.IDENTITY`). | Enables auto-incrementing serial primary keys in PostgreSQL. |
+| `@Column(name="...", ...)` | JPA / Hibernate | Customizes column mapping: column name, nullability, uniqueness, and length. | Sets `@Column(name = "train_number", nullable = false, unique = true)`. |
+| `@Enumerated` | JPA / Hibernate | Specifies whether an Enum field is stored as an integer (`ORDINAL`) or string (`STRING`). | Persists `ERole` and alert types as clean readable text strings in SQL. |
+| `@OneToMany` | JPA / Hibernate | Defines a one-to-many relationship where one parent entity links to multiple child entities. | `Train` entity links to multiple `TrainStation` schedule stops. |
+| `@ManyToOne` | JPA / Hibernate | Defines a many-to-one relationship where multiple child entities link to a single parent. | `Favorite` entity links back to the owning `User`. |
+| `@ManyToMany` | JPA / Hibernate | Defines a many-to-many relationship between entities using an intermediate join table. | `User` entity links to assigned `Role` records via `user_roles`. |
+| `@JoinColumn` | JPA / Hibernate | Specifies the foreign key column name in the database table for associations. | Designates `@JoinColumn(name = "user_id")` on relational links. |
+| `@JoinTable` | JPA / Hibernate | Defines the physical bridge table name and foreign keys for `@ManyToMany` relationships. | Configures the `user_roles` mapping table connecting users and roles. |
+| `@Lob` | JPA / Hibernate | Instructs Hibernate that the mapped property should be stored as a Large Object (CLOB/TEXT). | Used on long travel blog article bodies and AI chat transcripts. |
+| `@CreationTimestamp` | JPA / Hibernate | Automatically records the timestamp when an entity row is first inserted into the database. | Populates `createdAt` on user accounts, alerts, and favorites. |
+| `@UpdateTimestamp` | JPA / Hibernate | Automatically updates the timestamp whenever an entity row is modified and committed. | Tracks `updatedAt` on user notification preferences and train cache entries. |
+| `@Transactional` | JPA / Hibernate | Wraps database operations in a transaction; automatically commits or rolls back on exception. | Guarantees atomic writes in `JourneyServiceImpl.java` and `FavoriteServiceImpl.java`. |
+| `@Valid` | Validation | Triggers Jakarta Bean Validation on the annotated request body or method argument. | Placed before `@RequestBody SignupRequest request` in `AuthController.java`. |
+| `@NotNull` | Validation | Validates that the annotated field is not null. | Enforces mandatory IDs and dates in DTOs. |
+| `@NotBlank` | Validation | Validates that a string field is not null and contains at least one non-whitespace character. | Enforces non-empty train numbers, station codes, and usernames. |
+| `@Size(min=..., max=...)` | Validation | Enforces minimum and maximum length bounds on strings or collection sizes. | Enforces password complexity bounds: `@Size(min = 6, max = 40)`. |
+| `@Email` | Validation | Validates that the annotated string adheres to standard RFC 5322 email syntax. | Validates email addresses on user registration and reminder requests. |
+| `@EnableScheduling` | Scheduling / Async | Enables Spring Boot's background task scheduling engine for `@Scheduled` cron jobs. | Configured on `RailtrackerApplication.java` to run morning reminder cron jobs. |
+| `@Scheduled` | Scheduling / Async | Configures a method to run periodically via fixed delays, fixed rates, or cron expressions. | Runs the 06:00 AM IST reminder job: `@Scheduled(cron = "0 0 6 * * *")`. |
+| `@RestControllerAdvice` | Error Handling | Declares a centralized global exception interceptor across all REST controllers in the application. | Applied to `GlobalExceptionHandler.java` to format clean RFC-compliant error JSONs. |
+| `@ExceptionHandler` | Error Handling | Binds a handler method to a specific exception class, formatting an appropriate HTTP response. | Handles `ResourceNotFoundException.class`, `BadCredentialsException.class`. |
 
 ---
 
+### 3.2. Enterprise Software Design Patterns Implemented in RailTrack Backend
 
+The RailTrack India backend implements **11 proven enterprise software design patterns** to maintain clean code separation, scalability, and high testability:
+
+| Design Pattern | Pattern Category | Implementation in RailTrack India | Architectural Benefit |
+| :--- | :--- | :--- | :--- |
+| **Singleton Pattern** | Creational | All Spring `@Service`, `@Repository`, and `@Configuration` beans are managed as singletons by default. | Guarantees only one instance of `TrainService` or `WebClient` exists in memory, optimizing heap usage. |
+| **Factory Method Pattern** | Creational | `ResponseEntity.ok(...)`, `ResponseEntity.status(...)`, and `JwtTokenProvider.generateToken(...)`. | Decouples caller code from concrete HTTP response construction and cryptographic token assembly. |
+| **Builder Pattern** | Creational | JJWT `Jwts.builder()` for token creation, and `WebClient.builder()` for HTTP client configuration. | Provides clean, readable, fluent APIs for constructing complex cryptographic and network client objects. |
+| **Repository Pattern** | Architectural / Data | Interfaces extending `JpaRepository<T, ID>` (e.g., `UserRepository`, `TrainRepository`). | Completely isolates domain entities and business logic from physical SQL queries and JDBC drivers. |
+| **Data Transfer Object (DTO)** | Structural | All request and response classes in `com.example.railtracker.dto` (`TrainLiveStatusDto`, `AlertDto`). | Prevents over-fetching, protects internal database entity schemas, and eliminates cyclic JSON recursion. |
+| **Adapter Pattern** | Structural | `UserDetailsImpl.java` implements Spring Security's `UserDetails` interface. | Adapts our internal PostgreSQL `User` domain model into the standard contract required by Spring Security. |
+| **Strategy Pattern** | Behavioral | `RailwayDataProvider` interface implemented by `RailRadarDataProvider` and mock providers. | Allows seamlessly hot-swapping or testing external rail data providers without altering `TrainService`. |
+| **Chain of Responsibility** | Behavioral | Spring Security's `SecurityFilterChain` (`JwtAuthenticationFilter` -> `AuthorizationFilter`). | Processes incoming HTTP requests sequentially through independent filters; any filter can abort the chain. |
+| **Observer / Pub-Sub Pattern** | Behavioral | Server-Sent Events (`SseEmitter`) in `LiveUpdatesController.java`. | Controllers maintain a registry of open client emitters; when train telemetry updates, it pushes to all observers. |
+| **Template Method Pattern** | Behavioral | `GlobalExceptionHandler.java` extending `ResponseEntityExceptionHandler`. | Framework defines the skeleton error-handling algorithm; custom methods override specific error handlers. |
+| **AOP Proxy Pattern** | Structural | `@Transactional`, `@PreAuthorize`, and `@Cacheable` method interception. | Spring wraps beans in dynamic proxies to inject transaction commits, security checks, and cache lookups transparently. |
+
+---
 
 ## 4. Master Configuration & Environment Files
 
@@ -534,7 +702,33 @@ Configures a complete multi-container local development stack:
 
 ---
 
+### 4.6. Master Configuration Properties & Environment Variables Reference Table
 
+The following master table documents every environment variable, its default fallback, application configuration key, and functional role across development and cloud production:
+
+| Environment Variable | Application Property Key | Default Fallback Value | Security Sensitivity | Description & Production Usage |
+| :--- | :--- | :--- | :--- | :--- |
+| `PORT` | `server.port` | `8080` | Public | HTTP port where embedded Tomcat listens. Dynamically assigned by cloud platforms (Render, Heroku). |
+| `DATABASE_URL` | `spring.datasource.url` | `jdbc:h2:mem:railtrack_db;DB_CLOSE_DELAY=-1` | High (Secret) | JDBC connection URI for PostgreSQL Neon DB (`jdbc:postgresql://ep-xyz.neon.tech/railtrack_db?sslmode=require`). |
+| `DATABASE_USERNAME` | `spring.datasource.username` | `sa` | High (Secret) | Master database user role identifier for PostgreSQL authentication. |
+| `DATABASE_PASSWORD` | `spring.datasource.password` | `(empty)` | Critical (Secret) | Master database password credential for secure SSL/TLS connection handshake. |
+| `DATABASE_DRIVER` | `spring.datasource.driver-class-name` | `(inferred)` | Public | Fully qualified Java JDBC driver class (`org.postgresql.Driver` or `org.h2.Driver`). |
+| `HIBERNATE_DDL_AUTO` | `spring.jpa.hibernate.ddl-auto` | `update` | Operational | Controls schema migration strategy (`update` safely mutates schema without dropping production data). |
+| `REDIS_HOST` | `spring.data.redis.host` | `localhost` | Medium | Hostname for Upstash Serverless Redis cache cluster (`us1-xyz.upstash.io`). |
+| `REDIS_PORT` | `spring.data.redis.port` | `6379` | Public | Network port for Redis cache communication (standard default `6379`). |
+| `REDIS_PASSWORD` | `spring.data.redis.password` | `(empty)` | High (Secret) | Authentication token required by Upstash managed Redis instances. |
+| `REDIS_HEALTH_ENABLED` | `management.health.redis.enabled` | `false` | Operational | Flags whether Spring Actuator requires active Redis connection for server health check. |
+| `FRONTEND_URL` | `app.frontend-url` | `http://localhost:5173` | Public | Permitted CORS origin for React/Vite web clients and mobile web views. |
+| `JWT_SECRET` | `app.jwt.secret` | `(pre-set 256-bit default)` | Critical (Secret) | Base64-encoded 256-bit secret key used to HMAC-SHA256 sign and verify all JWT tokens. |
+| `JWT_EXPIRATION_MS` | `app.jwt.expiration-ms` | `86400000` (24h) | Operational | Milliseconds before a user's session token expires, requiring re-login. |
+| `RAILRADAR_API_KEY` | `app.railradar.api-key` | `(empty)` | Critical (Secret) | Secret API authorization token for Indian Railway live telemetry from RailRadar. |
+| `RAILRADAR_BASE_URL` | `app.railradar.base-url` | `https://api.railradar.in/v1` | Public | Base HTTPS endpoint for RailRadar live status and timetable API calls. |
+| `RAILRADAR_TRUST_ALL_SSL` | `app.railradar.trust-all-ssl` | `true` | Operational | Bypass strict SSL certificate validation if intermediate network proxies are present. |
+| `BREVO_API_KEY` | `app.brevo.api-key` | `(empty)` | Critical (Secret) | Secret API key for Brevo (Sendinblue) transactional email dispatch service. |
+| `GEMINI_API_KEY` | `gemini.api.key` | `(empty)` | Critical (Secret) | Google AI Studio authorization token for conversational RailAI natural language querying. |
+| `GEMINI_API_URL` | `gemini.api.url` | `https://generativelanguage.googleapis.com` | Public | Base endpoint for Google Gemini 1.5 Flash / Pro model completions. |
+
+---
 
 ## 5. Application Bootstrap & Entry Point
 
@@ -898,7 +1092,31 @@ This is the master security configuration class that establishes permissions, ro
 
 ---
 
+### 6.6. Master Route Security & Role Access Matrix Table
 
+The following master security matrix details authorization rules, required tokens, and permissions enforced by `SecurityConfig.java` across every URI pattern:
+
+| Route URI Pattern | HTTP Methods | Required Authorization | Granted Role | Handling Filter / Mechanism |
+| :--- | :--- | :--- | :--- | :--- |
+| `/api/v1/auth/**` | `POST` | Public (Unauthenticated) | None | `.permitAll()` — Handles user login, signup, and OTP reset. |
+| `/api/v1/trains/**` | `GET` | Public (Unauthenticated) | None | `.permitAll()` — Allows anonymous search for train schedules, live status, and delay analytics. |
+| `/api/v1/stations/**` | `GET` | Public (Unauthenticated) | None | `.permitAll()` — Allows public browsing of stations and live digital display boards. |
+| `/api/v1/journey/**` | `GET`, `POST` | Public (Unauthenticated) | None | `.permitAll()` — Journey search and route optimization between stations. |
+| `/api/v1/disruptions/**` | `GET` | Public (Unauthenticated) | None | `.permitAll()` — Active railway cancellations, diversions, and weather warnings. |
+| `/api/v1/blogs/**` | `GET` | Public (Unauthenticated) | None | `.permitAll()` — Public access to railway stories, historical heritage articles, and passenger tips. |
+| `/api/v1/health` | `GET` | Public (Unauthenticated) | None | `.permitAll()` — Lightweight server uptime ping for cloud health probes. |
+| `/actuator/**` | `GET` | Public (Unauthenticated) | None | `.permitAll()` — Spring Boot Actuator monitoring and health metrics. |
+| `/swagger-ui/**`, `/v3/api-docs/**` | `GET` | Public (Unauthenticated) | None | `.permitAll()` — Interactive OpenAPI documentation and API sandbox. |
+| `/api/v1/favorites/**` | `GET`, `POST`, `DELETE` | Authenticated (JWT Required) | `ROLE_USER`, `ROLE_ADMIN` | `.authenticated()` — Manages saved favorite trains and stations tied to user account. |
+| `/api/v1/alerts/**` | `GET`, `POST`, `DELETE` | Authenticated (JWT Required) | `ROLE_USER`, `ROLE_ADMIN` | `.authenticated()` — Custom proximity and delay notification triggers. |
+| `/api/v1/history/**` | `GET`, `DELETE` | Authenticated (JWT Required) | `ROLE_USER`, `ROLE_ADMIN` | `.authenticated()` — User's recent search and route journey history. |
+| `/api/v1/notifications/preferences/**` | `GET`, `PUT` | Authenticated (JWT Required) | `ROLE_USER`, `ROLE_ADMIN` | `.authenticated()` — Toggle alert channels (Email, Push, WhatsApp, SMS) and quiet hours. |
+| `/api/v1/pnr/reminder` | `POST` | Public / Authenticated | Optional | `.permitAll()` — Users can schedule travel reminders by providing an email address. |
+| `/api/v1/alarm/**` | `POST` | Public / Authenticated | Optional | `.permitAll()` — Hardware station approaching alarm and snooze dispatch. |
+| `/api/v1/railai/chat` | `POST` | Public / Optional Auth | None / Any | Principal-safe controller: Works anonymously or injects user context if logged in. |
+| `/api/v1/admin/**` | `GET`, `POST`, `PUT`, `DELETE` | Authenticated (Admin Required) | `ROLE_ADMIN` | `.hasRole('ADMIN')` — Database re-indexing, broadcast advisories, user management. |
+
+---
 
 ## 7. System Infrastructure & Configuration Layer
 
@@ -1240,7 +1458,27 @@ File path: `src/main/java/com/example/railtracker/entity/SearchHistory.java`
 
 ---
 
+### 8.13. Master Database Entities & Relational Schema Table
 
+The following schema matrix defines all persistent database tables, JPA entity mappings, primary/foreign keys, and storage indexes across PostgreSQL:
+
+| Physical Table Name | JPA Entity Class | Primary Key | Foreign Key Links | Database Indexes | Business Domain Role |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `users` | `User.java` | `id` (BIGSERIAL) | Links to `roles` via `user_roles` | Unique on `username`, Unique on `email` | User identity, hashed passwords, verification status. |
+| `roles` | `Role.java` | `id` (SERIAL) | None | Unique on `name` (`ROLE_USER`, `ROLE_ADMIN`) | Authorization authority definitions. |
+| `user_roles` | Join Table | Composite (`user_id`, `role_id`) | FK to `users(id)`, FK to `roles(id)` | Composite index on (`user_id`, `role_id`) | Many-to-Many junction mapping users to granted roles. |
+| `trains` | `Train.java` | `id` (BIGSERIAL) | None | Unique on `train_number`, Index on `name` | Static train inventory (number, name, type, source, destination). |
+| `stations` | `Station.java` | `id` (BIGSERIAL) | None | Unique on `code`, Index on `name`, Index on `city` | Static station catalog (code, name, state, zone, amenities). |
+| `train_stations` | `TrainStation.java` | `id` (BIGSERIAL) | FK to `trains(id)`, FK to `stations(id)` | Index on (`train_id`, `station_order`) | Ordered timetable stops, scheduled arrival/departure, day count, distance. |
+| `favorites` | `Favorite.java` | `id` (BIGSERIAL) | FK to `users(id)`, FK to `trains(id)` | Index on `user_id` | User bookmarked trains and journeys. |
+| `alerts` | `Alert.java` | `id` (BIGSERIAL) | FK to `users(id)`, FK to `trains(id)` | Index on `user_id`, Index on `active` | User-configured delay and station arrival alert monitors. |
+| `search_history` | `SearchHistory.java` | `id` (BIGSERIAL) | FK to `users(id)` | Index on `user_id`, Index on `searched_at` | Recent train and station queries executed by user. |
+| `travel_reminders` | `TravelReminder.java` | `id` (BIGSERIAL) | FK to `users(id)` (optional) | Index on (`travel_date`, `reminder_sent`) | 06:00 AM IST travel morning briefing schedule queue. |
+| `user_notification_preferences` | `UserNotificationPreferences.java` | `id` (BIGSERIAL) | FK to `users(id)` (Unique 1-to-1) | Unique index on `user_id` | User notification preferences, active channels, quiet hours. |
+| `train_disruptions` | `TrainDisruption.java` | `id` (BIGSERIAL) | FK to `trains(id)` (optional) | Index on `train_number`, Index on `disruption_type` | Active track cancellations, route diversions, and delays. |
+| `blog_articles` | `BlogArticle.java` | `id` (BIGSERIAL) | None | Index on `slug`, Index on `category` | Editorial stories, travel guides, and passenger tip catalog. |
+
+---
 
 ## 9. Persistence Layer (Spring Data JPA Repositories)
 
@@ -1304,7 +1542,31 @@ Spring Data JPA generates SQL implementation at runtime by inspecting interface 
 
 ---
 
+### 9.10. Master Spring Data Repositories & Custom Query Derivation Table
 
+The following table documents all repository interfaces and derived JPQL query methods:
+
+| Repository Interface | Entity Managed | Key Method Derived by Spring Data | SQL Query Semantics Generated by Hibernate |
+| :--- | :--- | :--- | :--- |
+| `UserRepository` | `User` | `findByUsername(String username)` | `SELECT * FROM users WHERE username = ?` |
+| `UserRepository` | `User` | `existsByUsername(String username)` | `SELECT COUNT(*) > 0 FROM users WHERE username = ?` |
+| `UserRepository` | `User` | `existsByEmail(String email)` | `SELECT COUNT(*) > 0 FROM users WHERE email = ?` |
+| `RoleRepository` | `Role` | `findByName(ERole name)` | `SELECT * FROM roles WHERE name = ?` |
+| `TrainRepository` | `Train` | `findByTrainNumber(String trainNumber)` | `SELECT * FROM trains WHERE train_number = ?` |
+| `TrainRepository` | `Train` | `searchTrains(String query)` | `SELECT * FROM trains WHERE LOWER(name) LIKE %?% OR train_number LIKE %?%` |
+| `StationRepository` | `Station` | `findByCode(String code)` | `SELECT * FROM stations WHERE code = ?` |
+| `StationRepository` | `Station` | `searchStations(String query)` | `SELECT * FROM stations WHERE LOWER(name) LIKE %?% OR LOWER(code) LIKE %?%` |
+| `TrainStationRepository` | `TrainStation` | `findByTrainOrderByStationOrderAsc(Train train)` | `SELECT * FROM train_stations WHERE train_id = ? ORDER BY station_order ASC` |
+| `TrainStationRepository` | `TrainStation` | `findByStation(Station station)` | `SELECT * FROM train_stations WHERE station_id = ?` |
+| `FavoriteRepository` | `Favorite` | `findByUserId(Long userId)` | `SELECT * FROM favorites WHERE user_id = ?` |
+| `FavoriteRepository` | `Favorite` | `findByUserIdAndTrainNumber(...)` | `SELECT * FROM favorites WHERE user_id = ? AND train_number = ?` |
+| `AlertRepository` | `Alert` | `findByUserId(Long userId)` | `SELECT * FROM alerts WHERE user_id = ?` |
+| `AlertRepository` | `Alert` | `findByActiveTrue()` | `SELECT * FROM alerts WHERE active = true` |
+| `SearchHistoryRepository` | `SearchHistory` | `findByUserIdOrderBySearchedAtDesc(...)` | `SELECT * FROM search_history WHERE user_id = ? ORDER BY searched_at DESC LIMIT 10` |
+| `TravelReminderRepository` | `TravelReminder` | `findByTravelDateAndReminderSentFalse(...)` | `SELECT * FROM travel_reminders WHERE travel_date = ? AND reminder_sent = false` |
+| `UserNotificationPreferencesRepository` | `UserNotificationPreferences` | `findByUserId(Long userId)` | `SELECT * FROM user_notification_preferences WHERE user_id = ?` |
+
+---
 
 ## 10. Global Exception & Error Handling
 
@@ -1378,7 +1640,21 @@ File path: `src/main/java/com/example/railtracker/exception/GlobalExceptionHandl
 
 ---
 
+### 10.5. Master Error Codes & Exception Mapping Table
 
+The following matrix documents all exception classes intercepted by `GlobalExceptionHandler.java` and their HTTP response translations:
+
+| Exception Class | HTTP Status Code | Response Code String | Trigger Condition | JSON Payload Delivered to Client |
+| :--- | :--- | :--- | :--- | :--- |
+| `ResourceNotFoundException` | `404 NOT_FOUND` | `RESOURCE_NOT_FOUND` | Train, station, user, or alert record does not exist in database. | `{ "success": false, "message": "Train not found with number: 12678" }` |
+| `BadRequestException` | `400 BAD_REQUEST` | `BAD_REQUEST` | Invalid date range, mismatched station route, or duplicate resource. | `{ "success": false, "message": "Destination cannot be same as origin" }` |
+| `BadCredentialsException` | `401 UNAUTHORIZED` | `BAD_CREDENTIALS` | Invalid username or password supplied at `/api/v1/auth/login`. | `{ "success": false, "message": "Invalid username or password" }` |
+| `MethodArgumentNotValidException` | `400 BAD_REQUEST` | `VALIDATION_FAILED` | Jakarta Bean Validation failure (`@NotBlank`, `@Email`, `@Size`). | `{ "success": false, "message": "Validation failed", "errors": { "email": "must be valid" } }` |
+| `AccessDeniedException` | `403 FORBIDDEN` | `ACCESS_DENIED` | Authenticated user lacks required authority (`ROLE_ADMIN`). | `{ "success": false, "message": "Access Denied: Insufficient privileges" }` |
+| `ApiException` | `502 BAD_GATEWAY` | `EXTERNAL_API_ERROR` | RailRadar, Brevo, or Gemini API returns HTTP 5xx or connection times out. | `{ "success": false, "message": "External railway telemetry service temporarily unavailable" }` |
+| `Exception` (Catch-all) | `500 INTERNAL_SERVER_ERROR` | `INTERNAL_SERVER_ERROR` | Unhandled runtime exception or null pointer encountered. | `{ "success": false, "message": "An unexpected error occurred. Please try again later." }` |
+
+---
 
 ## 11. External Integration & AI Engine Layer
 
@@ -1888,7 +2164,47 @@ REST Controllers expose HTTP endpoints, unpack query parameters and JSON bodies,
 
 ---
 
+### 13.17. Master REST API Endpoints Catalog Table
 
+The following master catalog documents all **16 REST Controllers** and their endpoints across the RailTrack India API:
+
+| Controller Class | Base Route Path | HTTP Method | Endpoint Sub-Path | Auth Required | Purpose & Action |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `AuthController` | `/api/v1/auth` | `POST` | `/login` | Public | Authenticates credentials with BCrypt; returns JWT and user profile. |
+| `AuthController` | `/api/v1/auth` | `POST` | `/signup` | Public | Registers new user account with default `ROLE_USER`. |
+| `AuthController` | `/api/v1/auth` | `POST` | `/forgot-password` | Public | Dispatches OTP reset code to user's registered email via Brevo. |
+| `AuthController` | `/api/v1/auth` | `POST` | `/reset-password` | Public | Validates OTP and sets new BCrypt-hashed password. |
+| `TrainController` | `/api/v1/trains` | `GET` | `/{trainNumber}/live` | Public | Real-time train tracking, current station, GPS coordinates, delay minutes. |
+| `TrainController` | `/api/v1/trains` | `GET` | `/{trainNumber}/schedule` | Public | Complete timetable of all scheduled stops, arrival/departure, day counts. |
+| `TrainController` | `/api/v1/trains` | `GET` | `/search?q={query}` | Public | Autocomplete search for trains by number or name. |
+| `StationController` | `/api/v1/stations` | `GET` | `/{code}` | Public | Station metadata: full name, state, zone, amenities, platform count. |
+| `StationController` | `/api/v1/stations` | `GET` | `/search?q={query}` | Public | Station autocomplete search by station code or city name. |
+| `LiveStationBoardController` | `/api/v1/stations` | `GET` | `/{code}/board?hours={2\|4\|8}` | Public | Digital arrival/departure board for junction with delay status and platform tracks. |
+| `LiveStationBoardController` | `/api/v1/stations` | `POST` | `/{code}/live/email` | Public | Dispatches live station board snapshot table directly to recipient's inbox. |
+| `LiveUpdatesController` | `/api/v1/updates` | `GET` | `/train/{trainNumber}` | Public | Server-Sent Events (SSE) live push stream of train location coordinates. |
+| `JourneyController` | `/api/v1/journey` | `GET` | `/search?from={}&to={}&date={}` | Public | Finds direct trains and optimal connecting routes between two stations. |
+| `RailAiController` | `/api/v1/railai` | `POST` | `/chat` | Public / Auth | Conversational AI assistant powered by Gemini 1.5 with dynamic tool invocation. |
+| `FavoriteController` | `/api/v1/favorites` | `GET` | `/` | User Auth | Retrieves all bookmarked trains and stations for the logged-in user. |
+| `FavoriteController` | `/api/v1/favorites` | `POST` | `/` | User Auth | Adds a train or journey to the user's bookmarked favorites. |
+| `FavoriteController` | `/api/v1/favorites` | `DELETE` | `/{id}` | User Auth | Deletes a favorite entry by ID. |
+| `AlertController` | `/api/v1/alerts` | `GET` | `/` | User Auth | Retrieves active delay and proximity alert monitors for user. |
+| `AlertController` | `/api/v1/alerts` | `POST` | `/` | User Auth | Creates a new delay or station arrival threshold alert. |
+| `AlertController` | `/api/v1/alerts` | `DELETE` | `/{id}` | User Auth | Cancels and deletes an active alert monitor. |
+| `SearchHistoryController` | `/api/v1/history` | `GET` | `/` | User Auth | Returns the user's 10 most recent train and station searches. |
+| `SearchHistoryController` | `/api/v1/history` | `DELETE` | `/` | User Auth | Clears user search history. |
+| `TrainDisruptionController` | `/api/v1/disruptions`| `GET` | `/exceptions?type={ALL\|...}` | Public | Active train cancellations, route detours, and rescheduled services. |
+| `TrainDisruptionController` | `/api/v1/disruptions`| `POST`| `/alert` | Public | Subscribes an email to disruption and safety advisories for a train. |
+| `BlogController` | `/api/v1/blogs` | `GET` | `/` | Public | Curated Indian Railways heritage stories, train profiles, and travel guides. |
+| `BlogController` | `/api/v1/blogs` | `GET` | `/tips` | Public | Community passenger travel hacks, food safety tips, and station amenities. |
+| `StationAlarmController` | `/api/v1/alarm` | `POST` | `/approach` | Public | Dispatches instant email notification when station approach alarm triggers. |
+| `StationAlarmController` | `/api/v1/alarm` | `POST` | `/snooze` | Public | Dispatches snooze confirmation email when user clicks any alarm overlay button. |
+| `PnrReminderController` | `/api/v1/pnr` | `POST` | `/reminder` | Public | Enqueues travel day morning 06:00 AM IST email reminder for a PNR. |
+| `PnrReminderController` | `/api/v1/pnr` | `POST` | `/chart-alert` | Public | Subscribes user to IRCTC Chart Preparation notice (+20 min upload buffer). |
+| `NotificationPreferencesController` | `/api/v1/notifications` | `GET` | `/preferences` | User Auth | Fetches user notification cockpit preferences (channels, quiet hours). |
+| `NotificationPreferencesController` | `/api/v1/notifications` | `PUT` | `/preferences` | User Auth | Updates notification channel toggles (Email, Push, WhatsApp, SMS). |
+| `HealthController` | `/api/v1/health` | `GET` | `/` | Public | Returns `{ "status": "UP", "timestamp": "..." }` for cloud uptime monitors. |
+
+---
 
 ## 14. Data Transfer Objects (DTOs) & Contracts
 
@@ -3071,3 +3387,26 @@ flowchart TD
        - **APPROACHING:** Crimson Red theme (`#7f1d1d`) with subject `🚨 WAKE-UP ALARM: Train {no} is approaching {station}`.
   3. **Universal Dispatch:**
      - Dispatched from both React web overlays and native Android receivers (including notification shade action buttons via `StopAlarmReceiver.java`).
+
+### 21.3. Master Notification Architecture & Email Dispatch Matrix Table
+
+The following master dispatch matrix details all **14 notification and alert services** supported by the backend:
+
+| Notification Service | Trigger Mechanism | Frequency / Cadence | Target Recipient | Brevo Template / Channel | Key Information Delivered |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Travel Morning Reminder** | Spring `@Scheduled` Cron | Daily at 06:00 AM IST | Passenger & Family | Dark HTML Email | PNR status, coach/berth, live departure platform, 1-tap live tracking link. |
+| **2. Station Live Board Snapshot** | On-Demand User Click | Instant (On-Request) | Passenger / Cab Driver | Dark HTML Table Email | 2, 4, or 8-hour live junction board, platform allocations, delay badges. |
+| **3. Station Wake-Up Alarm** | Telemetry Proximity ($\le$ 25km / 30m) | Target trigger time | Sleeping Night Passenger | High-Priority Email + Web Audio | Imminent arrival notice, platform track, Onboarding & Deboarding Checklists. |
+| **4. IRCTC Chart Preparation** | Proximity to 4h before departure | Departure - 3h 40m | Passenger & Waitlist | Dark HTML Email | Final chart status, RAC/WL clearance, vacant berths available on current train. |
+| **5. Route Disruption Advisory** | Exception Detection / User Alert | Instant on cancellation | Subscribed Passengers | Dual-Channel Email + Push | Cancellation reason, diverted route stations, IRCTC full TDR refund guide. |
+| **6. Automated Train Delay Alert** | Scheduled Monitor (Every 15m) | When delay exceeds threshold | Active Passengers | Dark HTML Email | Live delay minutes (+45m, +120m), revised arrival time, make-up speed index. |
+| **7. Journey Planner Travel Memo** | On-Demand Journey Route Search | Instant (On-Request) | Passenger & Friends | Responsive Route Email | Complete trip itinerary, interchange stations, buffer times, total fares. |
+| **8. Rotating Weekly Rail Gazette** | Spring `@Scheduled` Cron | Sundays at 09:00 AM IST | Subscribed Community | Editorial Gazette Email | Featured train stories, historical engineering heritage, passenger travel tips. |
+| **9. Notification Preferences** | User Profile Action | Instant on save | Registered Users | In-App / System Store | Custom channel toggles (Email, Push, SMS), quiet hours (`23:00 - 06:00`). |
+| **10. Auth Welcome & OTP Reset** | User Signup / Forgot Password | Instant (Zero-delay) | Account Holder | Transactional OTP Email | 6-digit cryptographic security code with 10-minute validity window. |
+| **11. Food on Track Meal Guide** | Route Milestone Trigger | 45m before meal hours | Long-Distance Passenger | Culinary Guide Email | Junction culinary specialties (e.g., Nagpur Oranges, Ratlam Sev, Agra Petha). |
+| **12. Dual-Channel Delay Notice** | Live Polling Sync | Delay delta $\ge$ 15 mins | Passenger Inbox | Push + Brevo Email | Synchronized dual-channel alert ensuring passengers are warned even if app is asleep. |
+| **13. Dynamic Departure Alarm** | Telemetry Departure Sync | Early Morning Departures | Early Morning Commuters | Adaptive Alarm + Email | Dynamic wake-up warning adjusted if train departs source earlier or delayed. |
+| **14. Alarm Snooze Dispatch** | Overlay Button Click (`AWAKE`/`SNOOZE`) | Instant on click | Active Traveler | Confirmation Email | Proof of alarm acknowledgment, remaining arrival minutes, safety checklist. |
+
+---
