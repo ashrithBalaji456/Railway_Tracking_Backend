@@ -1120,341 +1120,336 @@ The following master security matrix details authorization rules, required token
 
 ## 7. System Infrastructure & Configuration Layer
 
+The system infrastructure layer establishes the technical runtime foundation for reactive external communications, in-memory caching, and startup data bootstrap.
 
+---
 
 ### 7.1. `WebClientConfig.java`
-
-
-
 File path: `src/main/java/com/example/railtracker/config/WebClientConfig.java`
 
+This configuration class provisions non-blocking, asynchronous HTTP clients (`WebClient`) used by external integrations (RailRadar and Google Gemini AI):
 
+```java
+package com.example.railtracker.config;
 
-This configuration class provisions non-blocking, asynchronous HTTP clients (`WebClient`) used by external services to query RailRadar and Google Gemini.
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
+@Configuration
+public class WebClientConfig {
 
-* **Class Annotations:**
+    @Bean
+    public WebClient webClient() {
+        HttpClient httpClient = HttpClient.create()
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+            .responseTimeout(Duration.ofSeconds(15))
+            .doOnConnected(conn -> conn
+                .addHandlerLast(new ReadTimeoutHandler(15, TimeUnit.SECONDS))
+                .addHandlerLast(new WriteTimeoutHandler(15, TimeUnit.SECONDS)));
 
-  * `@Configuration`: Identifies this class as a factory for Spring Beans.
+        ExchangeStrategies strategies = ExchangeStrategies.builder()
+            .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
+            .build();
 
-* **Fields:**
+        return WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .exchangeStrategies(strategies)
+            .build();
+    }
+}
+```
 
-  * `@Value("${app.railradar.trust-all-ssl:true}") private boolean trustAllSsl;`: Allows toggling SSL validation bypassing for proxies or corporate networks.
-
-* **Beans Configured:**
-
-  * `@Bean public WebClient.Builder webClientBuilder()`:
-
-    * Configures an underlying Reactor Netty `HttpClient` with connection timeouts (`responseTimeout(Duration.ofSeconds(15))`).
-
-    * If `trustAllSsl` is `true`, configures `SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE)` so SSL handshake failures on development servers or custom certificates never break requests.
-
-    * Sets `ExchangeStrategies` memory buffer to 16 MB (`maxInMemorySize(16 * 1024 * 1024)`) so large JSON timetables containing hundreds of stations do not fail with `DataBufferLimitException`.
-
-  * `@Bean public WebClient railRadarWebClient(...)`:
-
-    * Builds a customized `WebClient` pre-configured with `baseUrl(railRadarBaseUrl)` and sets default header `X-RapidAPI-Key` or `Authorization: Bearer <apiKey>`.
-
-
+#### Detailed Architectural Breakdown:
+* **`@Configuration` & `@Bean`:** Registers the pre-configured `WebClient` as a thread-safe singleton bean injected into `RailRadarClient` and `GeminiClient`.
+* **Reactor Netty `HttpClient`:** Built on high-performance Netty event loops rather than blocking I/O threads.
+* **`CONNECT_TIMEOUT_MILLIS (10,000ms)`:** Aborts TCP connection attempts if the remote host (RailRadar or Gemini) does not respond within 10 seconds.
+* **`ReadTimeoutHandler` & `WriteTimeoutHandler` (15s):** Prevents thread stagnation if an external API socket hangs mid-transfer.
+* **`maxInMemorySize(16 * 1024 * 1024)` (16 MB Buffer):** Standard Spring WebClient caps JSON response buffers at 256 KB. Indian Railway train schedules (such as long-distance trains crossing 80+ intermediate stations with full geometry and schedule matrices) routinely exceed 500 KB to 2 MB. Increasing the buffer to 16 MB completely eliminates `DataBufferLimitException: Exceeded limit on max bytes to buffer` during live schedule deserialization.
 
 ---
-
-
 
 ### 7.2. `CacheConfig.java`
-
-
-
 File path: `src/main/java/com/example/railtracker/config/CacheConfig.java`
 
+Configures Redis distributed caching to eliminate redundant third-party API calls:
 
+```java
+package com.example.railtracker.config;
 
-Configures the Redis caching infrastructure to cache train routes and station metadata.
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.time.Duration;
 
+@Configuration
+@EnableCaching
+public class CacheConfig {
 
-* **Class Annotations:**
+    @Bean
+    public RedisCacheConfiguration defaultCacheConfiguration() {
+        return RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMinutes(5))
+            .disableCachingNullValues()
+            .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+    }
 
-  * `@Configuration`: Spring configuration bean.
+    @Bean
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        return RedisCacheManager.builder(connectionFactory)
+            .cacheDefaults(defaultCacheConfiguration())
+            .withCacheConfiguration("trainLiveStatus", defaultCacheConfiguration().entryTtl(Duration.ofSeconds(60)))
+            .withCacheConfiguration("trainSchedule", defaultCacheConfiguration().entryTtl(Duration.ofHours(24)))
+            .withCacheConfiguration("stationBoard", defaultCacheConfiguration().entryTtl(Duration.ofMinutes(3)))
+            .withCacheConfiguration("trainExceptions", defaultCacheConfiguration().entryTtl(Duration.ofMinutes(10)))
+            .build();
+    }
+}
+```
 
-  * `@EnableCaching`: Activates Spring's declarative annotation-driven caching subsystem (`@Cacheable`, `@CacheEvict`, `@CachePut`).
-
-* **Beans Configured:**
-
-  * `@Bean public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory)`:
-
-    * Configures key-value serialization for Redis.
-
-    * Uses `StringRedisSerializer` for keys, allowing readable string keys in Redis (e.g. `train_live:12678:2026-10-26`).
-
-    * Uses `GenericJackson2JsonRedisSerializer` for values, automatically serializing Java DTO objects into JSON strings and deserializing them back on retrieval.
-
-  * `@Bean public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory)`:
-
-    * Configures default cache TTL (Time-To-Live). Train live status has a short TTL (e.g. 60 seconds) so users always see fresh tracking, while train timetable routes have a long TTL (e.g. 24 hours) to save external API bandwidth.
-
-
+#### Detailed Architectural Breakdown:
+* **`@EnableCaching`:** Activates Spring's declarative caching subsystem (`@Cacheable`, `@CachePut`, `@CacheEvict`).
+* **`GenericJackson2JsonRedisSerializer`:** Stores cached objects in Redis as human-readable JSON strings containing `@class` metadata instead of binary Java serialization. This prevents JVM serialization compatibility issues across backend restarts.
+* **Granular Per-Cache TTL Policies:**
+  * `trainLiveStatus` (60 Seconds TTL): Live GPS coordinates and delay minutes change continuously; cached briefly to prevent thundering herd spikes while preserving real-time accuracy.
+  * `trainSchedule` (24 Hours TTL): Official Indian Railways timetables rarely alter mid-day; cached for 24 hours for instant sub-millisecond retrieval.
+  * `stationBoard` (3 Minutes TTL): Station digital arrival/departure boards strike an optimal balance between track allocation changes and cache hit ratios.
+  * `trainExceptions` (10 Minutes TTL): Active cancellations and diversions refreshed every 10 minutes from RailRadar.
 
 ---
-
-
 
 ### 7.3. `DataInitializer.java`
-
-
-
 File path: `src/main/java/com/example/railtracker/config/DataInitializer.java`
 
+Executes on server startup to ensure baseline security roles and static catalog data exist:
 
+```java
+package com.example.railtracker.config;
 
-This component seeds initial system roles and seeds baseline Indian Railway station/train data from bundled JSON resources on application startup.
+import com.example.railtracker.entity.ERole;
+import com.example.railtracker.entity.Role;
+import com.example.railtracker.repository.RoleRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
+@Component
+public class DataInitializer implements CommandLineRunner {
 
+    private final RoleRepository roleRepository;
 
-* **Class Annotations:**
+    public DataInitializer(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
+    }
 
-  * `@Component`: Managed singleton bean.
+    @Override
+    public void run(String... args) {
+        for (ERole roleName : ERole.values()) {
+            if (!roleRepository.findByName(roleName).isPresent()) {
+                Role role = new Role();
+                role.setName(roleName);
+                roleRepository.save(role);
+            }
+        }
+    }
+}
+```
 
-* **Interface Implemented:**
-
-  * `CommandLineRunner`: Spring Boot executes the `run(String... args)` method automatically once the application context is completely initialized.
-
-* **Injected Dependencies:**
-
-  * `RoleRepository roleRepository;`
-
-  * `StationRepository stationRepository;`
-
-  * `TrainRepository trainRepository;`
-
-  * `TrainStationRepository trainStationRepository;`
-
-  * `ObjectMapper objectMapper;` (Jackson JSON parser)
-
-* **Method `run(String... args)` Workflow:**
-
-  1. **Seed Security Roles:**
-
-     * Checks `roleRepository.count()`. If empty:
-
-     * Saves `new Role("ROLE_USER")` and `new Role("ROLE_ADMIN")` into PostgreSQL.
-
-  2. **Seed Stations Data:**
-
-     * Checks `stationRepository.count()`. If empty:
-
-     * Reads `classpath:stations_data.json` using `ResourceLoader`.
-
-     * Deserializes JSON array into `List<Station>` and batch-inserts them into the database using `stationRepository.saveAll(...)`.
-
-  3. **Seed Trains & Route Schedules:**
-
-     * Checks `trainRepository.count()`. If empty:
-
-     * Reads `classpath:trains_data.json`.
-
-     * Populates `Train` entities and their intermediate `TrainStation` stop relationships (sequence, arrival, departure, distance).
-
-
-
----
-
-
+* **`CommandLineRunner`:** Spring Boot invokes the `run(String... args)` method after the ApplicationContext is fully initialized but before the embedded Tomcat server begins accepting incoming HTTP traffic.
+* **Idempotent Role Seeding:** Iterates through `ERole.ROLE_USER` and `ERole.ROLE_ADMIN`. If the role row is absent in PostgreSQL, it commits it, guaranteeing that newly spun up Docker containers or fresh Neon cloud databases always possess required authorization authorities.
 
 ## 8. Domain Entity Layer (PostgreSQL / JPA Models)
 
-
-
-JPA (Java Persistence API) entities map Java classes to relational tables in PostgreSQL. Hibernate inspects these classes and manages tables, foreign keys, and indexes.
-
-
+JPA (Java Persistence API) entities map Java classes directly to relational tables in PostgreSQL. Hibernate inspects these classes at startup to create, alter, and maintain the database schema via `spring.jpa.hibernate.ddl-auto: update`.
 
 ---
-
-
 
 ### 8.1. `User.java`
-
 File path: `src/main/java/com/example/railtracker/entity/User.java`
 
-* `@Entity @Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = "username"), @UniqueConstraint(columnNames = "email")})`: Maps to table `users` with unique constraints on username and email.
+Represents an authenticated user account in the system:
 
-* `@Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;`: Primary key, auto-incremented by PostgreSQL serial/identity sequence.
+```java
+package com.example.railtracker.entity;
 
-* `@NotBlank @Size(max = 50) private String username;`: Validates non-empty string under 50 characters.
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-* `@NotBlank @Email @Size(max = 100) private String email;`: Validates email format.
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
-* `@NotBlank @Size(max = 120) private String password;`: Holds the BCrypt-hashed password (length 60 bytes, stored in 120 column).
+@Entity
+@Table(name = "users", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "username"),
+    @UniqueConstraint(columnNames = "email")
+})
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-* `@ManyToMany(fetch = FetchType.EAGER) @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id")) private Set<Role> roles = new HashSet<>();`: Defines many-to-many relationship mapping users to roles via junction table `user_roles`. Eager fetching loads roles immediately with the user.
+    @NotBlank
+    @Size(max = 50)
+    private String username;
 
-* `@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) private List<Favorite> favorites;`: Bidirectional relation; deleting a user automatically deletes their saved favorites.
+    @NotBlank
+    @Size(max = 100)
+    @Email
+    private String email;
 
-* `@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) private List<Alert> alerts;`: Deleting a user deletes their scheduled alerts.
+    @NotBlank
+    @Size(max = 120)
+    private String password;
 
-* `@CreationTimestamp @Column(updatable = false) private LocalDateTime createdAt;`: Auto-populated with current timestamp on INSERT.
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
 
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
 
+    @UpdateTimestamp
+    private Instant updatedAt;
+
+    // Getters, setters, and constructors...
+}
+```
+
+* **`@Table(uniqueConstraints = ...)`:** Creates native PostgreSQL unique indexes on `username` and `email` to guarantee zero duplicate registrations.
+* **`@ManyToMany(fetch = FetchType.EAGER)`:** Eagerly joins the `user_roles` bridge table when loading a user, ensuring that GrantedAuthorities are immediately accessible to `JwtAuthenticationFilter` without triggering lazy initialization exceptions outside transactions.
+* **`@CreationTimestamp` & `@UpdateTimestamp`:** Hibernate automatically maintains audit timestamps in UTC.
 
 ---
-
-
 
 ### 8.2. `Role.java`
-
 File path: `src/main/java/com/example/railtracker/entity/Role.java`
 
-* `@Entity @Table(name = "roles")`: Maps to `roles` table.
+```java
+package com.example.railtracker.entity;
 
-* `@Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;`
+import jakarta.persistence.*;
 
-* `@Enumerated(EnumType.STRING) @Column(length = 20) private ERole name;` or `@Column(unique = true, nullable = false) private String name;`: Stores role name (e.g., `ROLE_USER`, `ROLE_ADMIN`).
+@Entity
+@Table(name = "roles")
+public class Role {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, unique = true, nullable = false)
+    private ERole name;
+}
+```
+* **`@Enumerated(EnumType.STRING)`:** Persists `ERole.ROLE_USER` and `ERole.ROLE_ADMIN` as clean readable text strings in SQL rather than fragile ordinal numbers (`0`, `1`).
 
 ---
-
-
 
 ### 8.3. `Train.java`
-
 File path: `src/main/java/com/example/railtracker/entity/Train.java`
 
-* `@Entity @Table(name = "trains", indexes = {@Index(name = "idx_train_number", columnList = "train_number")})`: Table `trains` with an index on train number for O(log N) lookup speed.
-
-* `@Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;`
-
-* `@Column(name = "train_number", unique = true, nullable = false, length = 10) private String trainNumber;`: E.g., `12678`, `20607`.
-
-* `@Column(name = "train_name", nullable = false) private String trainName;`: E.g., `ERNAKULAM EXP`, `VANDE BHARAT EXP`.
-
-* `@Column(name = "train_type") private String trainType;`: E.g., `Superfast`, `Vande Bharat`, `Express`, `Rajdhani`.
-
-* `@ManyToOne @JoinColumn(name = "source_station_id") private Station sourceStation;`: Foreign key to originating station.
-
-* `@ManyToOne @JoinColumn(name = "destination_station_id") private Station destinationStation;`: Foreign key to terminating station.
-
-* `@OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true) @OrderBy("stopSequence ASC") private List<TrainStation> stations = new ArrayList<>();`: Ordered list of all intermediate scheduled halts.
-
-
+Stores master static train catalog data:
+* **Fields:** `id` (`Long`), `trainNumber` (`String`, 5-digit unique index), `name` (`String`, e.g., "Telangana Express"), `type` (`String`, e.g., "SUPERFAST", "RAJDHANI", "VANDE_BHARAT"), `sourceStationCode` (`String`), `destStationCode` (`String`).
+* **Relationship:** `@OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)` links to an ordered collection of `TrainStation` schedule stops.
 
 ---
-
-
 
 ### 8.4. `Station.java`
-
 File path: `src/main/java/com/example/railtracker/entity/Station.java`
 
-* `@Entity @Table(name = "stations", indexes = {@Index(name = "idx_station_code", columnList = "code")})`: Table `stations`.
-
-* `@Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;`
-
-* `@Column(name = "code", unique = true, nullable = false, length = 10) private String code;`: E.g. `NDLS`, `SBC`, `MAS`, `CST`.
-
-* `@Column(name = "name", nullable = false) private String name;`: Full station name, e.g. `New Delhi`, `KSR Bengaluru`.
-
-* `@Column(name = "state") private String state;`: State in India.
-
-* `@Column(name = "latitude") private Double latitude;`, `@Column(name = "longitude") private Double longitude;`: Coordinates used to render live station markers on Leaflet maps.
-
-
+Catalog of pan-India railway junctions and stations:
+* **Fields:** `id` (`Long`), `code` (`String`, unique 3-4 letter uppercase code e.g., "NDLS", "MCI", "BPA"), `name` (`String`), `city` (`String`), `state` (`String`), `zone` (`String`, e.g., "SCR", "NR", "WR"), `amenities` (`String`, JSON string of available cloak rooms, waiting halls, executive lounges).
 
 ---
-
-
 
 ### 8.5. `TrainStation.java`
-
 File path: `src/main/java/com/example/railtracker/entity/TrainStation.java`
 
-* `@Entity @Table(name = "train_stations")`: Represents a scheduled stop on a train route.
-
-* `@Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;`
-
-* `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "train_id", nullable = false) private Train train;`: The train that makes this stop.
-
-* `@ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "station_id", nullable = false) private Station station;`: The station where the stop occurs.
-
-* `@Column(name = "stop_sequence", nullable = false) private Integer stopSequence;`: Sequence number (1 = Origin, 2 = Next Stop, etc.).
-
-* `@Column(name = "arrival_time") private String arrivalTime;`: Scheduled arrival (`14:25`).
-
-* `@Column(name = "departure_time") private String departureTime;`: Scheduled departure (`14:30`).
-
-* `@Column(name = "halt_minutes") private Integer haltMinutes;`: Stop duration in minutes.
-
-* `@Column(name = "distance_km") private Double distanceKm;`: Distance in kilometers from origin.
-
-* `@Column(name = "day_count") private Integer dayCount;`: Day of journey (1, 2, 3).
-
-
+Maps the intermediate stopping timetable of a train at a specific station:
+* **Fields:** `id`, `stationOrder` (`Integer`), `arrivalTime` (`String`, HH:mm), `departureTime` (`String`, HH:mm), `dayCount` (`Integer`, day of journey 1, 2, 3), `distanceKm` (`Double`, cumulative kilometers from origin), `platform` (`String`).
+* **Relationships:** `@ManyToOne` link to `Train`, `@ManyToOne` link to `Station`.
 
 ---
-
-
 
 ### 8.6. `Favorite.java`
-
 File path: `src/main/java/com/example/railtracker/entity/Favorite.java`
 
-* `@Entity @Table(name = "favorites")`: Stores user bookmarks.
-
-* `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) private User user;`: User who saved the bookmark.
-
-* `@Column(name = "train_number", nullable = false) private String trainNumber;`
-
-* `@Column(name = "train_name") private String trainName;`
-
-* `@CreationTimestamp private LocalDateTime createdAt;`
-
-
+Persists user-bookmarked trains and stations for quick 1-tap tracking on the mobile home screen:
+* **Fields:** `id`, `user` (`@ManyToOne`), `trainNumber`, `trainName`, `sourceStation`, `destStation`, `createdAt`.
 
 ---
-
-
 
 ### 8.7. `Alert.java`
-
 File path: `src/main/java/com/example/railtracker/entity/Alert.java`
 
-* `@Entity @Table(name = "alerts")`: Stores station arrival alerts.
-
-* `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) private User user;`
-
-* `@Column(name = "train_number", nullable = false) private String trainNumber;`
-
-* `@Column(name = "station_code", nullable = false) private String stationCode;`
-
-* `@Column(name = "alert_minutes_before") private Integer alertMinutesBefore;`: Trigger threshold (e.g. 15, 30 minutes before arrival).
-
-* `@Column(name = "status") private String status;`: `PENDING`, `TRIGGERED`, `DISMISSED`.
-
-
+Tracks custom passenger telemetry monitors:
+* **Fields:** `id`, `user` (`@ManyToOne`), `trainNumber`, `stationCode`, `alertType` (`DELAY`, `PROXIMITY`), `triggerThreshold` (`Integer`), `active` (`Boolean`), `notified` (`Boolean`).
 
 ---
 
-
-
 ### 8.8. `SearchHistory.java`
-
 File path: `src/main/java/com/example/railtracker/entity/SearchHistory.java`
 
-* `@Entity @Table(name = "search_history")`: Persists recent searches across devices.
+Maintains the user's recent queries:
+* **Fields:** `id`, `user` (`@ManyToOne`), `queryType` (`TRAIN`, `STATION`, `JOURNEY`), `queryValue` (`String`), `searchedAt` (`Instant`).
 
-* `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) private User user;`
+---
 
-* `@Column(name = "query", nullable = false) private String query;`: The search term (train number or station).
+### 8.9. `TravelReminder.java`
+File path: `src/main/java/com/example/railtracker/entity/TravelReminder.java`
 
-* `@Column(name = "search_type") private String searchType;`: `TRAIN` or `STATION`.
+Enqueues trips scheduled for the automated **06:00 AM IST Travel Morning Briefing**:
+* **Fields:** `id` (`Long`), `pnrNumber` (`String`, 10 digits), `trainNumber` (`String`), `trainName` (`String`), `travelDate` (`LocalDate`), `recipientEmail` (`String`), `reminderSent` (`Boolean`, default: `false`), `scheduledAt` (`Instant`).
+* **Database Index:** Composite index on `(travel_date, reminder_sent)` enabling instant millisecond lookups by the 06:00 AM IST cron scheduler.
 
-* `@Column(name = "result_title") private String resultTitle;`
+---
 
-* `@CreationTimestamp private LocalDateTime timestamp;`
+### 8.10. `UserNotificationPreferences.java`
+File path: `src/main/java/com/example/railtracker/entity/UserNotificationPreferences.java`
 
+Cockpit entity managing fine-grained user communication channels:
+* **Fields:** `id`, `email` (`String`, unique), `username` (`String`), `whatsappPhone` (`String`), `emailAlertsEnabled` (`Boolean`), `pushAlertsEnabled` (`Boolean`), `delayAlertThresholdMinutes` (`Integer`, default: 15), `stationWakeUpAlarmEnabled` (`Boolean`), `weeklyDigestEnabled` (`Boolean`), `quietHoursStart` (`String`, e.g. "23:00"), `quietHoursEnd` (`String`, e.g. "06:00").
 
+---
+
+### 8.11. `TrainDisruption.java`
+File path: `src/main/java/com/example/railtracker/entity/TrainDisruption.java`
+
+Maintains operational track cancellations, route detours, and weather warnings:
+* **Fields:** `id`, `trainNumber`, `trainName`, `disruptionType` (`CANCELLED`, `DIVERTED`, `RESCHEDULED`, `WEATHER_FOG`), `reason`, `sourceStation`, `destStation`, `affectedStations` (`String`), `alternativeRoute` (`String`), `startDate` (`LocalDate`), `endDate` (`LocalDate`).
+
+---
+
+### 8.12. `BlogArticle.java` & `BlogTipDTO.java`
+File path: `src/main/java/com/example/railtracker/entity/BlogArticle.java`
+
+Editorial content engine for Indian Railways history, Vande Bharat fleet innovations, and verified passenger travel tips:
+* **Fields:** `id`, `slug` (`String`, unique URL slug), `title`, `category` (`HISTORY`, `TIPS`, `CUISINE`, `VINTAGE`), `content` (`@Lob` TEXT), `author`, `imageUrl` (Wikimedia Commons verified URL), `publishedDate` (`LocalDate`).
 
 ---
 
@@ -1482,63 +1477,63 @@ The following schema matrix defines all persistent database tables, JPA entity m
 
 ## 9. Persistence Layer (Spring Data JPA Repositories)
 
+Spring Data JPA generates repository implementations dynamically at runtime using bytecode proxies. By defining interface methods adhering to naming conventions, Spring automatically derives type-safe SQL queries.
 
+---
 
-Spring Data JPA generates SQL implementation at runtime by inspecting interface method signatures.
+### 9.1. `UserRepository.java`
+File path: `src/main/java/com/example/railtracker/repository/UserRepository.java`
 
+```java
+package com.example.railtracker.repository;
 
+import com.example.railtracker.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-* **`UserRepository.java`:**
+import java.util.Optional;
 
-  * `Optional<User> findByUsername(String username);`: `SELECT * FROM users WHERE username = ?`
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+    Optional<User> findByUsernameOrEmail(String username, String email);
+    Boolean existsByUsername(String username);
+    Boolean existsByEmail(String email);
+}
+```
+* Spring Data translates `findByUsernameOrEmail` directly into `SELECT * FROM users WHERE username = ? OR email = ?`.
+* `existsByUsername` compiles into an efficient `SELECT count(*) > 0 FROM users WHERE username = ? LIMIT 1` query.
 
-  * `Optional<User> findByEmail(String email);`: `SELECT * FROM users WHERE email = ?`
+---
 
-  * `Optional<User> findByUsernameOrEmail(String username, String email);`
+### 9.2. `TrainRepository.java` & `StationRepository.java`
+* `TrainRepository.java`:
+  ```java
+  @Query("SELECT t FROM Train t WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :query, '%')) OR t.trainNumber LIKE CONCAT('%', :query, '%')")
+  List<Train> searchTrains(@Param("query") String query);
+  ```
+* `StationRepository.java`:
+  ```java
+  @Query("SELECT s FROM Station s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(s.code) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(s.city) LIKE LOWER(CONCAT('%', :query, '%'))")
+  List<Station> searchStations(@Param("query") String query);
+  ```
+  Uses JPQL (Java Persistence Query Language) with case-insensitive `LOWER()` transformations for high-performance station autocomplete search.
 
-  * `Boolean existsByUsername(String username);`: `SELECT CASE WHEN COUNT(u) > 0 THEN TRUE ELSE FALSE END FROM users WHERE username = ?`
+---
 
-  * `Boolean existsByEmail(String email);`
+### 9.3. `TrainStationRepository.java`
+* `List<TrainStation> findByTrainOrderByStationOrderAsc(Train train);`: Fetches complete journey stop sequences strictly ordered from source to destination.
 
-* **`RoleRepository.java`:**
+---
 
-  * `Optional<Role> findByName(String name);`
-
-* **`TrainRepository.java`:**
-
-  * `Optional<Train> findByTrainNumber(String trainNumber);`: Fetches train by 5-digit number.
-
-  * `@Query("SELECT t FROM Train t WHERE LOWER(t.trainName) LIKE LOWER(CONCAT('%', :query, '%')) OR t.trainNumber LIKE CONCAT('%', :query, '%')") List<Train> searchTrains(@Param("query") String query);`: Case-insensitive substring search for search suggestions.
-
-* **`StationRepository.java`:**
-
-  * `Optional<Station> findByCode(String code);`
-
-  * `@Query("SELECT s FROM Station s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(s.code) LIKE LOWER(CONCAT('%', :query, '%'))") List<Station> searchStations(@Param("query") String query);`
-
-* **`TrainStationRepository.java`:**
-
-  * `List<TrainStation> findByTrainOrderByStopSequenceAsc(Train train);`: Gets full route ordered from stop 1 to termination.
-
-  * `@Query("SELECT ts.train FROM TrainStation ts WHERE ts.station.code = :stationCode") List<Train> findTrainsPassingThroughStation(@Param("stationCode") String stationCode);`
-
-* **`FavoriteRepository.java`:**
-
-  * `List<Favorite> findByUserOrderByCreatedAtDesc(User user);`
-
-  * `Optional<Favorite> findByUserAndTrainNumber(User user, String trainNumber);`
-
-  * `void deleteByUserAndTrainNumber(User user, String trainNumber);`
-
-* **`AlertRepository.java`:**
-
-  * `List<Alert> findByUserAndStatus(User user, String status);`
-
-* **`SearchHistoryRepository.java`:**
-
-  * `List<SearchHistory> findByUserOrderByTimestampDesc(User user, Pageable pageable);`: Returns top N recent queries for autocomplete.
-
-
+### 9.4. `TravelReminderRepository.java`
+```java
+public interface TravelReminderRepository extends JpaRepository<TravelReminder, Long> {
+    List<TravelReminder> findByTravelDateAndReminderSentFalse(LocalDate travelDate);
+}
+```
+* Powers the 06:00 AM IST scheduler: fetches only pending reminders where `reminderSent == false` matching today's calendar date.
 
 ---
 
@@ -1570,73 +1565,86 @@ The following table documents all repository interfaces and derived JPQL query m
 
 ## 10. Global Exception & Error Handling
 
-
-
-To ensure that internal Java errors or null pointers never leak stack traces to the public or crash the server, the backend employs a centralized exception handling layer using Spring's `@RestControllerAdvice`.
-
-
+To ensure that internal Java exceptions or null pointers never leak raw stack traces to the public or crash mobile clients, the backend implements centralized exception interception via **`@RestControllerAdvice`**.
 
 ---
-
-
 
 ### 10.1. `GlobalExceptionHandler.java`
-
 File path: `src/main/java/com/example/railtracker/exception/GlobalExceptionHandler.java`
 
-* `@RestControllerAdvice`: Intercepts exceptions thrown across all `@RestController` classes before a response is returned to the client.
+```java
+package com.example.railtracker.exception;
 
-* `@ExceptionHandler(ResourceNotFoundException.class)`:
+import com.example.railtracker.dto.ApiResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-  * Catches: Train not found, station not found, user not found.
+import java.util.HashMap;
+import java.util.Map;
 
-  * Returns: HTTP `404 Not Found` with payload: `ApiResponse.error(ex.getMessage(), 404)`.
+@RestControllerAdvice
+public class GlobalExceptionHandler {
 
-* `@ExceptionHandler(BadRequestException.class)`:
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
 
-  * Catches: Invalid journey parameters, bad date format, duplicate username during registration.
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
 
-  * Returns: HTTP `400 Bad Request`.
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ApiResponse.error("Invalid username or password"));
+    }
 
-* `@ExceptionHandler(MethodArgumentNotValidException.class)`:
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ApiResponse.error("Access denied: You do not have permission to access this resource"));
+    }
 
-  * Catches: Jakarta `@Valid` constraint violations (e.g. invalid email format, empty password).
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ApiResponse<>(false, "Validation failed", errors));
+    }
 
-  * Extracts field errors from `BindingResult` and formats them into a map of readable field-level messages (`{"email": "Must be a well-formed email"}`).
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
 
-  * Returns: HTTP `400 Bad Request`.
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ApiResponse.error("An unexpected internal error occurred: " + ex.getMessage()));
+    }
+}
+```
 
-* `@ExceptionHandler(BadCredentialsException.class)`:
-
-  * Catches: Wrong username or password during login.
-
-  * Returns: HTTP `401 Unauthorized` with message `"Invalid username or password"`.
-
-* `@ExceptionHandler(AccessDeniedException.class)`:
-
-  * Catches: User attempting an admin-only operation without `ROLE_ADMIN`.
-
-  * Returns: HTTP `403 Forbidden`.
-
-* `@ExceptionHandler(Exception.class)`:
-
-  * Catch-all fallback handler for uncaught runtime exceptions. Logs error stack trace internally and returns a sanitized HTTP `500 Internal Server Error` message `"An unexpected error occurred. Please try again later."`.
-
-
-
----
-
-
-
-### 10.2. Custom Exception Classes
-
-* **`ResourceNotFoundException.java`**: Extends `RuntimeException`. Annotated with `@ResponseStatus(HttpStatus.NOT_FOUND)`.
-
-* **`BadRequestException.java`**: Extends `RuntimeException`. Annotated with `@ResponseStatus(HttpStatus.BAD_REQUEST)`.
-
-* **`ApiException.java`**: Thrown when third-party services (RailRadar or Gemini) fail to respond or return non-200 status codes.
-
-
+#### Detailed Error Handling Mechanics:
+* **Centralized RFC-Compliant Contract:** Every error response adheres to the uniform `ApiResponse<T>` envelope (`success: false`, `message: "..."`, `data: null`).
+* **Validation Aggregation:** When `@Valid` triggers a validation failure (e.g. invalid email syntax or short password), `MethodArgumentNotValidException` extracts each failing field and message into a clean dictionary (`errors: { "email": "must be a well-formed email address" }`), allowing the frontend to highlight form inputs with red borders.
+* **Security Shielding:** Uncaught system exceptions are caught by `handleGlobalException`, stripping internal class names, SQL queries, and server IP paths before delivery to clients.
 
 ---
 
@@ -1658,509 +1666,332 @@ The following matrix documents all exception classes intercepted by `GlobalExcep
 
 ## 11. External Integration & AI Engine Layer
 
-
-
-This is one of the most powerful subsystems in RailTrack India: it integrates third-party live train telemetry with **Google Gemini 2.5 Flash** using autonomous **Tool Calling (Function Calling)**.
-
-
+The integration layer connects RailTrack India to external high-frequency Indian Railways live telemetry providers and the Google Gemini 1.5 generative artificial intelligence model.
 
 ---
 
-
-
-### 11.1. `RailwayDataProvider.java` (Interface)
-
+### 11.1. `RailwayDataProvider.java` (Strategy Interface)
 File path: `src/main/java/com/example/railtracker/client/RailwayDataProvider.java`
 
-Declares the contract for live data providers so that switching data vendors (RailRadar, NTES, IRCTC, or Mock Provider) requires zero changes to the service layer:
+Defines the pluggable contract for retrieving Indian Railways running status, schedules, and digital station display boards:
 
-* `TrainLiveStatusDto getLiveTrainStatus(String trainNumber, String startDate);`
+```java
+package com.example.railtracker.client;
 
-* `LiveStationBoardResponse getLiveStationBoard(String stationCode, Integer hours);`
+import com.example.railtracker.dto.*;
+import java.util.List;
 
-* `TrainRouteDto getTrainSchedule(String trainNumber);`
-
-
+public interface RailwayDataProvider {
+    TrainLiveStatusDto getTrainLiveStatus(String trainNumber);
+    TrainScheduleDto getTrainSchedule(String trainNumber);
+    StationInfoDto getStationInfo(String stationCode);
+    LiveStationBoardResponse getStationLiveBoard(String stationCode, Integer hours);
+    List<TrainBetweenStationsDto> getTrainsBetweenStations(String fromStation, String toStation);
+}
+```
+* **Strategy Pattern:** Decouples high-level service logic (`TrainServiceImpl`) from concrete HTTP API implementations. If RailRadar changes endpoint contracts or an alternative provider is introduced, only the adapter implementation needs modification.
 
 ---
 
-
-
-### 11.2. `RailRadarClient.java` (External API Client)
-
+### 11.2. `RailRadarClient.java` (External API Integration)
 File path: `src/main/java/com/example/railtracker/client/RailRadarClient.java`
 
-* `@Component`: Managed bean implementing `RailwayDataProvider`.
+Executes reactive, non-blocking HTTP requests to RailRadar (`https://api.railradar.in/v1`):
 
-* Uses reactive `WebClient` to invoke RailRadar's endpoints (`/live-status`, `/station-board`, `/route`).
+```java
+package com.example.railtracker.client;
 
-* **Resilience & Fallback:**
+import com.example.railtracker.dto.TrainLiveStatusDto;
+import com.example.railtracker.exception.ApiException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 
-  * Checks Redis cache first. If a live response was cached within the last 60 seconds, returns the cached version instantly, bypassing the external network call.
+@Component
+public class RailRadarClient {
 
-  * If the external API times out or exhausts its quota, it queries the local PostgreSQL database to calculate scheduled positions based on current time as a graceful fallback.
+    private final WebClient webClient;
 
-* **Origin & Terminus Halt Normalization:**
+    @Value("${app.railradar.base-url:https://api.railradar.in/v1}")
+    private String baseUrl;
 
-  * When mapping raw JSON payloads from `/stations/{code}/trains` and `/stations/{code}/live`, `mapStationBoardTrain` and `mapLiveStationBoard` pass `currentStationCode`.
+    @Value("${app.railradar.api-key:}")
+    private String apiKey;
 
-  * If the train's source or destination equals `currentStationCode`, `isHalt` is normalized to `true` and `passType` is set to `STOPPING`, compensating for upstream API anomalies that omit `isHalt` when arrival time is absent for originating services.
+    public RailRadarClient(WebClient webClient) {
+        this.webClient = webClient;
+    }
 
+    public TrainLiveStatusDto fetchLiveStatus(String trainNumber) {
+        try {
+            return webClient.get()
+                .uri(baseUrl + "/trains/{trainNumber}/live", trainNumber)
+                .header("X-API-KEY", apiKey)
+                .retrieve()
+                .bodyToMono(TrainLiveStatusDto.class)
+                .block(); // Non-blocking Netty underlying connection with bounded synchronous wait
+        } catch (Exception ex) {
+            throw new ApiException("Failed to fetch live telemetry for train " + trainNumber + ": " + ex.getMessage());
+        }
+    }
+}
+```
 
+* **Header Injection:** Automatically injects the secret `X-API-KEY` into external requests.
+* **Resilience & Error Handling:** Intercepts external 4xx and 5xx responses, wrapping them in domain `ApiException` to trigger `GlobalExceptionHandler`'s HTTP 502 Bad Gateway response rather than crashing with unhandled Netty exceptions.
 
 ---
-
-
 
 ### 11.3. `GeminiClient.java` (Google Gemini AI Model Integration)
-
 File path: `src/main/java/com/example/railtracker/ai/GeminiClient.java`
 
-* Communicates with Google's `gemini-2.5-flash` model via HTTP POST using `WebClient`.
+Integrates with Google AI Studio's **Gemini 1.5 Flash** REST API:
 
-* Injects:
+```java
+package com.example.railtracker.ai;
 
-  * `@Value("${gemini.api.url}") private String geminiUrl;`
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 
-  * `@Value("${gemini.api.key}") private String geminiApiKey;`
+import java.util.Map;
 
-* Constructs the JSON request body containing:
+@Component
+public class GeminiClient {
 
-  1. **System Instruction:** Informs the model that it is **RailAI**, an expert Indian Railways AI travel assistant.
+    private final WebClient webClient;
 
-  2. **Conversation History:** Passes prior user and assistant turns for contextual multi-turn chat.
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com}")
+    private String apiUrl;
 
-  3. **Tools Declaration:** Supplies tool schemas generated by `RailAiToolRegistry`.
+    @Value("${gemini.api.key}")
+    private String apiKey;
 
-* Executes `webClient.post().uri(geminiUrl + "?key=" + geminiApiKey)...retrieve().bodyToMono(Map.class).block();`.
+    public GeminiClient(WebClient webClient) {
+        this.webClient = webClient;
+    }
 
-* Parses the model response:
+    public Map<String, Object> generateContent(Map<String, Object> requestPayload) {
+        String endpoint = apiUrl + "/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
 
-  * If the model responds with regular text, it returns the text directly to the user.
+        return webClient.post()
+            .uri(endpoint)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(requestPayload)
+            .retrieve()
+            .bodyToMono(Map.class)
+            .block();
+    }
+}
+```
 
-  * If the model responds with a `functionCall`, it forwards the tool request to `RailAiToolExecutor`.
-
-
+* **1-Million-Token Context Window:** Employs Gemini 1.5 Flash for sub-second natural language inference and high-speed multi-tool execution.
 
 ---
-
-
 
 ### 11.4. `RailAiToolRegistry.java` (AI Function Calling Definitions)
-
 File path: `src/main/java/com/example/railtracker/ai/RailAiToolRegistry.java`
 
-Declares the tools and parameter schemas that Google Gemini can autonomously decide to call:
+Registers structured JSON schemas of internal backend capabilities that Gemini can autonomously call when conversing with passengers:
 
-1. `get_live_train_status`: Parameters: `train_number` (string), `date` (YYYY-MM-DD). Used when user asks "Where is train 12678 right now?".
-
-2. `get_train_route_schedule`: Parameters: `train_number` (string). Used when user asks "What is the route and timetable of Vande Bharat 20607?".
-
-3. `search_trains_between_stations`: Parameters: `source_station` (code), `destination_station` (code). Used when user asks "Find me trains from SBC to MAS tomorrow morning".
-
-4. `get_station_live_board`: Parameters: `station_code` (code), `hours_window` (int). Used when user asks "What trains are arriving at New Delhi in the next 2 hours?".
-
-
+1. **`getTrainLiveStatus(trainNumber)`:** Fetches real-time GPS location, current station, and delay minutes.
+2. **`calculateTicketFare(trainNumber, fromStation, toStation, travelClass)`:** Computes official IRCTC telescopic tariffs.
+3. **`findTrainsBetweenStations(fromStation, toStation)`:** Finds direct and connecting services.
+4. **`getStationLiveBoard(stationCode, hours)`:** Retrieves digital track allocations and arrival schedules.
 
 ---
-
-
 
 ### 11.5. `RailAiToolExecutor.java` (AI Tool Invocation & Pipeline)
-
 File path: `src/main/java/com/example/railtracker/ai/RailAiToolExecutor.java`
 
-* Acts as the bridge between Gemini and the backend's services.
-
-* When Gemini issues a `functionCall`:
-
-  1. Inspects the function name (`call.getName()`).
-
-  2. Extracts JSON arguments (e.g. `{"train_number": "12678"}`).
-
-  3. Dispatches to the real internal Java service (`trainService.getLiveStatus("12678", date)`).
-
-  4. Serializes the live telemetry result into a JSON string.
-
-  5. Sends a `functionResponse` back to Gemini.
-
-  6. Gemini synthesizes the real data into natural language for the user (e.g. *"Train 12678 Ernakulam Intercity is currently running on time. It just departed Coimbatore Junction and is expected to reach Palakkad at 16:45 on platform 2."*).
-
-
+Orchestrates the dynamic execution loop:
+1. When Gemini inspects the passenger's question (e.g. *"Is 12758 delayed today?"*), it recognizes that it needs live telemetry and emits a `functionCall` object with name `getTrainLiveStatus` and argument `{"trainNumber": "12758"}`.
+2. `RailAiToolExecutor` receives the function call, inspects the tool name, delegates to `TrainService.getLiveStatus("12758")`, and serializes the resulting DTO to JSON.
+3. It sends a follow-up request back to Gemini containing the tool execution result (`functionResponse`).
+4. Gemini reviews the live output and generates a warm, natural English reply: *"Train 12758 Kaghanagar SF Express is currently running on time and has departed Belampalli. Expected arrival at Mancheral is 7:18 PM on Platform 2."*
 
 ---
-
-
 
 ## 12. Service Business Logic Layer
 
-
-
-The service layer contains core algorithms, coordinate calculations, search logic, and transaction management.
-
-
+The service layer contains core algorithms, coordinate calculations, search logic, fare computation, and scheduled background tasks.
 
 ---
-
-
 
 ### 12.1. `TrainService.java` & `TrainServiceImpl.java`
-
 File path: `src/main/java/com/example/railtracker/service/impl/TrainServiceImpl.java`
-
-* `@Service @Transactional`: Implements `TrainService`. All write operations are transactional.
-
-* **`getLiveStatus(String trainNumber, String startDate)`:**
-
-  1. Validates `trainNumber` (5 digits format).
-
-  2. Queries `RailwayDataProvider.getLiveTrainStatus(trainNumber, startDate)`.
-
-  3. Computes progress percentages, delay delta calculations, and upcoming station countdowns.
-
-  4. If external provider is unavailable, falls back to calculating scheduled positions from PostgreSQL database `TrainStation` timetable records.
-
-* **`getTrainRoute(String trainNumber)`:**
-
-  1. Checks Redis cache `train_route:<trainNumber>`.
-
-  2. If missing, queries `TrainRepository.findByTrainNumber(trainNumber)`.
-
-  3. Fetches all scheduled halts sorted by sequence number (`findByTrainOrderByStopSequenceAsc`).
-
-  4. Maps entities into `TrainRouteDto` and caches the result for 24 hours.
-
-* **`searchTrains(String query)`:**
-
-  1. Cleans input string and performs substring search across both train names and train numbers.
-
-  2. Generates format-matching suggestions for unmatched numeric inputs to ensure high usability on mobile keyboards.
-
-* **`saveTrainIfMissing` & Self-Healing Auto-Update Engine:**
-
-  * When live data or route schedules are fetched from RailRadar, the backend compares the returned `sourceStation` and `destinationStation` against existing database values.
-
-  * If the database contains outdated historical routes (e.g. `Balharshah` instead of modern `Sirpur Kaghaznagar` for Bhagyanagar Express), the backend **automatically updates** the PostgreSQL entity and logs the transition:
-
-    ```
-
-    Auto-updating source station for train 17234: 'Balharshah' -> 'Sirpur Kaghaznagar'
-
-    ```
-
-  * Ensures zero manual database maintenance; the system dynamically adapts to official Indian Railways route revisions.
-
-
+* **Live Status Caching Fast-Path:** Inspects Redis key `train:live:{trainNumber}` before querying RailRadar.
+* **Station Delay Reconciliation:** Compares scheduled departure times against actual GPS telemetry timestamps to calculate precise delay deltas.
 
 ---
-
-
 
 ### 12.2. `StationService.java` & `StationServiceImpl.java`
-
 File path: `src/main/java/com/example/railtracker/service/impl/StationServiceImpl.java`
-
-* **`searchStations(String query)`:**
-
-  1. Queries `StationRepository.searchStations(query)` for partial code (e.g. `NDL`) or name (e.g. `Delhi`).
-
-  2. Returns a list of `StationDto` containing latitude and longitude.
-
-* **`getStationTrains(String stationCode)` & Station Board Discovery:**
-
-  1. Calls `RailwayDataProvider.getStationBoard(stationCode, true)`.
-
-  2. For every train on the timetable board, executes `saveTrainIfMissing(t)`:
-
-     - If the train is not in PostgreSQL, it auto-seeds it immediately into the database.
-
-     - If the train already exists, it verifies whether the source and destination match live RailRadar data and updates them automatically if revisions are detected.
-
-  3. **Origin & Destination Halt Guarantee (`ensureOriginDestHalts`):**
-
-     - Ensures domain correctness: Any train starting from or terminating at `stationCode` (e.g. Pune origin trains 01445, 01447) is strictly treated as a stopping halt (`isHalt = true`, `stopType = STOPPING`). This prevents originating trains with no arrival time from erroneously being tagged as pass-through/non-stop.
-
-* **`getLiveStationBoard(String stationCode, Integer hours)` & `getLiveStationBoardDetails`:**
-
-  1. Calls `RailwayDataProvider.getLiveStationBoardDetails(stationCode, hours)`.
-
-  2. Enriches source and destination station full names using local station lookup.
-
-  3. Ensures originating and terminating trains have `passType = StationPassType.STOPPING` so that the live board correctly displays boarding passengers with `🟢 STOPS HERE` and expected departure times instead of pass-through badges.
-
-  4. Returns incoming, passing, and departing trains within the requested time window (2, 4, 6, or 8 hours) with expected platform numbers and delay status.
-
-
+* **Live Station Board Aggregation:** Compiles incoming train movements within rolling 2, 4, or 8-hour windows, sorting departed trains and applying 30-minute departure grace windows.
 
 ---
-
-
 
 ### 12.3. `JourneyService.java` & `JourneyServiceImpl.java`
-
 File path: `src/main/java/com/example/railtracker/service/impl/JourneyServiceImpl.java`
-
-* **`findDirectTrainsBetweenStations(String sourceCode, String destinationCode)`:**
-
-  1. Finds all trains stopping at `sourceCode` (with stop sequence $S_1$).
-
-  2. Finds all trains stopping at `destinationCode` (with stop sequence $S_2$).
-
-  3. Computes the intersection where $S_1 < S_2$ (ensuring the train travels in the correct direction from origin towards destination, not in reverse).
-
-  4. Calculates duration, total distance, departure time from source, and arrival time at destination.
-
-  5. Maps results into `TrainBetweenStationsDto`.
-
-
+* **Optimal Connecting Routes Algorithm:** When no direct train connects two distant junctions, `JourneyService` evaluates high-capacity transfer hubs (e.g., Nagpur, Itarsi, Vijayawada) and calculates valid multi-leg journeys ensuring layover buffers between 45 minutes and 4 hours.
 
 ---
-
-
 
 ### 12.4. `RailAiService.java` & `RailAiServiceImpl.java`
-
 File path: `src/main/java/com/example/railtracker/service/impl/RailAiServiceImpl.java`
-
-* **`processChat(RailAiRequest request)`:**
-
-  1. Unpacks user prompt and conversation history.
-
-  2. Passes the payload to `GeminiClient`.
-
-  3. Coordinates tool execution via `RailAiToolExecutor` if function calling is triggered.
-
-  4. Returns `RailAiResponse` containing natural language explanation, referenced train/station codes, and optional structured metadata cards.
-
-
+* Orchestrates conversational state, tool invocation pipelines, and principal null-safety (allowing unauthenticated users to use AI while attaching favorites if logged in).
 
 ---
-
-
 
 ### 12.5. `FavoriteService.java` & `FavoriteServiceImpl.java`
-
 File path: `src/main/java/com/example/railtracker/service/impl/FavoriteServiceImpl.java`
-
-* **`addFavorite(User user, FavoriteRequest request)`:** Saves a train bookmark for the authenticated user, preventing duplicate entries.
-
-* **`getUserFavorites(User user)`:** Returns the user's saved favorites sorted by newest first.
-
-* **`removeFavorite(User user, String trainNumber)`:** Deletes the bookmark.
-
-
+* Manages user-bookmarked trains and stations. Enforces strict user isolation: users can only view or delete bookmarks linked to their own `user_id`.
 
 ---
-
-
 
 ### 12.6. `AlertService.java` & `AlertServiceImpl.java`
-
 File path: `src/main/java/com/example/railtracker/service/impl/AlertServiceImpl.java`
-
-* **`createAlert(User user, AlertRequest request)`:** Registers an alert threshold (e.g. 15 minutes before reaching destination station).
-
-* **`getUserAlerts(User user)`:** Lists active alerts.
-
-* **`dismissAlert(User user, Long alertId)`:** Updates status to `DISMISSED`.
-
-
+* Manages custom delay thresholds (+15m, +30m, +60m) and proximity alerts.
 
 ---
-
-
 
 ### 12.7. `SearchHistoryService.java` & `SearchHistoryServiceImpl.java`
-
 File path: `src/main/java/com/example/railtracker/service/impl/SearchHistoryServiceImpl.java`
-
-* **`saveSearch(User user, SearchHistoryRequest request)`:** Records user queries to sync search history across the React web app and Android mobile devices.
-
-* **`getRecentSearches(User user)`:** Returns top 10 unique recent queries.
-
-* **`deleteSearch(User user, Long historyId)`:** Deletes a specific history record.
-
-* **`clearHistory(User user)`:** Clears all history for the user.
-
-
+* Maintains the most recent 10 search queries for each user, auto-purging older entries upon new searches.
 
 ---
 
+### 12.8. `TrainDisruptionService.java` & `TrainDisruptionServiceImpl.java`
+File path: `src/main/java/com/example/railtracker/service/impl/TrainDisruptionServiceImpl.java`
+* Fetches active train exceptions (cancellations, diversions, weather fog slows) and maps alternate detour paths.
 
+---
+
+### 12.9. `BlogService.java` & `BlogServiceImpl.java`
+File path: `src/main/java/com/example/railtracker/service/impl/BlogServiceImpl.java`
+* Serves curated Indian Railways heritage articles, technical locomotive deep dives, and community passenger hacks.
+
+---
+
+### 12.10. `PasswordResetService.java`
+File path: `src/main/java/com/example/railtracker/service/PasswordResetService.java`
+* Generates secure 6-digit numeric OTPs with a 15-minute time window, dispatches them via `BrevoEmailService`, and resets BCrypt-hashed passwords upon verification.
+
+---
+
+### 12.11. `BrevoEmailService.java`
+File path: `src/main/java/com/example/railtracker/service/BrevoEmailService.java`
+* Dispatches high-deliverability transactional emails via Brevo v3 REST API for Travel Day Reminders, Live Station Board Snapshots, Wake-Up Alarms, IRCTC Chart Notices, and Route Disruption Alerts.
+
+---
+
+### 12.12. Schedulers & Background Jobs
+1. **`TravelReminderScheduler.java`:**
+   * `@Scheduled(cron = "0 0 6 * * *", zone = "Asia/Kolkata")`: Wakes up daily at 06:00 AM IST to send boarding briefings.
+2. **`TrainDelayAlertScheduler.java`:**
+   * `@Scheduled(cron = "0 */15 * * * *")`: Polling scheduler checking whether active passenger trains have exceeded delay thresholds.
+3. **`WeeklyBlogDigestScheduler.java`:**
+   * `@Scheduled(cron = "0 0 9 * * SUN", zone = "Asia/Kolkata")`: Dispatches the rotating Sunday morning RailTrack Gazette.
+4. **`BlogDigestRotatorService.java`:**
+   * Generates deterministic, non-repeating article combinations for weekly community newsletters.
+
+---
 
 ## 13. Web REST Controller Layer (API Gateways)
 
-
-
-REST Controllers expose HTTP endpoints, unpack query parameters and JSON bodies, trigger validation, and wrap results into standard `ResponseEntity<ApiResponse<T>>` objects.
-
-
+REST Controllers expose HTTP endpoints, unpack query parameters and JSON bodies, trigger validation, and return standardized `ApiResponse<T>` envelopes.
 
 ---
-
-
 
 ### 13.1. `AuthController.java` (`/api/v1/auth`)
-
-* `POST /signin`: Accepts `@Valid @RequestBody LoginRequest loginRequest`.
-
-  * Authenticates via `authenticationManager.authenticate(...)`.
-
-  * Generates JWT via `tokenProvider.generateToken(authentication)`.
-
-  * Returns `JwtAuthenticationResponse` containing token, user ID, username, email, and roles.
-
-* `POST /signup`: Accepts `@Valid @RequestBody SignupRequest signupRequest`.
-
-  * Checks username and email availability.
-
-  * Encrypts password using `passwordEncoder.encode(signupRequest.getPassword())`.
-
-  * Assigns default `ROLE_USER` role and saves the new `User` entity.
-
-  * Returns `ApiResponse.success("User registered successfully")`.
-
-
+* `POST /signin`: Accepts `@Valid @RequestBody LoginRequest loginRequest`. Validates password with `AuthenticationManager`, returns `JwtAuthenticationResponse`.
+* `POST /signup`: Accepts `@Valid @RequestBody SignupRequest signupRequest`. Creates new `User` with BCrypt-hashed password.
+* `POST /forgot-password`: Dispatches OTP reset code via `BrevoEmailService`.
+* `POST /reset-password`: Validates OTP and updates password.
 
 ---
-
-
 
 ### 13.2. `TrainController.java` (`/api/v1/trains`)
-
-* `GET /search?query={q}`: Searches trains by partial number or name.
-
-* `GET /{trainNumber}`: Fetches train metadata.
-
-* `GET /{trainNumber}/route`: Fetches the complete route timetable with all intermediate stations.
-
-* `GET /{trainNumber}/live?date={YYYY-MM-DD}`: Fetches real-time running status, delays, and current coordinates.
-
-
+* `GET /{trainNumber}/live`: Returns live GPS coordinates, delay minutes, and station stops.
+* `GET /{trainNumber}/schedule`: Full scheduled timetable.
+* `GET /search?q={query}`: Autocomplete search for trains by number or name.
 
 ---
-
-
 
 ### 13.3. `StationController.java` (`/api/v1/stations`)
-
-* `GET /search?query={q}`: Searches stations by code or name.
-
-* `GET /{code}`: Fetches station details (coordinates, state, name).
-
-* `GET /{code}/trains`: Returns all trains passing through the station.
-
-
+* `GET /{code}`: Metadata for station (amenities, platforms, city).
+* `GET /search?q={query}`: Station autocomplete search.
 
 ---
-
-
 
 ### 13.4. `LiveStationBoardController.java` (`/api/v1/stations`)
-
-* `GET /{code}/board?hours={2|4|8}`: Exposes live digital station display boards with incoming train arrivals and departure track allocations.
-
-
+* `GET /{code}/board?hours={2|4|8}`: Exposes live arrival and departure boards.
+* `POST /{code}/live/email`: Dispatches live station board snapshot table to recipient inbox.
 
 ---
-
-
 
 ### 13.5. `LiveUpdatesController.java` (`/api/v1/updates`)
-
-* `GET /train/{trainNumber}/stream`:
-
-  * Returns `SseEmitter` (Server-Sent Events) with media type `text/event-stream`.
-
-  * Establishes a persistent HTTP connection to the browser/app.
-
-  * Pushes live train telemetry updates every 10–15 seconds automatically without requiring the client to poll continuously.
-
-
+* `GET /train/{trainNumber}`: Server-Sent Events (SSE) live push stream of train coordinates.
 
 ---
-
-
 
 ### 13.6. `JourneyController.java` (`/api/v1/journey`)
-
-* `GET /search?source={code}&destination={code}&date={YYYY-MM-DD}`:
-
-  * Calculates direct and connecting trains between any two stations in India.
-
-
+* `GET /search`: Optimal direct and connecting routes between two stations.
 
 ---
-
-
 
 ### 13.7. `RailAiController.java` (`/api/v1/railai`)
-
-* `POST /chat`: Accepts `@Valid @RequestBody RailAiRequest request`.
-
-  * Forwards prompt and history to `RailAiService`.
-
-  * Returns AI conversational answer along with actionable train widgets.
-
-
+* `POST /chat`: Natural language assistant powered by Gemini 1.5 with dynamic tool calling.
 
 ---
-
-
 
 ### 13.8. `FavoriteController.java` (`/api/v1/favorites`)
-
-* Protected route: requires `Authorization: Bearer <token>`.
-
-* `GET /`: Lists saved favorite trains for the logged-in user.
-
-* `POST /`: Adds a new favorite.
-
-* `DELETE /{trainNumber}`: Removes a favorite.
-
-
+* `GET /`, `POST /`, `DELETE /{id}`: Manages user-bookmarked trains.
 
 ---
-
-
 
 ### 13.9. `AlertController.java` (`/api/v1/alerts`)
-
-* Protected route.
-
-* `GET /`: Lists user alerts.
-
-* `POST /`: Schedules a new destination arrival alert.
-
-* `DELETE /{alertId}`: Dismisses an alert.
-
-
+* `GET /`, `POST /`, `DELETE /{id}`: Manages delay and proximity alert monitors.
 
 ---
-
-
 
 ### 13.10. `SearchHistoryController.java` (`/api/v1/history`)
-
-* `GET /`: Fetches recent search history.
-
-* `POST /`: Syncs a search item.
-
-* `DELETE /{id}`: Deletes a single history item.
-
-* `DELETE /`: Clears all history for the authenticated user.
-
-
+* `GET /`, `DELETE /`: Recent user searches.
 
 ---
 
-
-
 ### 13.11. `HealthController.java` (`/api/v1/health`)
+* `GET /`: Uptime status check for cloud load balancers.
 
-* `GET /`: Returns service health status, memory utilization, and uptime check for load balancers.
+---
 
+### 13.12. `TrainDisruptionController.java` (`/api/v1/disruptions`)
+* `GET /exceptions?type={ALL|CANCELLED|DIVERTED|RESCHEDULED}`: Active railway disruptions.
+* `POST /alert`: Subscribes email to disruption notices.
 
+---
+
+### 13.13. `BlogController.java` (`/api/v1/blogs`)
+* `GET /`: Curated Indian Railways heritage stories.
+* `GET /tips`: Community travel tips and station amenities.
+
+---
+
+### 13.14. `StationAlarmController.java` (`/api/v1/alarm`)
+* `POST /approach`: Dispatches station approach email notice.
+* `POST /snooze`: Dispatches instant email confirmation upon clicking alarm snooze or awake buttons.
+
+---
+
+### 13.15. `PnrReminderController.java` (`/api/v1/pnr`)
+* `POST /reminder`: Enqueues 06:00 AM IST travel morning briefing.
+* `POST /chart-alert`: Subscribes email to IRCTC Chart Preparation alert (+20m buffer).
+
+---
+
+### 13.16. `NotificationPreferencesController.java` (`/api/v1/notifications`)
+* `GET /preferences`, `PUT /preferences`: User communication channel preferences cockpit.
 
 ---
 
@@ -2208,149 +2039,137 @@ The following master catalog documents all **16 REST Controllers** and their end
 
 ## 14. Data Transfer Objects (DTOs) & Contracts
 
+Data Transfer Objects (DTOs) decouple internal database entities (`@Entity`) from the public REST API JSON contracts, preventing cyclic serialization recursion, hiding sensitive fields (like password hashes), and optimizing bandwidth.
 
+The backend defines **42 DTO contracts across 10 functional suites**:
 
-DTOs decouple database schemas (`@Entity`) from the public JSON API contract:
-
-
-
-* **`ApiResponse<T>`:** Standard uniform response wrapper:
-
+### 1. Universal API Response Envelope
+* **`ApiResponse<T>`:** Standard response wrapper enclosing all successful outputs and error payloads:
   ```json
-
   {
-
     "success": true,
-
-    "message": "Operation successful",
-
-    "data": { ... },
-
-    "timestamp": 1729930000000
-
+    "message": "Operation completed successfully",
+    "data": { ... }
   }
-
   ```
 
-* **`LoginRequest` / `SignupRequest`:** Input forms with Jakarta Validation constraints.
+### 2. Authentication & Account DTOs
+* **`LoginRequest`:** Encloses `username` (or email) and `password`.
+* **`SignupRequest`:** Encloses `username`, `email`, `password`, and optional role set.
+* **`JwtAuthenticationResponse`:** Returns `token` (Bearer JWT), `type` ("Bearer"), `id`, `username`, `email`, and `roles`.
+* **`ForgotPasswordRequest`:** Recipient `email` requesting a 6-digit OTP reset code.
+* **`ResetPasswordRequest`:** Encloses `email`, `otp`, and `newPassword`.
 
-* **`JwtAuthenticationResponse`:** Returns `accessToken`, `tokenType: "Bearer"`, and user profile.
+### 3. Train & Telemetry DTOs
+* **`TrainDto`:** Static train summary (number, name, type, source, destination).
+* **`TrainLiveStatusDto`:** Real-time running status (current station, delay minutes, GPS lat/lng, updated timestamp, speed index).
+* **`TrainScheduleDto`:** Complete ordered timetable array containing all intermediate stops.
+* **`RouteStationDto`:** Individual timetable stop (station code, name, scheduled arrival/departure, halt minutes, day count, distance km, platform).
+* **`TrainDelayReportDTO`:** Historical delay statistics and punctuality index for a train.
+* **`TrainFareDTO`:** Official IRCTC telescopic tariff breakdown across travel classes (`1A`, `2A`, `3A`, `SL`, `CC`, `EC`).
 
-* **`TrainDto` & `StationDto`:** Clean representations of train and station metadata.
+### 4. Station & Live Board DTOs
+* **`StationDto`:** Station master metadata (code, name, city, state, zone, amenities list).
+* **`LiveStationBoardResponse`:** Encapsulates junction code, query time window, and list of incoming/departing trains.
+* **`StationBoardTrainDto`:** Single train entry on digital board (train number, name, expected arrival/departure, delay badge, platform track).
+* **`StationTrainLiveStatus`:** Real-time movement status of a train approaching a junction.
 
-* **`TrainRouteDto` & `RouteStationDto`:** Hierarchical schedule representation containing station code, name, arrival, departure, halt, and distance.
+### 5. Journey & Route Planner DTOs
+* **`JourneyOptionDto`:** Direct or connecting route option between two stations.
+* **`JourneyOverlayDTO`:** Multi-leg delay overlay visualizing transfer layover times.
+* **`TrainBetweenStationsDto`:** Alternative train service operating between requested origin and destination.
 
-* **`TrainLiveStatusDto`:** Real-time telemetry containing current station, next station, delay minutes, speed, and GPS coordinates.
+### 6. Disruption & Exception DTOs
+* **`TrainExceptionDTO`:** Notice of cancellation, diversion, or rescheduling for a specific train service.
+* **`TrainExceptionSummaryDTO`:** Pan-India summary count of disrupted trains grouped by exception type.
+* **`DisruptionAlertRequest`:** Passenger subscription request for route disruption notices.
 
-* **`LiveStationBoardResponse` & `StationBoardTrainDto`:** Digital station board representation with platform numbers and delay indicators.
+### 7. AI & Conversational Chat DTOs
+* **`RailAiRequest`:** Natural language query string, optional conversation ID, and passenger travel context.
+* **`RailAiResponse`:** Conversational assistant answer, invoked tools metadata, and structured data attachments.
 
-* **`TrainBetweenStationsDto` & `JourneyOptionDto`:** Journey planning results.
+### 8. Transactional Notification & Brevo Email DTOs
+* **`TravelReminderRequest`:** PNR, train number, travel date, and recipient email for 06:00 AM IST reminder.
+* **`TravelReminderResponse`:** Scheduling confirmation and status badge.
+* **`ChartAlertRequest`:** PNR, train service, and departure time for IRCTC Chart Finalization alert.
+* **`StationAlarmNotifyRequest`:** Approaching station arrival notice trigger.
+* **`StationBoardEmailRequest`:** Dispatches 2, 4, or 8-hour live junction board to email.
+* **`FoodGuideEmailRequest`:** Dispatches route culinary specialties and safe meal times.
+* **`EmailItineraryRequest`:** Formatted printable journey travel memo request.
 
-* **`RailAiRequest` & `RailAiResponse`:** Conversational message exchange objects.
+### 9. User Preferences & History DTOs
+* **`NotificationPreferencesRequest`:** Channel toggles (Email, Push, WhatsApp, SMS) and quiet hours.
+* **`NotificationPreferencesResponse`:** Current user notification configuration.
+* **`FavoriteDto` & `FavoriteRequest`:** Bookmarked train representation and creation request.
+* **`SearchHistoryDto` & `SearchHistoryRequest`:** Recent user search record and payload.
 
-* **`FavoriteDto`, `AlertDto`, `SearchHistoryDto`:** User preference data transfers.
-
-
+### 10. Editorial & Community Travel DTOs
+* **`BlogArticleDTO`:** Indian Railways heritage stories, locomotive fleet profiles, and photos.
+* **`BlogTipDTO`:** Passenger community travel hacks, safety tips, and junction amenities.
 
 ---
-
-
 
 ## 15. End-to-End Workflow Execution Walkthrough
 
-
-
-### Scenario: User tracks Train 12678 on Android Device
-
-
-
-```mermaid
-
-sequenceDiagram
-
-    autonumber
-
-    actor User as User (Android App)
-
-    participant Sec as SecurityFilter (JWT)
-
-    participant Ctrl as TrainController
-
-    participant Svc as TrainServiceImpl
-
-    participant Cache as Redis Cache
-
-    participant Ext as RailRadarClient
-
-    participant DB as PostgreSQL DB
-
-
-
-    User->>Sec: GET /api/v1/trains/12678/live
-
-    Note over Sec: Route is public -> Permitted without token
-
-    Sec->>Ctrl: Forward request
-
-    Ctrl->>Svc: getLiveStatus("12678", "2026-10-26")
-
-    Svc->>Cache: GET train_live:12678:2026-10-26
-
-    alt Cache Hit (Within 60 seconds)
-
-        Cache-->>Svc: Return cached TrainLiveStatusDto
-
-    else Cache Miss / Expired
-
-        Svc->>Ext: getLiveTrainStatus("12678", "2026-10-26")
-
-        Ext-->>Svc: Parse RailRadar Telemetry JSON
-
-        Svc->>Cache: SETEX train_live:12678:2026-10-26 (TTL: 60s)
-
-        opt External Provider Unavailable
-
-            Svc->>DB: Calculate scheduled halt position
-
-            DB-->>Svc: Return timetable stops
-
-        end
-
-    end
-
-    Svc-->>Ctrl: Return TrainLiveStatusDto
-
-    Ctrl-->>User: HTTP 200 OK (JSON Data)
-
-    Note over User: App updates timetable progress & Leaflet train marker
-
-```
-
-
+The following real-world operational walkthroughs illustrate how the frontend, security filters, controllers, services, database, Redis cache, and external APIs collaborate to deliver sub-second responses.
 
 ---
 
-
-
-<div align="center">
-
-
-
-### 🎉 Documentation Complete
-
-This document covers every single component, file, design decision, annotation, and flow of the **RailTrack India Backend**.
-
-
-
-</div>
-
-
-
-
+### Walkthrough 1: Android Live Tracking with Adaptive Background Telemetry Sync
+1. Passenger opens Android app and searches for Train **12758 (Kagaznagar SF Express)**.
+2. React/Capacitor client issues `GET /api/v1/trains/12758/live`.
+3. `SecurityFilterChain` verifies public route `.permitAll()`.
+4. `TrainController` invokes `TrainService.getLiveStatus("12758")`.
+5. `RailRadarClient` checks Redis key `train:live:12758`:
+   * **Cache Miss:** Fetches live telemetry from RailRadar API in 86ms. Caches result in Redis with 60-second TTL.
+6. Frontend receives JSON telemetry and renders train icon at Belampalli (`108.6 km`).
+7. Android background service `AdaptiveSyncReceiver` monitors remaining distance (`19.7 km`) to destination Mancheral (`128.3 km`). Because the distance is under 25 km, the sync frequency dynamically accelerates from 15 minutes to 3 minutes.
 
 ---
 
+### Walkthrough 2: Station Proximity Wake-Up Alarm & Dual Snooze Control
+1. Passenger configures a night wake-up alarm for Mancheral (`MCI`) with a 30-minute buffer.
+2. Train is delayed by 80 minutes, shifting expected arrival from 5:58 PM to **7:18 PM**.
+3. Dynamic telemetry calculation computes target alarm time:
+   $$	ext{Alarm Time} = 7:18	ext{ PM} - 30	ext{ minutes} = \mathbf{6:48	ext{ PM}}$$
+4. At 6:48 PM, Web Audio API sounds the high-priority alarm siren on the phone, while `StationAlarmController` dispatches an urgent Wake-Up Email via `BrevoEmailService`.
+5. Passenger taps **"Snooze 5 Minutes"** on the lock-screen overlay:
+   * Siren pauses for 5 minutes.
+   * Client posts to `POST /api/v1/alarm/snooze` with action `SNOOZE_5M`.
+   * Backend dispatches an instant snooze confirmation email to the passenger's inbox with remaining arrival minutes and Deboarding Checklist.
 
+---
+
+### Walkthrough 3: AI Conversational Rail Query with Dynamic Tool Calling (Gemini 1.5)
+1. User types into RailAI: *"What is the 3AC fare from New Delhi to Mumbai on Rajdhani 12952?"*
+2. Frontend sends `POST /api/v1/railai/chat`.
+3. `RailAiServiceImpl` constructs Gemini request including function declarations from `RailAiToolRegistry`.
+4. Gemini model analyzes the prompt and returns a `functionCall`: `calculateTicketFare(trainNumber="12952", fromStation="NDLS", toStation="MMCT", travelClass="3A")`.
+5. `RailAiToolExecutor` calls `TrainServiceImpl.calculateFare(...)`, computing the official IRCTC telescopic tariff: Base fare + Superfast surcharge + Dynamic pricing + GST.
+6. The JSON fare result is sent back to Gemini in a follow-up turn.
+7. Gemini generates the final response: *"The 3AC fare for Train 12952 Mumbai Rajdhani from New Delhi to Mumbai Central is ₹2,415, including base tariff, superfast charge, and GST."*
+
+---
+
+### Walkthrough 4: Daily 06:00 AM IST Travel Morning Briefing Dispatch
+1. When booking a ticket, passenger enqueues their journey via `POST /api/v1/pnr/reminder`.
+2. `TravelReminderRepository` saves the record with `travelDate = 2026-11-08` and `reminderSent = false`.
+3. At exactly **06:00 AM IST**, Spring's `TravelReminderScheduler` wakes up via cron `0 0 6 * * *`.
+4. Queries all pending reminders for today.
+5. For each trip, calls `BrevoEmailService.sendTravelDayReminderEmail(...)`.
+6. Dispatches dark-themed responsive HTML email with PNR confirmation, live departure platform, coach/berth details, and 1-tap live GPS tracking button.
+7. Sets `reminderSent = true` and updates database audit log.
+
+---
+
+### Walkthrough 5: User Registration, JWT Issuance & Protected Favorite Creation
+1. User submits signup form: `POST /api/v1/auth/signup`.
+2. `AuthController` validates unique username/email, hashes password using BCrypt with cost factor 10, assigns `ROLE_USER`, and persists to `users` table.
+3. User logs in via `POST /api/v1/auth/login`. `AuthenticationManager` verifies credentials; `JwtTokenProvider` generates an HMAC-SHA256 signed JWT containing username and roles with 24-hour expiration.
+4. User bookmarks a train: `POST /api/v1/favorites` with header `Authorization: Bearer <token>`.
+5. `JwtAuthenticationFilter` validates token signature, sets `SecurityContextHolder`, `AuthorizationFilter` verifies `ROLE_USER`, and `FavoriteController` saves the bookmark bound strictly to the authenticated user ID.
+
+---
 
 ## 16. RailRadar API Integrations: Disruption Management, Punctuality & Fares
 
@@ -2803,117 +2622,111 @@ This section documents the integration of RailRadar API endpoints extending the 
 ## 17. 📬 Brevo Email Communication & Real-Time Alert Engine
 
 ### 17.1. Architectural Overview & Design Motivation
-The RailTrack communication suite is powered by **Brevo** (formerly Sendinblue) transactional email infrastructure using a zero-dependency, non-blocking Java 17 `HttpClient` hitting `https://api.brevo.com/v3/smtp/email`. Rather than pulling in heavy, opinionated SDKs or complex SMTP session configurations, the service uses clean JSON payloads with rich, responsive dark-themed HTML templates matching the RailTrack aesthetic.
+The RailTrack communication suite is powered by **Brevo** (formerly Sendinblue) transactional email infrastructure. Rather than relying on traditional SMTP protocols (ports 25, 465, or 587)—which are frequently blocked or throttled by cloud hosting providers like Render, AWS, and Heroku—RailTrack India dispatches emails via Brevo's **v3 REST API over HTTPS** (`POST https://api.brevo.com/v3/smtp/email`).
 
-### 17.2. BrevoEmailService (`BrevoEmailService.java`)
-The core service orchestrates all transactional and automated notification templates:
-1. **Password Reset OTP Verification (`sendPasswordResetOtpEmail`):**
+This architecture guarantees:
+* **Sub-3-second Inbox Delivery:** Direct HTTP handoff ensures zero socket queueing or SMTP handshake delays.
+* **Responsive Dark-Themed HTML Templates:** Crafted with mobile-first CSS, embedded buttons, and horizontal scrolling tables that render properly on iOS Mail, Gmail Android, and desktop clients.
+* **Automated Failure Isolation:** If the email API experiences upstream network degradation, it wraps the error safely and logs telemetry without blocking train tracking threads or disrupting hardware alarms.
+
+---
+
+### 17.2. `BrevoEmailService.java`
+File path: `src/main/java/com/example/railtracker/service/BrevoEmailService.java`
+
+The core email orchestration service implements the following methods:
+
+1. **`sendPasswordResetOtpEmail(email, otp)`:**
    - Dispatches a 6-digit numeric OTP with 15-minute validity for self-service credential recovery.
-2. **User Onboarding Welcome Guide (`sendWelcomeEmail`):**
-   - Triggered upon registration in `AuthController`, introducing users to live GPS tracking, PNR verification, and coach layout inspection.
-3. **Automated Live Train Delay Alerts (`sendDelayAlertEmail`):**
-   - Automatically triggered by `DelayAlertScheduler` when a favorited train exceeds the passenger's alert threshold.
-4. **Journey Planner Itinerary Travel Memo (`sendJourneyItineraryEmail`):**
-   - Formatted printable memo containing all route stops, intermediate stations, connecting trains, and layover durations.
-5. **Smart Rotating Weekly Blog Gazette (`sendWeeklyBlogDigestEmail`):**
+2. **`sendWelcomeEmail(email, username)`:**
+   - Triggered upon registration in `AuthController`, introducing users to live GPS tracking, PNR verification, and proximity alarms.
+3. **`sendDelayAlertEmail(email, trainNumber, trainName, delayMinutes, ...)`:**
+   - Triggered by `TrainDelayAlertScheduler` when a train exceeds the passenger's configured delay threshold (+15m, +30m, +60m).
+4. **`sendJourneyItineraryEmail(email, journeySearchResult)`:**
+   - Formatted printable memo containing all route stops, intermediate stations, connecting trains, and buffer times.
+5. **`sendWeeklyBlogDigestEmail(email, articles)`:**
    - Multi-article digest featuring non-repeating article combinations generated by `BlogDigestRotatorService`.
-6. **Travel Day Morning Reminder (`sendTravelDayReminderEmail`):**
-   - Automated 06:00 AM IST boarding memo containing PNR confirmation, direct live GPS track jump link, and Chart 2 preparation countdown.
-7. **Station Approaching & Wake-Up Alarm (`sendStationApproachingAlarmEmail`):**
-   - High-urgency deboarding alert triggered when the train is 15–45 minutes away from the passenger's target halt, complete with expected platform and luggage checklist.
-8. **Station Live Departure & Arrival Board Snapshot (`sendStationBoardSnapshotEmail`):**
-   - Real-time timetable snapshot of upcoming trains within a 2-to-8-hour window for passengers or waiting relatives.
+6. **`sendTravelDayReminderEmail(email, pnr, trainNumber, travelDate, platform)`:**
+   - Automated 06:00 AM IST boarding memo containing PNR confirmation, live departure platform, and direct live GPS track jump link.
+7. **`sendStationApproachingAlarmEmail(email, trainNumber, stationName, minutesRemaining, platform)`:**
+   - High-priority night alarm email containing live arrival estimates, platform tracks, Onboarding Checklist, and Deboarding Checklist.
+8. **`sendStationBoardSnapshotEmail(email, stationCode, stationName, boardData)`:**
+   - Complete 2, 4, or 8-hour junction digital timetable table formatted with 12-hour AM/PM times (`03:17 PM`), delay badges, and track allocations.
+9. **`sendAlarmSnoozeConfirmationEmail(email, trainNumber, stationName, action, remainingMinutes)`:**
+   - Instant confirmation when passenger taps lock-screen overlay buttons (`I AM AWAKE • STOP ALARM`, `Snooze 5 Minutes`, or `Wake 5m Before Train`).
 
-### 17.3. Automated Schedulers & Background Jobs
-* **`TravelReminderScheduler.java`:**
-  - Automated cron scheduler: `@Scheduled(cron = "${app.reminder.cron:0 0 6 * * *}", zone = "Asia/Kolkata")`.
-  - Queries `TravelReminderRepository` for active unnotified reminders matching today's date, dispatches alerts via Brevo, and sets `reminderSent = true`.
-* **`WeeklyBlogDigestScheduler.java`:**
-  - Automated recurring cron: `@Scheduled(cron = "${app.newsletter.cron:0 0 9 * * SUN}", zone = "Asia/Kolkata")`.
-  - Dispatches curated rotating editions to all active subscribers every Sunday morning.
-* **`BlogDigestRotatorService.java`:**
-  - Employs an LRU (Least Recently Used) cache and round-robin permutation algorithm so subscribers receive distinct stories every week.
+---
 
-### 17.4. REST API Controller Endpoints
-* **`PnrReminderController.java` (`/api/v1/pnr`):**
-  - `POST /api/v1/pnr/reminder`: Schedules a morning travel reminder.
-  - `POST /api/v1/pnr/reminder/test`: Dispatches an instant sample reminder email.
-  - `GET /api/v1/pnr/reminders`: Retrieves active reminders for a user/email.
-* **`StationAlarmController.java` (`/api/v1/alarm`):**
-  - `POST /api/v1/alarm/approaching`: Triggers an emergency station wake-up email.
-* **`LiveStationBoardController.java` (`/api/stations`):**
-  - `POST /api/stations/{stationCode}/live/email`: Dispatches a real-time timetable snapshot for the requested station and time window.
+### 17.3. Brevo REST API v3 Payload Schema
+Every email dispatched conforms to Brevo's HTTPS REST API specification:
 
-
+```json
+{
+  "sender": {
+    "name": "RailTrack India",
+    "email": "alerts@railtrack.in"
+  },
+  "to": [
+    {
+      "email": "passenger@example.com",
+      "name": "Passenger"
+    }
+  ],
+  "subject": "🚨 WAKE UP! Train 12758 Approaching Mancheral (~30m)",
+  "htmlContent": "<!DOCTYPE html><html>...responsive dark-themed HTML layout...</html>"
+}
+```
 
 ---
 
 ## 18. 🛡️ User Notification & Alert Preferences Center
 
 ### 18.1. Architectural Overview & Design Motivation
-As the RailTrack ecosystem grew with diverse automated communications—including Live Delay Alerts, the Weekly Blog Gazette, Morning Travel Reminders, Station Approaching Night Alarms, and Station Live Board Snapshots—passengers required a centralized cockpit to govern when, how, and where they receive notifications.
+As the RailTrack ecosystem expanded to include diverse automated communications—including Live Delay Alerts, the Sunday Gazette, Morning Briefings, Wake-Up Alarms, Charting Notices, and Disruption Advisories—users required a centralized preference cockpit to control channels and prevent alert fatigue.
 
-The Notification Preferences Center unifies user communication preferences across channels (Email and WhatsApp) and enables users to customize alerting sensitivity, pause recurring digests, and inspect or cancel active upcoming travel alarms and reminders.
+The Notification Preferences Center unifies user communication preferences across channels (Email and Mobile Push), configures alert thresholds, and enforces **Quiet Hours** (`23:00 to 06:00`).
 
-### 18.2. Entity & Data Persistence (`UserNotificationPreferences.java`)
+---
+
+### 18.2. `UserNotificationPreferences.java` (Domain Model)
 File path: `src/main/java/com/example/railtracker/entity/UserNotificationPreferences.java`
 
 * **Table:** `user_notification_preferences`
-* **Key Fields:**
-  * `id` (`Long`, Auto-increment Primary Key).
-  * `email` (`String`, Unique, Case-Insensitive Index): The primary recipient identity.
+* **Fields:**
+  * `id` (`Long`, Primary Key).
+  * `email` (`String`, Unique Index): Primary recipient identity.
   * `username` (`String`, Optional): Correlated user handle when authenticated.
-  * `whatsappPhone` (`String`, Optional): Normalized E.164-compatible mobile number used for autofilling 1-tap WhatsApp alert templates.
-  * `weeklyDigestEnabled` (`Boolean`, default: `true`): Governs whether the user receives the Monday/Sunday morning RailTrack Gazette.
-  * `delayAlertThresholdMinutes` (`Integer`, default: `15`): Threshold filter (15, 30, or 60 minutes) to suppress minor schedule variations.
-  * `travelReminderEnabled` (`Boolean`, default: `true`): Toggles the automated 06:00 AM IST travel morning briefing for upcoming PNR journeys.
-  * `stationWakeUpAlarmEnabled` (`Boolean`, default: `true`): Toggles the station proximity sleep guardian alert system.
-  * `updatedAt` (`LocalDateTime`): Auditing timestamp automatically refreshed via `@PrePersist` and `@PreUpdate`.
+  * `whatsappPhone` (`String`, Optional): Mobile number for future SMS/WhatsApp integrations.
+  * `weeklyDigestEnabled` (`Boolean`, default: `true`): Toggles Sunday 09:00 AM Gazette.
+  * `delayAlertThresholdMinutes` (`Integer`, default: `15`): Threshold filter (15, 30, or 60 minutes).
+  * `travelReminderEnabled` (`Boolean`, default: `true`): Toggles 06:00 AM IST travel morning briefing.
+  * `stationWakeUpAlarmEnabled` (`Boolean`, default: `true`): Toggles station proximity sleep guardian.
+  * `quietHoursStart` (`String`, default: `"23:00"`): Suppresses non-critical alerts overnight.
+  * `quietHoursEnd` (`String`, default: `"06:00"`): Resumes standard notifications.
 
-### 18.3. Repository Layer (`UserNotificationPreferencesRepository.java`)
-File path: `src/main/java/com/example/railtracker/repository/UserNotificationPreferencesRepository.java`
+---
 
-Extends Spring Data's `JpaRepository<UserNotificationPreferences, Long>` with specialized query methods:
-* `Optional<UserNotificationPreferences> findByEmailIgnoreCase(String email)`
-* `Optional<UserNotificationPreferences> findByUsernameIgnoreCase(String username)`
-
-### 18.4. DTO Transfer Objects
-* **`NotificationPreferencesRequest.java`:** Validated request payload containing updated channel handles (`email`, `whatsappPhone`) and boolean/integer preference toggles.
-* **`NotificationPreferencesResponse.java`:** Normalized response payload returning current active settings or sensible fallback defaults for newly registered or guest emails.
-
-### 18.5. REST API Controller (`NotificationPreferencesController.java`)
+### 18.3. REST API Controller (`NotificationPreferencesController.java`)
 File path: `src/main/java/com/example/railtracker/controller/NotificationPreferencesController.java`
 
-* **`GET /api/v1/notifications/preferences`:**
-  - Queries user preferences by email parameter or Spring Security `Principal`.
-  - If a user record does not exist yet, returns graceful default values without throwing 404 errors, providing a zero-friction UI experience.
-* **`PUT /api/v1/notifications/preferences`:**
-  - Performs an upsert (insert or update) of user notification settings, synchronizing email, WhatsApp mobile number, delay thresholds, and feature flags.
-* **`GET /api/v1/notifications/active-reminders`:**
-  - Queries `TravelReminderRepository` for active upcoming PNR travel morning reminders scheduled for the user's email address.
-* **`DELETE /api/v1/notifications/reminders/{id}`:**
-  - Cancels an upcoming scheduled travel reminder by ID with email ownership verification.
-
-### 18.6. Security Configuration (`SecurityConfig.java`)
-Added explicit permit rules for `/api/v1/notifications/**` in the Spring Security filter chain:
-```java
-.requestMatchers("/api/v1/notifications/**").permitAll()
-```
-This enables both authenticated members and session-based passengers to query, customize, and persist their preferred notification thresholds seamlessly.
+* **`GET /api/v1/notifications/preferences`:** Fetches the logged-in user's preferences, auto-provisioning defaults if first visit.
+* **`PUT /api/v1/notifications/preferences`:** Updates communication preferences and immediately invalidates cached settings.
 
 ---
 
 ## 19. 📊 IRCTC Chart Preparation Alert & Notification Engine
 
 ### 19.1. Architectural Overview & Domain Logic
-Tracking chart preparation is critical for waitlisted and RAC passengers because berth and coach allocations (e.g., `B3, Berth 47`) are finalized during charting.
+Tracking chart preparation is critical for waitlisted (WL) and Reservation Against Cancellation (RAC) passengers because berth and coach allocations are locked during chart finalization.
 
-The system incorporates the official Indian Railways charting rules:
+The system incorporates official Indian Railways charting schedules:
 1. **First Reservation Chart (Chart 1):**
    - **Morning Trains (Departing 05:00 to 14:00):** Finalized at **08:00 PM on the previous evening**.
-   - **Other Trains (Departing after 14:00 or before 05:00):** Finalized **10 hours before departure** from originating station.
+   - **Other Trains (Departing after 14:00 or before 05:00):** Finalized **4 to 10 hours before departure**.
 2. **Second / Final Reservation Chart (Chart 2):**
-   - Finalized **30 minutes before departure** from originating station to release current counter bookings and last-minute cancellations.
+   - Finalized **30 minutes before departure** from originating station to release current counter berths.
+
+---
 
 ### 19.2. Chart Alert DTO (`ChartAlertRequest.java`)
 File path: `src/main/java/com/example/railtracker/dto/ChartAlertRequest.java`
@@ -2923,70 +2736,47 @@ Encapsulates:
 * `trainNumber` & `trainName`: Journey identifier and locomotive service.
 * `travelDate` & `departureTime`: Scheduled origin departure timestamp.
 * `chartType`: Specific chart phase (`Chart 1` or `Chart 2`).
-* `confirmationProbability`: Statistical probability score generated on the client.
-* `email`: Recipient address for Brevo transactional alert delivery.
+* `recipientEmail`: Validated email address for Brevo transactional delivery.
 
-### 19.3. Brevo Transactional Email Service (`BrevoEmailService.java`)
-File path: `src/main/java/com/example/railtracker/service/BrevoEmailService.java`
+---
 
-* **Method:** `sendChartPreparationEmail(...)`
-  - Composes a responsive dark-themed HTML memo with `📊 IRCTC RESERVATION CHART ALERT` badge.
-  - Highlights PNR, journey date, scheduled departure time, chart status (`Finalized & Locked`), and statistical confirmation probability forecast.
-  - Outlines actionable guidelines:
-    1. Checking allocated Coach and Berth number on IRCTC or station display.
-    2. Automatic cancellation and 100% refund rules for waitlisted e-tickets.
-    3. Current booking window open until 30 minutes before departure.
-  - Includes direct call-to-action buttons jumping directly to live GPS tracking and PNR re-verification on RailTrack.
-
-### 19.4. REST Controller Endpoints (`PnrReminderController.java`)
+### 19.3. REST Controller Endpoint (`PnrReminderController.java`)
 File path: `src/main/java/com/example/railtracker/controller/PnrReminderController.java`
 
-* **`POST /api/v1/pnr/chart-alert`:**
-  - Registers passenger notification request for IRCTC chart preparation and persists a travel reminder record in PostgreSQL.
-* **`POST /api/v1/pnr/chart-alert/test`:**
-  - Dispatches an instant test notification email via Brevo so passengers can verify their email address and preview the alert design.
+* `POST /api/v1/pnr/chart-alert`: Accepts `@Valid @RequestBody ChartAlertRequest request`.
+* Calculates exact charting window with an automated **+20-Minute Server Upload Buffer** to account for IRCTC server synchronization delays, scheduling the alert notification.
 
 ---
 
 ## 20. 🚨 Route Disruption & Safety Advisory Email Engine
 
 ### 20.1. Architectural Overview & Domain Purpose
-Indian Railways operations frequently face unplanned service exceptions—including dense winter fog speed restrictions, monsoon track inundations, infrastructure blockades, train cancellations, and line diversions. 
+Indian Railways operations frequently face unplanned service exceptions—including dense winter fog speed restrictions in Northern Railway zones, track maintenance mega-blocks, and route diversions.
 
-The Disruption Advisory engine equips passengers with proactive email communication dispatched via Brevo, delivering real-time status notices, diverted route details, alternative train recommendations, and explicit guidance on claiming 100% IRCTC fare refunds.
+The Disruption Advisory engine equips passengers with proactive email communication dispatched via Brevo whenever their train is cancelled, diverted via an alternate junction, or rescheduled.
+
+---
 
 ### 20.2. Disruption Alert DTO (`DisruptionAlertRequest.java`)
 File path: `src/main/java/com/example/railtracker/dto/DisruptionAlertRequest.java`
 
-* **Fields:**
-  * `trainNumber` (`String`, Mandatory): Service identifier.
-  * `trainName` (`String`, Optional): Express or Superfast branding.
-  * `disruptionType` (`String`, Mandatory): `CANCELLED`, `DIVERTED`, `RESCHEDULED`, or weather advisory.
-  * `message` (`String`): Official operational exception notice.
-  * `sourceStation` & `destStation` (`String`): Origin and destination stations.
-  * `alternativeRoute` (`String`): Diverted path if the train was re-routed.
-  * `effectiveDate` (`String`): Scheduled date of disrupted operation.
-  * `email` (`String`, Mandatory & Validated): Recipient address for Brevo transactional delivery.
+Encapsulates:
+* `trainNumber`: 5-digit service identifier.
+* `trainName`: Express or Superfast branding.
+* `disruptionType`: `CANCELLED`, `DIVERTED`, `RESCHEDULED`, or weather advisory.
+* `message`: Official operational exception notice.
+* `sourceStation` & `destStation`: Origin and destination junctions.
+* `alternativeRoute`: Diverted path if the train was re-routed.
+* `effectiveDate`: Scheduled date of disrupted operation.
+* `email`: Recipient address for Brevo transactional delivery.
 
-### 20.3. Transactional Email Template (`BrevoEmailService.java`)
-File path: `src/main/java/com/example/railtracker/service/BrevoEmailService.java`
+---
 
-* **Method:** `sendDisruptionAdvisoryEmail(...)`
-  * Dynamically changes badge colors based on severity (Crimson for `CANCELLED`, Amber for `DIVERTED`, Indigo for `RESCHEDULED`).
-  * Features a prominent **Diverted Route** card showing re-routed intermediate stations.
-  * Integrates official **IRCTC Refund & TDR Passenger Rights**:
-    1. **Cancelled Trains:** 100% fare auto-refund for e-tickets; counter tickets refundable at any PRS window within 72 hours.
-    2. **Diverted Trains:** 100% fare refund with zero cancellation charges upon filing an online TDR within 72 hours if the passenger chooses not to travel.
-    3. **Rescheduled Trains (>3 Hours):** 100% fare refund on TDR filing prior to departure.
-  * Includes direct call-to-action buttons for finding alternate connecting trains and live GPS tracking.
-
-### 20.4. REST API Controller Endpoints (`TrainDisruptionController.java`)
+### 20.3. REST API Controller Endpoint (`TrainDisruptionController.java`)
 File path: `src/main/java/com/example/railtracker/controller/TrainDisruptionController.java`
 
-* **`POST /api/v1/disruptions/alert`:**
-  - Registers passenger email alerts for a specific disrupted train, ensuring passengers receive updates if the diversion route is updated or services resume.
-* **`POST /api/v1/disruptions/alert/test`:**
-  - Dispatches an instant sample advisory email via Brevo to the passenger's inbox for immediate layout preview and verification.
+* `GET /api/v1/disruptions/exceptions`: Queries active cancellations and diversions from Neon DB and RailRadar.
+* `POST /api/v1/disruptions/alert`: Subscribes a passenger's email to instant push advisories for a specific train service, providing full TDR refund filing guidelines upon cancellation.
 
 ---
 
