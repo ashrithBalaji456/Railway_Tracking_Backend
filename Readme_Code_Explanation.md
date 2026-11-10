@@ -3232,3 +3232,21 @@ When passengers configure a **Physical Landmark Station Alarm** (e.g., 2 station
    * Whether triggered by dynamic GPS ETA or by physical arrival at a 2-stop-prior landmark, the Brevo v3 transactional email is dispatched with the exact platform track and deboarding checklist, keeping the passenger informed on all channels.
 
 ---
+
+### 21.5. Serving Operational Telemetry Metadata for Client-Side Overview Dashboards
+
+#### Architecture
+The Train Operational Telemetry Card on the frontend requires key operational attributes (`runningDays`, `distance`, `duration`, `haltMinutes`, and sectional track speeds). The backend architecture provides this via existing high-performance endpoints without requiring new schema migrations:
+
+1. **Train Master Metadata (`/api/v1/trains/{trainNumber}`):**
+   * Delivers `trainNumber`, `trainName`, `trainType`, `sourceStation`, `destinationStation`, `runningDays`, total `distance` (in kilometers), and `duration` (in minutes).
+   * Data is cached in Redis with high TTL for ultra-fast page initial load times.
+
+2. **Route Halts & Permissible Sectional Speeds (`/api/v1/trains/{trainNumber}/schedule`):**
+   * Delivers the complete array of route stations with `distance` markers, `haltMinutes`, `platform`, and sectional speed ceilings (`speedToNextStationKmph`).
+   * Allows the frontend to calculate true passenger halt counts and sectional maximum speeds without incurring database write overhead.
+
+3. **Consecutive Return Train Parity Matching:**
+   * Because Indian Railways adheres strictly to the $N \pm 1$ consecutive numbering schema for rake turnaround pairings, client-side parity calculation instantly routes to the return train, which is seamlessly resolved by the backend train search and caching layers.
+
+---
