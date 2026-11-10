@@ -3200,3 +3200,35 @@ The following master dispatch matrix details all **14 notification and alert ser
 | **14. Alarm Snooze Dispatch** | Overlay Button Click (`AWAKE`/`SNOOZE`) | Instant on click | Active Traveler | Confirmation Email | Proof of alarm acknowledgment, remaining arrival minutes, safety checklist. |
 
 ---
+
+### 21.4. Intermediate Station Milestone & Non-Stopping Waypoint Alarm Architecture (Zero Backend Disturbance)
+
+#### Backend Architecture & Zero-Touch Compatibility:
+When passengers configure a **Physical Landmark Station Alarm** (e.g., 2 stations prior to destination, or an intermediate non-stopping passing station), the backend handles this with **Zero API Code Modifications**:
+
+1. **Station Independence of the Alarm Controller:**
+   The endpoint `POST /api/v1/alarm/approaching` takes the standard payload:
+   ```json
+   {
+     "email": "passenger@example.com",
+     "trainNumber": "12758",
+     "trainName": "Kagaznagar SF Express",
+     "stationName": "Belampalli",
+     "stationCode": "BPA",
+     "platform": "2",
+     "etaMinutes": 5
+   }
+   ```
+   * The controller (`StationAlarmController.java`) and email renderer (`BrevoEmailService.java`) do not hardcode destination assumptions.
+   * If the user anchors their alarm to **Belampalli (BPA)** (2 stations before Mancheral) or an intermediate passing loop, the backend formats and sends the high-priority approaching memo specifically naming that landmark station.
+
+2. **Route Timetable & Passing Station Delivery:**
+   * `TrainController.java` (`GET /api/v1/trains/{trainNumber}/schedule`) serves the complete ordered array of stations along the route.
+   * Stopping stations include scheduled arrival/departure times and halt durations (`haltMinutes > 0`).
+   * Non-stopping passing stations are marked with `haltMinutes == 0` or passing flags.
+   * Because the station sequence is fully deterministic and ordered by distance and sequence number, the client can compute relative offsets (such as $N - 1$ or $N - 2$ stations) without adding new database tables or backend endpoints.
+
+3. **Guaranteed Transactional Email Delivery:**
+   * Whether triggered by dynamic GPS ETA or by physical arrival at a 2-stop-prior landmark, the Brevo v3 transactional email is dispatched with the exact platform track and deboarding checklist, keeping the passenger informed on all channels.
+
+---
