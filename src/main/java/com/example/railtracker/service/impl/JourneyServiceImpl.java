@@ -46,34 +46,53 @@ public class JourneyServiceImpl implements JourneyService {
     private record ScoredOption(JourneyOptionDto option, double score) {}
     private record StationDist(String code, double dist, int weight) {}
 
-    private static final Map<String, List<String>> TERMINAL_CLUSTERS = Map.ofEntries(
-            Map.entry("SC", List.of("SC", "HYB", "KCG", "CHZ")),
-            Map.entry("HYB", List.of("SC", "HYB", "KCG", "CHZ")),
-            Map.entry("KCG", List.of("SC", "HYB", "KCG", "CHZ")),
-            Map.entry("CHZ", List.of("SC", "HYB", "KCG", "CHZ")),
-            Map.entry("NDLS", List.of("NDLS", "NZM", "DLI", "ANVT")),
-            Map.entry("NZM", List.of("NDLS", "NZM", "DLI", "ANVT")),
-            Map.entry("DLI", List.of("NDLS", "NZM", "DLI", "ANVT")),
-            Map.entry("ANVT", List.of("NDLS", "NZM", "DLI", "ANVT")),
-            Map.entry("CSMT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
-            Map.entry("MMCT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
-            Map.entry("BDTS", List.of("CSMT", "MMCT", "BDTS", "LTT")),
-            Map.entry("LTT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
-            Map.entry("DR", List.of("CSMT", "MMCT", "BDTS", "LTT")),
-            Map.entry("HWH", List.of("HWH", "SDAH", "KOAA")),
-            Map.entry("SDAH", List.of("HWH", "SDAH", "KOAA")),
-            Map.entry("KOAA", List.of("HWH", "SDAH", "KOAA")),
-            Map.entry("MAS", List.of("MAS", "MS", "TBM")),
-            Map.entry("MS", List.of("MAS", "MS", "TBM")),
-            Map.entry("SBC", List.of("SBC", "YPR", "SMVB")),
-            Map.entry("YPR", List.of("SBC", "YPR", "SMVB")),
-            Map.entry("SMVB", List.of("SBC", "YPR", "SMVB")),
-            Map.entry("WL", List.of("WL", "KZJ")),
-            Map.entry("KZJ", List.of("WL", "KZJ")),
-            Map.entry("TPTY", List.of("TPTY", "RU")),
-            Map.entry("RU", List.of("TPTY", "RU")),
-            Map.entry("BZA", List.of("BZA"))
-    );
+    private static final Map<String, List<String>> TERMINAL_CLUSTERS = new HashMap<>();
+    static {
+        // Hyderabad / Secunderabad: SC, HYB, KCG, CHZ (New 4th coaching terminal), LPI (West/IT terminal)
+        registerCluster(List.of("SC", "HYB", "KCG", "CHZ", "LPI"));
+        // Delhi NCR: NDLS, DLI, NZM, ANVT (East terminal), DEE (Sarai Rohilla), DEC (Delhi Cantt), GZB (Ghaziabad)
+        registerCluster(List.of("NDLS", "DLI", "NZM", "ANVT", "DEE", "DEC", "GZB"));
+        // Mumbai MMR: CSMT, MMCT, BDTS, LTT, DR (Dadar), BVI (Borivali outer WR halt), TNA (Thane), KYN (Kalyan), PNVL (Panvel)
+        registerCluster(List.of("CSMT", "MMCT", "BDTS", "LTT", "DR", "BVI", "TNA", "KYN", "PNVL"));
+        // Pune: PUNE, SVJR (Shivajinagar), HDP (Hadapsar new coaching terminal), CCH (Chinchwad)
+        registerCluster(List.of("PUNE", "SVJR", "HDP", "CCH"));
+        // Kolkata: HWH, SDAH, KOAA (Chitpur), SHM (Shalimar), SRC (Santragachi outer bypass)
+        registerCluster(List.of("HWH", "SDAH", "KOAA", "SHM", "SRC"));
+        // Chennai: MAS, MS (Egmore), TBM (Tambaram coaching terminal), PER (Perambur North outer bypass)
+        registerCluster(List.of("MAS", "MS", "TBM", "PER"));
+        // Bengaluru: SBC, YPR, SMVB (Sir M Visvesvaraya Baiyappanahalli), BNC (Bangalore Cantt), KJM (Krishnarajapuram East bypass)
+        registerCluster(List.of("SBC", "YPR", "SMVB", "BNC", "KJM"));
+        // Ahmedabad: ADI, SBT (Sabarmati BG), SBIB (Sabarmati BG), MAN (Maninagar)
+        registerCluster(List.of("ADI", "SBT", "SBIB", "MAN"));
+        // Surat: ST, UDN (Udhna Jn bypass)
+        registerCluster(List.of("ST", "UDN"));
+        // Patna: PNBE, PPTA (Patliputra bypass terminal), DNR (Danapur West terminal), RJPB (Rajendra Nagar)
+        registerCluster(List.of("PNBE", "PPTA", "DNR", "RJPB"));
+        // Vijayawada: BZA, RYP (Rayanapadu outer bypass for trains skipping BZA)
+        registerCluster(List.of("BZA", "RYP"));
+        // Visakhapatnam: VSKP, DVD (Duvvada outer bypass)
+        registerCluster(List.of("VSKP", "DVD"));
+        // Varanasi: BSB, BSBS (Banaras Terminal), DDU (Pt. Deen Dayal Upadhyaya / Mughalsarai)
+        registerCluster(List.of("BSB", "BSBS", "DDU"));
+        // Bhopal: BPL, RKMP (Rani Kamalapati)
+        registerCluster(List.of("BPL", "RKMP"));
+        // Jaipur: JP, GADJ (Gandhinagar Jaipur), DKBJ (Dahar Ka Balaji)
+        registerCluster(List.of("JP", "GADJ", "DKBJ"));
+        // Lucknow: LKO, LJN, ASH (Aishbagh), BNZ (Badshahnagar)
+        registerCluster(List.of("LKO", "LJN", "ASH", "BNZ"));
+        // Warangal: WL, KZJ (Kazipet Jn)
+        registerCluster(List.of("WL", "KZJ"));
+        // Tirupati: TPTY, RU (Renigunta Jn outer junction)
+        registerCluster(List.of("TPTY", "RU"));
+        // Coimbatore: CBE, CBF (Coimbatore North), PTJ (Podanur Jn bypass)
+        registerCluster(List.of("CBE", "CBF", "PTJ"));
+    }
+
+    private static void registerCluster(List<String> stations) {
+        for (String stn : stations) {
+            TERMINAL_CLUSTERS.put(stn.toUpperCase(), stations);
+        }
+    }
 
     private final Map<String, CacheEntry<List<TrainBetweenStationsDto>>> directTrainsCache = new ConcurrentHashMap<>();
     private final Map<String, CacheEntry<List<JourneyOptionDto>>> journeysPlanCache = new ConcurrentHashMap<>();
