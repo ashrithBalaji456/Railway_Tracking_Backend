@@ -56,7 +56,9 @@ public class DataInitializer implements CommandLineRunner {
             String division,
             String zone,
             String district,
-            String state
+            String state,
+            Double latitude,
+            Double longitude
     ) {}
 
     private static final Map<String, double[]> KNOWN_COORDINATES = Map.ofEntries(
@@ -97,12 +99,8 @@ public class DataInitializer implements CommandLineRunner {
 
     public void seedStations() {
         long currentCount = stationRepository.count();
-        if (currentCount >= 8000) {
-            logger.info("Station database already contains {} stations. Skipping seed.", currentCount);
-            return;
-        }
 
-        logger.info("Seeding Indian Railway stations into database from stations_data.json...");
+        logger.info("Checking Indian Railway stations in database (current count: {})...", currentCount);
         try (InputStream is = getClass().getResourceAsStream("/stations_data.json")) {
             if (is == null) {
                 logger.error("stations_data.json not found in classpath!");
@@ -125,8 +123,8 @@ public class DataInitializer implements CommandLineRunner {
                 existingCodes.add(code);
 
                 double[] coords = KNOWN_COORDINATES.get(code);
-                Double lat = coords != null ? coords[0] : null;
-                Double lon = coords != null ? coords[1] : null;
+                Double lat = coords != null ? coords[0] : r.latitude();
+                Double lon = coords != null ? coords[1] : r.longitude();
 
                 Station st = new Station(
                         r.serialNumber(),
@@ -151,7 +149,7 @@ public class DataInitializer implements CommandLineRunner {
                     });
                     totalNew += batchToSave.size();
                     chunk.clear();
-                    logger.info("Seeded batch of {} stations (total seeded: {})", batchToSave.size(), totalNew);
+                    logger.info("Seeded batch of {} stations (total new: {})", batchToSave.size(), totalNew);
                 }
             }
 
@@ -162,10 +160,40 @@ public class DataInitializer implements CommandLineRunner {
                 });
                 totalNew += batchToSave.size();
                 chunk.clear();
-                logger.info("Seeded final batch of {} stations (total seeded: {})", batchToSave.size(), totalNew);
+                logger.info("Seeded final batch of {} stations (total new: {})", batchToSave.size(), totalNew);
             }
 
-            logger.info("Successfully seeded {} Indian Railway stations into database!", totalNew);
+            if (totalNew > 0) {
+                logger.info("Successfully seeded {} new Indian Railway stations into database!", totalNew);
+            }
+
+            // Backfill coordinates for existing stations that have null latitude
+            Map<String, double[]> coordsMap = new HashMap<>(KNOWN_COORDINATES);
+            for (StationSeedRecord r : records) {
+                if (r.stationCode() != null && r.latitude() != null && r.longitude() != null) {
+                    coordsMap.putIfAbsent(r.stationCode().trim().toUpperCase(), new double[]{r.latitude(), r.longitude()});
+                }
+            }
+
+            List<Station> existingStations = stationRepository.findAll();
+            List<Station> toUpdate = new ArrayList<>();
+            for (Station s : existingStations) {
+                if (s.getLatitude() == null && s.getStationCode() != null) {
+                    double[] c = coordsMap.get(s.getStationCode().trim().toUpperCase());
+                    if (c != null) {
+                        s.setLatitude(c[0]);
+                        s.setLongitude(c[1]);
+                        toUpdate.add(s);
+                    }
+                }
+            }
+            if (!toUpdate.isEmpty()) {
+                logger.info("Backfilling coordinates for {} existing stations in database...", toUpdate.size());
+                transactionTemplate.executeWithoutResult(status -> {
+                    stationRepository.saveAll(toUpdate);
+                });
+                logger.info("Successfully updated coordinates for {} stations!", toUpdate.size());
+            }
         } catch (Exception e) {
             logger.error("Failed to seed stations from stations_data.json", e);
         }
