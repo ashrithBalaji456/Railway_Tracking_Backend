@@ -839,7 +839,7 @@ public class JourneyServiceImpl implements JourneyService {
         nearby.sort(Comparator.comparingInt(StationDist::weight).thenComparingDouble(StationDist::dist));
         List<String> res = new ArrayList<>();
         res.add(upper);
-        int maxLimit = isDestination ? 3 : 2; // Tightly bound hub count to prevent API query explosion
+        int maxLimit = isDestination ? 4 : 3; // Origin includes up to 2 nearest major hubs (e.g. RVKH -> MCI, RDM)
         for (StationDist sd : nearby) {
             if (!res.contains(sd.code())) {
                 res.add(sd.code());
