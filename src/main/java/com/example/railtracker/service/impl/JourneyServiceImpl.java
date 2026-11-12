@@ -86,6 +86,66 @@ public class JourneyServiceImpl implements JourneyService {
         registerCluster(List.of("TPTY", "RU"));
         // Coimbatore: CBE, CBF (Coimbatore North), PTJ (Podanur Jn bypass)
         registerCluster(List.of("CBE", "CBF", "PTJ"));
+        // Kochi / Ernakulam: ERS, ERN, AWY (Aluva)
+        registerCluster(List.of("ERS", "ERN", "AWY"));
+        // Thiruvananthapuram: TVC, KCVL (Kochuveli satellite terminal)
+        registerCluster(List.of("TVC", "KCVL"));
+        // Bhubaneswar / Cuttack: BBS, BBSN (Bhubaneswar New), CTC
+        registerCluster(List.of("BBS", "BBSN", "CTC"));
+        // Guwahati: GHY, KYQ (Kamakhya Jn)
+        registerCluster(List.of("GHY", "KYQ"));
+        // Godavari Valley (Coal Belt) Corridor: MCI, RDM, BPA, SKZR, PDPL
+        registerCluster(List.of("MCI", "RDM", "BPA", "SKZR", "PDPL"));
+        // Vadodara / Chhayapuri bypass: BRC, CYI
+        registerCluster(List.of("BRC", "CYI"));
+        // Nagpur / Ajni: NGP, AJNI
+        registerCluster(List.of("NGP", "AJNI"));
+        // Kanpur / Govindpuri: CNB, GOY
+        registerCluster(List.of("CNB", "GOY"));
+        // Prayagraj / Chheoki: PRYJ, PCOI
+        registerCluster(List.of("PRYJ", "PCOI"));
+        // Agra: AGC, AF, RKM
+        registerCluster(List.of("AGC", "AF", "RKM"));
+        // Gwalior: GWL, BLNR
+        registerCluster(List.of("GWL", "BLNR"));
+        // Jabalpur: JBP, MML
+        registerCluster(List.of("JBP", "MML"));
+        // Indore: INDB, LMNR
+        registerCluster(List.of("INDB", "LMNR"));
+        // Kota: KOTA, SGAC (Sogaria bypass), DKNT
+        registerCluster(List.of("KOTA", "SGAC", "DKNT"));
+        // Jodhpur: JU, BGKT (Bhagat Ki Kothi)
+        registerCluster(List.of("JU", "BGKT"));
+        // Amritsar: ASR, BEAS
+        registerCluster(List.of("ASR", "BEAS"));
+        // Ludhiana: LDH, DDL (Dhandari Kalan)
+        registerCluster(List.of("LDH", "DDL"));
+        // Jalandhar: JUC, JRC (Jalandhar Cantt)
+        registerCluster(List.of("JUC", "JRC"));
+        // Kharagpur / Hijli bypass: KGP, HIJ
+        registerCluster(List.of("KGP", "HIJ"));
+        // Siliguri / New Jalpaiguri: NJP, SGUJ
+        registerCluster(List.of("NJP", "SGUJ"));
+        // Dhanbad / Gomoh bypass: DHN, GMO
+        registerCluster(List.of("DHN", "GMO"));
+        // Jamshedpur: TATA, ADTP
+        registerCluster(List.of("TATA", "ADTP"));
+        // Ranchi: RNC, HTE
+        registerCluster(List.of("RNC", "HTE"));
+        // Raipur / Durg: R, DURG, BPHB
+        registerCluster(List.of("R", "DURG", "BPHB"));
+        // Bilaspur / Uslapur bypass: BSP, USL
+        registerCluster(List.of("BSP", "USL"));
+        // Haridwar / Dehradun: HW, DDN
+        registerCluster(List.of("HW", "DDN"));
+        // Jammu / Katra: JAT, SVDK
+        registerCluster(List.of("JAT", "SVDK"));
+        // Hubballi / Dharwad: UBL, DWR
+        registerCluster(List.of("UBL", "DWR"));
+        // Mangaluru: MAQ, MAJN
+        registerCluster(List.of("MAQ", "MAJN"));
+        // Kakinada / Samalkot: SLO, CCT, COA
+        registerCluster(List.of("SLO", "CCT", "COA"));
     }
 
     private static void registerCluster(List<String> stations) {
