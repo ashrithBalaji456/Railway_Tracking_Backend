@@ -37,8 +37,9 @@ public class JourneyController {
     public ResponseEntity<ApiResponse<List<JourneyOptionDto>>> planJourney(
             @RequestParam String source,
             @RequestParam String destination,
-            @RequestParam(required = false) String date) {
-        List<JourneyOptionDto> plan = journeyService.planJourney(source, destination, date);
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false, defaultValue = "false") boolean nearby) {
+        List<JourneyOptionDto> plan = journeyService.planJourney(source, destination, date, nearby);
         return ResponseEntity.ok(ApiResponse.success(plan));
     }
 

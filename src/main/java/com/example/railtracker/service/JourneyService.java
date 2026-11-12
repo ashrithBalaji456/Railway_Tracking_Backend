@@ -6,7 +6,11 @@ import java.util.List;
 
 public interface JourneyService {
 
-    List<JourneyOptionDto> planJourney(String sourceCode, String destinationCode, String date);
+    default List<JourneyOptionDto> planJourney(String sourceCode, String destinationCode, String date) {
+        return planJourney(sourceCode, destinationCode, date, false);
+    }
+
+    List<JourneyOptionDto> planJourney(String sourceCode, String destinationCode, String date, boolean nearby);
 
     JourneyOverlayDTO getJourneyOverlay(Object requestBody);
 }

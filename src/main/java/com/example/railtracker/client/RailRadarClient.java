@@ -939,7 +939,7 @@ public class RailRadarClient {
 
                     String directRunDays = extractRunDays(train);
                     if (directRunDays == null || directRunDays.isBlank()) {
-                        directRunDays = "mon,tue,wed,thu,fri,sat,sun";
+                        directRunDays = extractRunDays(item);
                     }
 
                     result.add(new JourneyOptionDto(
@@ -1047,33 +1047,31 @@ public class RailRadarClient {
 
     private String extractRunDays(JsonNode trainNode) {
         if (trainNode == null) return null;
-        if (trainNode.has("runDays")) {
-            JsonNode rd = trainNode.get("runDays");
-            if (rd.isArray()) {
-                List<String> days = new ArrayList<>();
-                rd.forEach(d -> {
-                    String s = d.asText().trim().toLowerCase();
-                    if (!s.isBlank()) days.add(s);
-                });
-                if (!days.isEmpty()) return String.join(",", days);
-            } else if (rd.isTextual() && !rd.asText().isBlank()) {
-                return rd.asText().trim().toLowerCase();
-            }
-        }
-        if (trainNode.has("runningDays") && !trainNode.get("runningDays").asText().isBlank()) {
-            return trainNode.get("runningDays").asText().trim().toLowerCase();
-        }
-        if (trainNode.has("days")) {
-            JsonNode dNode = trainNode.get("days");
-            if (dNode.isArray()) {
-                List<String> days = new ArrayList<>();
-                dNode.forEach(d -> {
-                    String s = d.asText().trim().toLowerCase();
-                    if (!s.isBlank()) days.add(s);
-                });
-                if (!days.isEmpty()) return String.join(",", days);
-            } else if (dNode.isTextual() && !dNode.asText().isBlank()) {
-                return dNode.asText().trim().toLowerCase();
+        String[] keys = {"runDays", "runningDays", "days", "runsOn", "running_days", "run_days", "runs_on"};
+        for (String k : keys) {
+            if (trainNode.has(k)) {
+                JsonNode rd = trainNode.get(k);
+                if (rd.isArray()) {
+                    List<String> days = new ArrayList<>();
+                    rd.forEach(d -> {
+                        String s = d.asText().trim().toLowerCase();
+                        if (!s.isBlank()) days.add(s);
+                    });
+                    if (!days.isEmpty()) return String.join(",", days);
+                } else if (rd.isObject()) {
+                    List<String> days = new ArrayList<>();
+                    rd.fieldNames().forEachRemaining(dayKey -> {
+                        JsonNode val = rd.get(dayKey);
+                        if ((val.isBoolean() && val.asBoolean()) 
+                                || (val.isNumber() && val.asInt() > 0) 
+                                || (val.isTextual() && val.asText().equalsIgnoreCase("true"))) {
+                            days.add(dayKey.trim().toLowerCase());
+                        }
+                    });
+                    if (!days.isEmpty()) return String.join(",", days);
+                } else if (rd.isTextual() && !rd.asText().isBlank()) {
+                    return rd.asText().trim().toLowerCase();
+                }
             }
         }
         return null;

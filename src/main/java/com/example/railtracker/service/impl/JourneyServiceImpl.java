@@ -5,6 +5,7 @@ import com.example.railtracker.dto.JourneyOverlayDTO;
 import com.example.railtracker.dto.TrainBetweenStationsDto;
 import com.example.railtracker.entity.Train;
 import com.example.railtracker.entity.TrainStation;
+import com.example.railtracker.entity.Station;
 import com.example.railtracker.repository.StationRepository;
 import com.example.railtracker.repository.TrainRepository;
 import com.example.railtracker.repository.TrainStationRepository;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +30,25 @@ public class JourneyServiceImpl implements JourneyService {
     private final RailwayDataProvider railwayDataProvider;
     private final StationRepository stationRepository;
     private final TrainRepository trainRepository;
+
+    private static class CacheEntry<T> {
+        final T data;
+        final long timestamp;
+        CacheEntry(T data) {
+            this.data = data;
+            this.timestamp = System.currentTimeMillis();
+        }
+        boolean isExpired(long ttlMs) {
+            return System.currentTimeMillis() - timestamp > ttlMs;
+        }
+    }
+
+    private record ScoredOption(JourneyOptionDto option, double score) {}
+    private record StationDist(String code, double dist, int weight) {}
+
+    private final Map<String, CacheEntry<List<TrainBetweenStationsDto>>> directTrainsCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry<List<JourneyOptionDto>>> journeysPlanCache = new ConcurrentHashMap<>();
+    private static final long CACHE_TTL_MS = 5 * 60 * 1000L; // 5 minutes cache TTL
 
     public JourneyServiceImpl(
             TrainStationRepository trainStationRepository,
@@ -43,11 +64,17 @@ public class JourneyServiceImpl implements JourneyService {
     @Override
     @Transactional
     public List<JourneyOptionDto> planJourney(String sourceCode, String destinationCode, String date) {
+        return planJourney(sourceCode, destinationCode, date, false);
+    }
+
+    @Override
+    @Transactional
+    public List<JourneyOptionDto> planJourney(String sourceCode, String destinationCode, String date, boolean nearby) {
         if (sourceCode == null || destinationCode == null) return List.of();
         
         String src = sourceCode.trim().toUpperCase();
         String dst = destinationCode.trim().toUpperCase();
-        logger.info("Solving journeys from '{}' to '{}' with date '{}'", src, dst, date);
+        logger.info("Solving journeys from '{}' to '{}' with date '{}', nearby: {}", src, dst, date, nearby);
         
         List<JourneyOptionDto> options = new ArrayList<>();
         Set<String> seenTrainKeys = new HashSet<>();
@@ -212,56 +239,110 @@ public class JourneyServiceImpl implements JourneyService {
         // =========================================================================
         // 2. Query RailRadar External Multi-Stop Route Planner (/v1/journeys/plan) & Direct Trains
         // =========================================================================
-        try {
-            List<JourneyOptionDto> multiStopOptions = railwayDataProvider.planMultiStopJourneys(List.of(src, dst), date, 1);
-            if (multiStopOptions != null && !multiStopOptions.isEmpty()) {
-                for (JourneyOptionDto opt : multiStopOptions) {
-                    String key = opt.direct() ? opt.firstTrainNumber() : (opt.firstTrainNumber() + "_" + opt.transferStationCode() + "_" + opt.secondTrainNumber());
-                    if (key != null && !seenTrainKeys.contains(key)) {
-                        seenTrainKeys.add(key);
-                        options.add(opt);
-                    }
+        String planCacheKey = src + "_" + dst + "_" + (date != null ? date : "");
+        CacheEntry<List<JourneyOptionDto>> cachedPlan = journeysPlanCache.get(planCacheKey);
+        List<JourneyOptionDto> multiStopOptions;
+        if (cachedPlan != null && !cachedPlan.isExpired(CACHE_TTL_MS)) {
+            multiStopOptions = cachedPlan.data;
+        } else {
+            try {
+                // Exactly 1 call to /v1/journeys/plan per route
+                multiStopOptions = railwayDataProvider.planMultiStopJourneys(List.of(src, dst), date, 1);
+                if (multiStopOptions != null) {
+                    journeysPlanCache.put(planCacheKey, new CacheEntry<>(multiStopOptions));
                 }
+            } catch (Exception e) {
+                logger.warn("External RailRadar /v1/journeys/plan query between '{}' and '{}' failed: {}", src, dst, e.getMessage());
+                multiStopOptions = List.of();
             }
-        } catch (Exception e) {
-            logger.warn("External RailRadar /v1/journeys/plan query between '{}' and '{}' failed: {}", src, dst, e.getMessage());
         }
 
-        try {
-            List<TrainBetweenStationsDto> directTrains = railwayDataProvider.getTrainsBetweenStations(src, dst, date);
-            if (directTrains != null && !directTrains.isEmpty()) {
-                String fromName = resolveStationName(src);
-                String toName = resolveStationName(dst);
-                
-                for (TrainBetweenStationsDto t : directTrains) {
-                    if (t.trainNumber() != null && !seenTrainKeys.contains(t.trainNumber())) {
-                        seenTrainKeys.add(t.trainNumber());
+        if (multiStopOptions != null && !multiStopOptions.isEmpty()) {
+            for (JourneyOptionDto opt : multiStopOptions) {
+                String key = opt.direct() ? opt.firstTrainNumber() : (opt.firstTrainNumber() + "_" + opt.transferStationCode() + "_" + opt.secondTrainNumber());
+                if (key != null && !seenTrainKeys.contains(key)) {
+                    seenTrainKeys.add(key);
+                    options.add(opt);
+                }
+            }
+        }
+
+        // Direct trains with corridor cluster expansion when nearby=true
+        List<String> srcHubs = nearby ? getNearbyStations(src, 55.0) : List.of(src);
+        List<String> dstHubs = nearby ? getNearbyStations(dst, 35.0) : List.of(dst);
+
+        Map<String, ScoredOption> trainDeduplicationMap = new HashMap<>();
+
+        for (String sCode : srcHubs) {
+            for (String dCode : dstHubs) {
+                if (sCode.equalsIgnoreCase(dCode)) continue;
+
+                String directCacheKey = sCode + "_" + dCode + "_" + (date != null ? date : "");
+                CacheEntry<List<TrainBetweenStationsDto>> cachedDirect = directTrainsCache.get(directCacheKey);
+                List<TrainBetweenStationsDto> directList;
+                if (cachedDirect != null && !cachedDirect.isExpired(CACHE_TTL_MS)) {
+                    directList = cachedDirect.data;
+                } else {
+                    try {
+                        directList = railwayDataProvider.getTrainsBetweenStations(sCode, dCode, date);
+                        if (directList != null) {
+                            directTrainsCache.put(directCacheKey, new CacheEntry<>(directList));
+                        }
+                    } catch (Exception e) {
+                        logger.warn("External direct train query between '{}' and '{}' failed: {}", sCode, dCode, e.getMessage());
+                        directList = List.of();
+                    }
+                }
+
+                if (directList != null && !directList.isEmpty()) {
+                    String fromName = resolveStationName(sCode);
+                    String toName = resolveStationName(dCode);
+                    double distFromUserSrc = getDistanceBetween(src, sCode);
+                    double distToUserDst = getDistanceBetween(dst, dCode);
+
+                    for (TrainBetweenStationsDto t : directList) {
+                        if (t.trainNumber() == null) continue;
                         saveTrainIfMissing(t);
-                        double dist = Math.round((t.durationMinutes() / 60.0) * 55.0 * 10.0) / 10.0;
-                        options.add(new JourneyOptionDto(
-                                true,
-                                t.trainNumber(),
-                                t.trainName(),
-                                src,
-                                fromName,
-                                t.departureTime(),
-                                dst,
-                                toName,
-                                t.arrivalTime(),
-                                null, null, null, null, null, null,
-                                0, null,
-                                t.durationMinutes(),
-                                t.runningDays(),
-                                null,
-                                dist,
-                                null,
-                                dist
-                        ));
+
+                        // Score: exact user origin gets +100; closer distance gets higher score
+                        double score = (sCode.equalsIgnoreCase(src) ? 100.0 : Math.max(0.0, 50.0 - distFromUserSrc))
+                                     + (dCode.equalsIgnoreCase(dst) ? 100.0 : Math.max(0.0, 50.0 - distToUserDst));
+
+                        ScoredOption existing = trainDeduplicationMap.get(t.trainNumber());
+                        if (existing == null || score > existing.score()) {
+                            double dist = Math.round((t.durationMinutes() / 60.0) * 55.0 * 10.0) / 10.0;
+                            JourneyOptionDto opt = new JourneyOptionDto(
+                                    true,
+                                    t.trainNumber(),
+                                    t.trainName(),
+                                    sCode,
+                                    fromName,
+                                    t.departureTime(),
+                                    dCode,
+                                    toName,
+                                    t.arrivalTime(),
+                                    null, null, null, null, null, null,
+                                    0, null,
+                                    t.durationMinutes(),
+                                    t.runningDays(),
+                                    null,
+                                    dist,
+                                    null,
+                                    dist
+                            );
+                            trainDeduplicationMap.put(t.trainNumber(), new ScoredOption(opt, score));
+                        }
                     }
                 }
             }
-        } catch (Exception e) {
-            logger.warn("External direct train query between '{}' and '{}' failed: {}", src, dst, e.getMessage());
+        }
+
+        // Add deduplicated direct trains to options
+        for (ScoredOption so : trainDeduplicationMap.values()) {
+            if (!seenTrainKeys.contains(so.option().firstTrainNumber())) {
+                seenTrainKeys.add(so.option().firstTrainNumber());
+                options.add(so.option());
+            }
         }
 
         // =========================================================================
@@ -542,6 +623,75 @@ public class JourneyServiceImpl implements JourneyService {
         }
         
         return durationSecs / 60;
+    }
+
+    private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 6371.0 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    private double getDistanceBetween(String code1, String code2) {
+        if (code1 == null || code2 == null || code1.equalsIgnoreCase(code2)) return 0.0;
+        Optional<Station> s1 = stationRepository.findByStationCode(code1.trim().toUpperCase());
+        Optional<Station> s2 = stationRepository.findByStationCode(code2.trim().toUpperCase());
+        if (s1.isPresent() && s2.isPresent() && s1.get().getLatitude() != null && s2.get().getLatitude() != null) {
+            return haversineKm(s1.get().getLatitude(), s1.get().getLongitude(), s2.get().getLatitude(), s2.get().getLongitude());
+        }
+        return 25.0;
+    }
+
+    private int getCategoryWeight(String category) {
+        if (category == null) return 15;
+        return switch (category.toUpperCase()) {
+            case "NSG1" -> 1;
+            case "NSG2" -> 2;
+            case "NSG3" -> 3;
+            case "NSG4" -> 4;
+            case "NSG5" -> 5;
+            case "NSG6" -> 6;
+            case "SG1" -> 7;
+            case "SG2" -> 8;
+            case "SG3" -> 9;
+            default -> 12;
+        };
+    }
+
+    private List<String> getNearbyStations(String stationCode, double radiusKm) {
+        if (stationCode == null) return List.of();
+        String upper = stationCode.trim().toUpperCase();
+        Optional<Station> opt = stationRepository.findByStationCode(upper);
+        if (opt.isEmpty() || opt.get().getLatitude() == null || opt.get().getLongitude() == null) {
+            return List.of(upper);
+        }
+        Station origin = opt.get();
+        double lat1 = origin.getLatitude();
+        double lon1 = origin.getLongitude();
+
+        List<Station> all = stationRepository.findAll();
+        List<StationDist> nearby = new ArrayList<>();
+        for (Station s : all) {
+            if (s.getLatitude() == null || s.getLongitude() == null) continue;
+            if (s.getStationCode().equalsIgnoreCase(upper)) continue;
+            if (Math.abs(s.getLatitude() - lat1) > 0.65 || Math.abs(s.getLongitude() - lon1) > 0.65) continue;
+            double dist = haversineKm(lat1, lon1, s.getLatitude(), s.getLongitude());
+            if (dist <= radiusKm) {
+                nearby.add(new StationDist(s.getStationCode(), dist, getCategoryWeight(s.getNewCategory())));
+            }
+        }
+        nearby.sort(Comparator.comparingInt(StationDist::weight).thenComparingDouble(StationDist::dist));
+        List<String> res = new ArrayList<>();
+        res.add(upper);
+        for (StationDist sd : nearby) {
+            if (!res.contains(sd.code())) {
+                res.add(sd.code());
+            }
+            if (res.size() >= 5) break;
+        }
+        return res;
     }
 
     @Override
