@@ -46,6 +46,33 @@ public class JourneyServiceImpl implements JourneyService {
     private record ScoredOption(JourneyOptionDto option, double score) {}
     private record StationDist(String code, double dist, int weight) {}
 
+    private static final Map<String, List<String>> TERMINAL_CLUSTERS = Map.ofEntries(
+            Map.entry("SC", List.of("SC", "HYB", "KCG")),
+            Map.entry("HYB", List.of("SC", "HYB", "KCG")),
+            Map.entry("KCG", List.of("SC", "HYB", "KCG")),
+            Map.entry("NDLS", List.of("NDLS", "NZM", "DLI", "ANVT")),
+            Map.entry("NZM", List.of("NDLS", "NZM", "DLI", "ANVT")),
+            Map.entry("DLI", List.of("NDLS", "NZM", "DLI", "ANVT")),
+            Map.entry("ANVT", List.of("NDLS", "NZM", "DLI", "ANVT")),
+            Map.entry("CSMT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
+            Map.entry("MMCT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
+            Map.entry("BDTS", List.of("CSMT", "MMCT", "BDTS", "LTT")),
+            Map.entry("LTT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
+            Map.entry("HWH", List.of("HWH", "SDAH", "KOAA")),
+            Map.entry("SDAH", List.of("HWH", "SDAH", "KOAA")),
+            Map.entry("KOAA", List.of("HWH", "SDAH", "KOAA")),
+            Map.entry("MAS", List.of("MAS", "MS", "TBM")),
+            Map.entry("MS", List.of("MAS", "MS", "TBM")),
+            Map.entry("SBC", List.of("SBC", "YPR", "SMVB")),
+            Map.entry("YPR", List.of("SBC", "YPR", "SMVB")),
+            Map.entry("SMVB", List.of("SBC", "YPR", "SMVB")),
+            Map.entry("WL", List.of("WL", "KZJ")),
+            Map.entry("KZJ", List.of("WL", "KZJ")),
+            Map.entry("TPTY", List.of("TPTY", "RU")),
+            Map.entry("RU", List.of("TPTY", "RU")),
+            Map.entry("BZA", List.of("BZA"))
+    );
+
     private final Map<String, CacheEntry<List<TrainBetweenStationsDto>>> directTrainsCache = new ConcurrentHashMap<>();
     private final Map<String, CacheEntry<List<JourneyOptionDto>>> journeysPlanCache = new ConcurrentHashMap<>();
     private static final long CACHE_TTL_MS = 5 * 60 * 1000L; // 5 minutes cache TTL
@@ -268,8 +295,8 @@ public class JourneyServiceImpl implements JourneyService {
         }
 
         // Direct trains with corridor cluster expansion when nearby=true
-        List<String> srcHubs = nearby ? getNearbyStations(src, 55.0) : List.of(src);
-        List<String> dstHubs = nearby ? getNearbyStations(dst, 35.0) : List.of(dst);
+        List<String> srcHubs = nearby ? getNearbyStations(src, 55.0, false) : List.of(src);
+        List<String> dstHubs = nearby ? getNearbyStations(dst, 35.0, true) : List.of(dst);
 
         Map<String, ScoredOption> trainDeduplicationMap = new HashMap<>();
 
@@ -660,9 +687,15 @@ public class JourneyServiceImpl implements JourneyService {
         };
     }
 
-    private List<String> getNearbyStations(String stationCode, double radiusKm) {
+    private List<String> getNearbyStations(String stationCode, double radiusKm, boolean isDestination) {
         if (stationCode == null) return List.of();
         String upper = stationCode.trim().toUpperCase();
+
+        // 1. If part of known major city terminal cluster, return strictly the primary terminals
+        if (TERMINAL_CLUSTERS.containsKey(upper)) {
+            return TERMINAL_CLUSTERS.get(upper);
+        }
+
         Optional<Station> opt = stationRepository.findByStationCode(upper);
         if (opt.isEmpty() || opt.get().getLatitude() == null || opt.get().getLongitude() == null) {
             return List.of(upper);
@@ -673,9 +706,16 @@ public class JourneyServiceImpl implements JourneyService {
 
         List<Station> all = stationRepository.findAll();
         List<StationDist> nearby = new ArrayList<>();
+
+        // Strict category filter: Only NSG1-NSG4 commercial stations are eligible as major corridor hubs.
+        // Wayside halts, small flag stations (NSG5/NSG6/SG/HG), and suburban MMTS stations like Moula Ali (MLY),
+        // Ghatkesar (GT), and Charlapalli (CHZ) are strictly excluded to avoid fruitless queries and API quota exhaustion.
+        Set<String> allowedCategories = Set.of("NSG1", "NSG2", "NSG3", "NSG4");
+
         for (Station s : all) {
             if (s.getLatitude() == null || s.getLongitude() == null) continue;
             if (s.getStationCode().equalsIgnoreCase(upper)) continue;
+            if (s.getNewCategory() == null || !allowedCategories.contains(s.getNewCategory().toUpperCase())) continue;
             if (Math.abs(s.getLatitude() - lat1) > 0.65 || Math.abs(s.getLongitude() - lon1) > 0.65) continue;
             double dist = haversineKm(lat1, lon1, s.getLatitude(), s.getLongitude());
             if (dist <= radiusKm) {
@@ -685,11 +725,12 @@ public class JourneyServiceImpl implements JourneyService {
         nearby.sort(Comparator.comparingInt(StationDist::weight).thenComparingDouble(StationDist::dist));
         List<String> res = new ArrayList<>();
         res.add(upper);
+        int maxLimit = isDestination ? 3 : 2; // Tightly bound hub count to prevent API query explosion
         for (StationDist sd : nearby) {
             if (!res.contains(sd.code())) {
                 res.add(sd.code());
             }
-            if (res.size() >= 5) break;
+            if (res.size() >= maxLimit) break;
         }
         return res;
     }
