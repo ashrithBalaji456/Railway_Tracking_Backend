@@ -1739,6 +1739,9 @@ public class RailRadarClient {
 
 * **Header Injection:** Automatically injects the secret `X-API-KEY` into external requests.
 * **Resilience & Error Handling:** Intercepts external 4xx and 5xx responses, wrapping them in domain `ApiException` to trigger `GlobalExceptionHandler`'s HTTP 502 Bad Gateway response rather than crashing with unhandled Netty exceptions.
+* **Dynamic Operating Days Extraction (`extractRunDays`):**
+  - Robustly extracts true operating days (`"mon,tue,wed,..."` or `"1111111"`) across multiple schema variations (`runDays`, `runningDays`, or `days`), handling both JSON arrays (`["MON", "TUE"]`) and delimited strings.
+  - Replaces legacy hardcoded `"Daily"` fallbacks in `mapTrainsBetweenResponse` and `mapJourneysPlanResponse` so the client accurately displays only active operational days for direct trains and transfer legs.
 
 ---
 
