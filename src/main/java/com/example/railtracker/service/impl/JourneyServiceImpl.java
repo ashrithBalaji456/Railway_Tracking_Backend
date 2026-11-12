@@ -58,6 +58,7 @@ public class JourneyServiceImpl implements JourneyService {
             Map.entry("MMCT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
             Map.entry("BDTS", List.of("CSMT", "MMCT", "BDTS", "LTT")),
             Map.entry("LTT", List.of("CSMT", "MMCT", "BDTS", "LTT")),
+            Map.entry("DR", List.of("CSMT", "MMCT", "BDTS", "LTT")),
             Map.entry("HWH", List.of("HWH", "SDAH", "KOAA")),
             Map.entry("SDAH", List.of("HWH", "SDAH", "KOAA")),
             Map.entry("KOAA", List.of("HWH", "SDAH", "KOAA")),
