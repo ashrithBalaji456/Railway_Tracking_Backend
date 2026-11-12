@@ -577,12 +577,7 @@ public class RailRadarClient {
             JsonNode from = item.get("from");
             JsonNode to = item.get("to");
             
-            String runDaysStr = "";
-            if (train != null && train.has("runDays") && train.get("runDays").isArray()) {
-                List<String> days = new ArrayList<>();
-                train.get("runDays").forEach(d -> days.add(d.asText()));
-                runDaysStr = String.join(",", days);
-            }
+            String runDaysStr = extractRunDays(train);
             
             list.add(new RailRadarTrainBetweenStations(
                 train != null ? text(train, "number") : null,
@@ -942,6 +937,11 @@ public class RailRadarClient {
                     LocalTime depTime = parseLocalTime(depStr);
                     LocalTime arrTime = parseLocalTime(arrStr);
 
+                    String directRunDays = extractRunDays(train);
+                    if (directRunDays == null || directRunDays.isBlank()) {
+                        directRunDays = "mon,tue,wed,thu,fri,sat,sun";
+                    }
+
                     result.add(new JourneyOptionDto(
                         true,
                         trainNum,
@@ -955,7 +955,7 @@ public class RailRadarClient {
                         null, null, null, null, null, null,
                         0, null,
                         durMins != null ? durMins : 0,
-                        "Daily", null,
+                        directRunDays, null,
                         distKm, null, distKm
                     ));
                 }
@@ -1011,6 +1011,9 @@ public class RailRadarClient {
                         Double dist1 = doubleVal(leg1, "distanceKm");
                         Double dist2 = doubleVal(leg2, "distanceKm");
 
+                        String firstRunDays = extractRunDays(t1Train);
+                        String secondRunDays = extractRunDays(t2Train);
+
                         result.add(new JourneyOptionDto(
                             false,
                             firstNum,
@@ -1030,7 +1033,8 @@ public class RailRadarClient {
                             waitMins != null ? waitMins : 0,
                             risk,
                             totalDur != null ? totalDur : 0,
-                            "Daily", "Daily",
+                            firstRunDays != null ? firstRunDays : "mon,tue,wed,thu,fri,sat,sun",
+                            secondRunDays != null ? secondRunDays : "mon,tue,wed,thu,fri,sat,sun",
                             dist1, dist2, totalDist
                         ));
                     }
@@ -1039,6 +1043,40 @@ public class RailRadarClient {
         }
 
         return result;
+    }
+
+    private String extractRunDays(JsonNode trainNode) {
+        if (trainNode == null) return null;
+        if (trainNode.has("runDays")) {
+            JsonNode rd = trainNode.get("runDays");
+            if (rd.isArray()) {
+                List<String> days = new ArrayList<>();
+                rd.forEach(d -> {
+                    String s = d.asText().trim().toLowerCase();
+                    if (!s.isBlank()) days.add(s);
+                });
+                if (!days.isEmpty()) return String.join(",", days);
+            } else if (rd.isTextual() && !rd.asText().isBlank()) {
+                return rd.asText().trim().toLowerCase();
+            }
+        }
+        if (trainNode.has("runningDays") && !trainNode.get("runningDays").asText().isBlank()) {
+            return trainNode.get("runningDays").asText().trim().toLowerCase();
+        }
+        if (trainNode.has("days")) {
+            JsonNode dNode = trainNode.get("days");
+            if (dNode.isArray()) {
+                List<String> days = new ArrayList<>();
+                dNode.forEach(d -> {
+                    String s = d.asText().trim().toLowerCase();
+                    if (!s.isBlank()) days.add(s);
+                });
+                if (!days.isEmpty()) return String.join(",", days);
+            } else if (dNode.isTextual() && !dNode.asText().isBlank()) {
+                return dNode.asText().trim().toLowerCase();
+            }
+        }
+        return null;
     }
 
     private LocalTime parseLocalTime(String timeStr) {
