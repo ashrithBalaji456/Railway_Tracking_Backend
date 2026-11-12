@@ -3253,3 +3253,164 @@ The Train Operational Telemetry Card on the frontend requires key operational at
    * Because Indian Railways adheres strictly to the $N \pm 1$ consecutive numbering schema for rake turnaround pairings, client-side parity calculation instantly routes to the return train, which is seamlessly resolved by the backend train search and caching layers.
 
 ---
+
+## 22. 🌐 Nationwide Railway Station Clustering, Outer Bypass Network, and Dynamic Nearby Corridor Engine
+
+### 22.1. The API Quota Challenge: Why Raw GPS Scanning Picked Moula Ali (`MLY`), Ghatkesar (`GT`), and Wayside Halts
+
+#### The Symptom & Root Cause:
+When passengers searched for trains with **"Search nearby stations"** enabled (for example, from **Ravindrakhani (`RVKH`)** to **Secunderabad (`SC`)**), third-party RailRadar API logs showed a sudden spike of 15+ external requests:
+```text
+/v1/trains/between/MCI/SC
+/v1/trains/between/MCI/HYB
+/v1/trains/between/MCI/MLY    <-- Moula Ali (Suburban MMTS halt)
+/v1/trains/between/MCI/CHZ    <-- Charlapalli
+/v1/trains/between/MCI/GT     <-- Ghatkesar (Wayside halt)
+/v1/trains/between/RDM/SC
+/v1/trains/between/RDM/HYB
+/v1/trains/between/RDM/MLY    <-- Moula Ali
+/v1/trains/between/RDM/CHZ
+...
+```
+1. **Unfiltered GPS Radius Scan:** The dynamic nearby algorithm calculated raw Haversine distances to *every* station within 35 km of Secunderabad.
+2. **Suburban Stations Picked as Terminals:** Because **Moula Ali (`MLY`, 7 km)**, **Charlapalli (`CHZ`, 12 km)**, and **Ghatkesar (`GT`, 18 km)** are physically close to Secunderabad, they were sorted into the destination hubs list without regard to whether express trains actually terminate there.
+3. **Fruitless API Calls:** Express and superfast trains from North/East Telangana never terminate at Moula Ali or Ghatkesar. Each API call returned empty lists (`[]`), needlessly consuming third-party API rate limits.
+
+---
+
+### 22.2. The Dual-Layer Architectural Solution
+
+To deliver 100% comprehensive nationwide coverage while strictly protecting API quotas, the engine operates on a **dual-layer architecture**:
+
+```mermaid
+flowchart TD
+    A["User Searches Route with 'Search nearby stations'"] --> B{"Is Station in Predefined City Cluster?"}
+    B -- "YES" --> C["Layer 1: Activate Predefined Terminal Cluster<br/>(SC, HYB, KCG, CHZ, LPI)"]
+    B -- "NO" --> D["Layer 2: Dynamic GPS Radius Discovery<br/>(Haversine Distance Scan)"]
+    D --> E["Filter by Commercial Category<br/>(NSG1, NSG2, NSG3, NSG4 only)"]
+    E --> F["Two-Tier Sort: Category Rank -> Proximity"]
+    F --> G["Enforce Circuit-Breaker Cap<br/>(maxLimit = isDestination ? 4 : 3)"]
+    C --> H["Assemble Symmetrical Hubs (Searched Station First)"]
+    G --> H
+    H --> I["Single External Multi-Stop Route Plan (/v1/journeys/plan)"]
+    H --> J["Combinatorial Direct Train Queries (Cached 5-min TTL)"]
+    I --> K["Smart Deduplication & UI 'Nearby' Badge Tagging"]
+    J --> K
+```
+
+---
+
+### 22.3. Predefined Metropolitan Clusters & Outer Bypass Hubs (27 States / UTs, 175+ Stations)
+
+Major Indian railway junctions suffer from central bottleneck congestion. Indian Railways routes trains around these bottlenecks using **outer bypass stations** and **satellite coaching terminals**:
+* **Vijayawada (`BZA`):** Trains running between Kazipet/Howrah and Chennai/Bangalore bypass BZA diamond junction and halt at **Rayanapadu (`RYP`)**.
+* **Hyderabad / Secunderabad (`SC`):** Trains terminate across **Secunderabad (`SC`)**, **Hyderabad Deccan (`HYB`)**, **Kacheguda (`KCG`)**, new 4th terminal **Charlapalli (`CHZ`)**, and Western IT terminal **Lingampalli (`LPI`)**. Minor MMTS halts (`MLY`, `GT`) are excluded.
+* **Delhi NCR:** Trains terminate across **`NDLS`** (New Delhi), **`DLI`** (Old Delhi), **`NZM`** (Nizamuddin), **`ANVT`** (Anand Vihar East), **`DEE`** (Sarai Rohilla), and bypass via **`DEC`** (Delhi Cantt) or **`GZB`** (Ghaziabad).
+* **Mumbai MMR:** Long-distance trains terminate across **`CSMT`**, **`MMCT`**, **`BDTS`**, **`LTT`**, **`DR`** (Dadar), with outer bypass stops at **`BVI`** (Borivali - WR), **`PNVL`** (Panvel - Konkan), **`KYN`** (Kalyan - Central), and **`TNA`** (Thane).
+* **Bengaluru:** Trains terminate across **`SBC`** (Majestic), **`YPR`** (Yesvantpur), **`SMVB`** (Baiyappanahalli), **`BNC`** (Cantonment), and bypass via **`KJM`** (Krishnarajapuram).
+* **Kolkata:** Terminals include **`HWH`** (Howrah), **`SDAH`** (Sealdah), **`KOAA`** (Chitpur), **`SHM`** (Shalimar), and outer bypass **`SRC`** (Santragachi).
+* **Chennai:** Terminals include **`MAS`** (Central), **`MS`** (Egmore), **`TBM`** (Tambaram), and outer bypass **`PER`** (Perambur).
+* **Vadodara:** Main junction **`BRC`** $\leftrightarrow$ Bypass **`CYI`** (Chhayapuri).
+* **Surat:** Main junction **`ST`** $\leftrightarrow$ Bypass **`UDN`** (Udhna Jn).
+* **Patna:** Main junction **`PNBE`** $\leftrightarrow$ Bypass **`PPTA`** (Patliputra Jn) $\leftrightarrow$ **`DNR`** (Danapur) $\leftrightarrow$ **`RJPB`** (Rajendra Nagar).
+* **Nagpur:** Main junction **`NGP`** $\leftrightarrow$ Satellite **`AJNI`** (Ajni).
+* **Kanpur:** Main junction **`CNB`** $\leftrightarrow$ Bypass **`GOY`** (Govindpuri).
+* **Prayagraj:** Main junction **`PRYJ`** $\leftrightarrow$ Bypass **`PCOI`** (Prayagraj Chheoki).
+* **Varanasi:** Main junction **`BSB`** $\leftrightarrow$ Satellite **`BSBS`** (Banaras) $\leftrightarrow$ Grand Chord **`DDU`** (Pt. Deen Dayal Upadhyaya).
+* **Goa:** **`MAO`** (Madgaon) $\leftrightarrow$ **`KRMI`** (Karmali) $\leftrightarrow$ **`THVM`** (Thivim) $\leftrightarrow$ **`VSG`** (Vasco-da-Gama).
+* **Chandigarh / Ambala:** **`CDG`** $\leftrightarrow$ **`UMB`** $\leftrightarrow$ **`KLK`**.
+* **North-Eastern Capitals:** **`AGTL`** (Agartala, Tripura), **`DMV`** (Dimapur, Nagaland), **`NHLN`** (Naharlagun, Arunachal), **`MNDP`** (Mendipathar, Meghalaya), **`JRBM`** (Jiribam, Manipur), **`BHRB`** (Bhairabi, Mizoram).
+
+---
+
+### 22.4. Layer 2: Dynamic GPS Radius Discovery (Haversine Formula & Circuit-Breaker Cap)
+
+When a station is **not** part of a predefined cluster (e.g., small towns, rural wayside halts like `RVKH` Ravindrakhani):
+1. **Haversine Distance Calculation:**
+   $$\Delta\text{lat} = \text{lat}_2 - \text{lat}_1, \quad \Delta\text{lon} = \text{lon}_2 - \text{lon}_1$$
+   $$a = \sin^2\left(\frac{\Delta\text{lat}}{2}\right) + \cos(\text{lat}_1)\cos(\text{lat}_2)\sin^2\left(\frac{\Delta\text{lon}}{2}\right)$$
+   $$d = 2R \cdot \text{atan2}(\sqrt{a}, \sqrt{1-a}) \quad (R = 6371\text{ km})$$
+   * Origin scan radius: **55 km**
+   * Destination scan radius: **35 km**
+
+2. **Strict Category Filtering (`allowedCategories`):**
+   ```java
+   Set<String> allowedCategories = Set.of("NSG1", "NSG2", "NSG3", "NSG4");
+   ```
+   * Small roadside flag halts (`NSG5`, `NSG6`, `SG1-3`, `HG1-3`) are strictly blocked.
+   * Only major commercial stations with confirmed express halts are admitted.
+
+3. **Circuit-Breaker Cap (`maxLimit`):**
+   ```java
+   int maxLimit = isDestination ? 4 : 3;
+   ```
+   * **Origin (`isDestination = false`):** Capped at 3 stations (Searched station + up to 2 nearest major hubs).
+     * *Example:* Searching from **`RVKH`** includes `RVKH` + **`MCI`** (Mancherial, 6.6 km) + **`RDM`** (Ramagundam, 19.5 km). Stops adding further stations.
+   * **Destination (`isDestination = true`):** Capped at 4 stations (Searched destination + up to 3 nearby major receiving terminals).
+
+---
+
+### 22.5. Two-Tier Sorting Algorithm & Prioritization
+
+Candidate stations within the radius are sorted using:
+```java
+nearby.sort(Comparator.comparingInt(StationDist::weight).thenComparingDouble(StationDist::dist));
+```
+1. **Tier 1 — Category Weight (`getCategoryWeight`):**
+   * `NSG1` = Weight 1 (Highest priority, e.g. Secunderabad, New Delhi, Howrah, CSMT)
+   * `NSG2` = Weight 2 (e.g. Kacheguda, Nampally, Anand Vihar)
+   * `NSG3` = Weight 3 (e.g. Lingampalli, Kazipet, Perambur)
+   * `NSG4` = Weight 4 (e.g. Mancherial, Ramagundam)
+   * `NSG5` = Weight 5 (e.g. Bellampalli, wayside halts)
+2. **Tier 2 — Geographic Proximity (Distance in km):**
+   * If two stations have the same category (e.g., `MCI` and `RDM` are both `NSG4`), the closer station (`MCI` at 6.6 km) is placed ahead of `RDM` (19.5 km).
+3. **Preserving User Intent (Searched Station First):**
+   The station explicitly selected by the user is **always inserted at index 0** (`res.add(upper)`), ensuring it is queried first, prioritized in search scoring, and displayed as the primary station without confusing badges.
+
+---
+
+### 22.6. Future Modification & Maintenance Guide
+
+#### How to Add a New City Cluster:
+In `JourneyServiceImpl.java`, inside the `static { ... }` block, add:
+```java
+registerCluster(List.of("STATION_A", "STATION_B", "STATION_C"));
+```
+And add the reciprocal entries in `Frontend/src/utils/stationClusters.ts`:
+```typescript
+STATION_A: { city: 'CityName', stations: ['STATION_A', 'STATION_B', 'STATION_C'] },
+STATION_B: { city: 'CityName', stations: ['STATION_A', 'STATION_B', 'STATION_C'] },
+```
+
+#### How to Adjust Station Selection Limits (`maxLimit`):
+Located in `JourneyServiceImpl.java` -> `getNearbyStations`:
+```java
+int maxLimit = isDestination ? 4 : 3;
+```
+* **To include more corridor stations:** Change `3` to `4` or `5`. The loop will pull the next best stations from the sorted list.
+* **To strictly restrict queries to 1 nearby hub:** Change `3` to `2`.
+
+#### How to Adjust Allowed Categories:
+```java
+Set<String> allowedCategories = Set.of("NSG1", "NSG2", "NSG3", "NSG4");
+```
+* If remote rural regions require searching `NSG5` stations (e.g. `BPA` Bellampalli), simply append `"NSG5"`. Because its weight is 5, it will automatically rank below `NSG1-NSG4` stations and only be selected if space remains under `maxLimit`.
+
+---
+
+### 22.7. Deduplication, In-Memory Caching (5-Min TTL), and Single-Call API Architecture
+
+1. **In-Memory Caching:**
+   * Both `/v1/journeys/plan` and direct train route pairs are stored in concurrent in-memory cache maps:
+     ```java
+     private final Map<String, CacheEntry<List<TrainBetweenStationsDto>>> directTrainsCache = new ConcurrentHashMap<>();
+     private final Map<String, CacheEntry<List<JourneyOptionDto>>> journeysPlanCache = new ConcurrentHashMap<>();
+     private static final long CACHE_TTL_MS = 5 * 60 * 1000L; // 5 minutes TTL
+     ```
+   * Repeated searches, sorting changes, or date toggles execute with **zero external API calls**.
+2. **Deduplication:**
+   * When querying corridor hubs (e.g. `MCI` and `RDM`), trains stopping at both stations are deduplicated by train number. The card is anchored to the station closer to the user's origin.
+3. **Frontend Presentation:**
+   * Exact matches are displayed without extra badges.
+   * Trains terminating or departing from sibling cluster stations display the distinct purple **`Nearby`** badge with the exact station code and name.
+
