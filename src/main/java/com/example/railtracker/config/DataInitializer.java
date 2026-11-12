@@ -215,12 +215,8 @@ public class DataInitializer implements CommandLineRunner {
 
     public void seedTrains() {
         long currentCount = trainRepository.count();
-        if (currentCount >= 8000) {
-            logger.info("Train database already contains {} trains. Skipping seed.", currentCount);
-            return;
-        }
+        logger.info("Checking Indian Railway trains in database (current count: {})...", currentCount);
 
-        logger.info("Seeding Indian Railway trains into database from trains_data.json in batches...");
         try (InputStream is = getClass().getResourceAsStream("/trains_data.json")) {
             if (is == null) {
                 logger.error("trains_data.json not found in classpath!");
@@ -229,6 +225,11 @@ public class DataInitializer implements CommandLineRunner {
 
             List<TrainSeedRecord> records = objectMapper.readValue(is, new TypeReference<List<TrainSeedRecord>>() {});
             Set<String> existingNumbers = new HashSet<>(trainRepository.findAllTrainNumbers());
+
+            if (currentCount >= 10700 && existingNumbers.size() >= records.size()) {
+                logger.info("Train database is up to date ({} trains). Skipping seed.", currentCount);
+                return;
+            }
 
             List<Train> chunk = new ArrayList<>(250);
             int totalNew = 0;
@@ -266,7 +267,7 @@ public class DataInitializer implements CommandLineRunner {
                     });
                     totalNew += batchToSave.size();
                     chunk.clear();
-                    logger.info("Seeded batch of {} trains (total seeded: {})", batchToSave.size(), totalNew);
+                    logger.info("Seeded batch of {} trains (total new: {})", batchToSave.size(), totalNew);
                 }
             }
 
@@ -277,10 +278,49 @@ public class DataInitializer implements CommandLineRunner {
                 });
                 totalNew += batchToSave.size();
                 chunk.clear();
-                logger.info("Seeded final batch of {} trains (total seeded: {})", batchToSave.size(), totalNew);
+                logger.info("Seeded final batch of {} trains (total new: {})", batchToSave.size(), totalNew);
             }
 
-            logger.info("Successfully finished seeding {} Indian Railway trains into database!", totalNew);
+            if (totalNew > 0) {
+                logger.info("Successfully finished seeding {} new Indian Railway trains into database!", totalNew);
+            }
+
+            // Backfill source and destination stations for existing trains where missing
+            Map<String, TrainSeedRecord> recordMap = new HashMap<>();
+            for (TrainSeedRecord r : records) {
+                if (r.trainNumber() != null) {
+                    recordMap.put(r.trainNumber().trim(), r);
+                }
+            }
+
+            List<Train> existingTrains = trainRepository.findAll();
+            List<Train> toUpdate = new ArrayList<>();
+            for (Train t : existingTrains) {
+                if (t.getTrainNumber() != null && (t.getSourceStation() == null || t.getSourceStation().isBlank() || t.getDestinationStation() == null || t.getDestinationStation().isBlank())) {
+                    TrainSeedRecord rec = recordMap.get(t.getTrainNumber().trim());
+                    if (rec != null) {
+                        boolean modified = false;
+                        if ((t.getSourceStation() == null || t.getSourceStation().isBlank()) && rec.sourceStation() != null && !rec.sourceStation().isBlank()) {
+                            t.setSourceStation(rec.sourceStation().trim());
+                            modified = true;
+                        }
+                        if ((t.getDestinationStation() == null || t.getDestinationStation().isBlank()) && rec.destinationStation() != null && !rec.destinationStation().isBlank()) {
+                            t.setDestinationStation(rec.destinationStation().trim());
+                            modified = true;
+                        }
+                        if (modified) {
+                            toUpdate.add(t);
+                        }
+                    }
+                }
+            }
+            if (!toUpdate.isEmpty()) {
+                logger.info("Enriching source/destination stations for {} existing trains...", toUpdate.size());
+                transactionTemplate.executeWithoutResult(status -> {
+                    trainRepository.saveAll(toUpdate);
+                });
+                logger.info("Successfully enriched {} existing trains!", toUpdate.size());
+            }
         } catch (Exception e) {
             logger.error("Failed to seed trains from trains_data.json", e);
         }
