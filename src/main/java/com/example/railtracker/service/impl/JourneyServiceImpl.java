@@ -712,9 +712,16 @@ public class JourneyServiceImpl implements JourneyService {
         if (stationCode == null) return List.of();
         String upper = stationCode.trim().toUpperCase();
 
-        // 1. If part of known major city terminal cluster, return strictly the primary terminals
+        // 1. If part of known major city terminal cluster, return the primary terminals with requested station first
         if (TERMINAL_CLUSTERS.containsKey(upper)) {
-            return TERMINAL_CLUSTERS.get(upper);
+            List<String> list = new ArrayList<>();
+            list.add(upper);
+            for (String s : TERMINAL_CLUSTERS.get(upper)) {
+                if (!s.equalsIgnoreCase(upper)) {
+                    list.add(s);
+                }
+            }
+            return list;
         }
 
         Optional<Station> opt = stationRepository.findByStationCode(upper);
