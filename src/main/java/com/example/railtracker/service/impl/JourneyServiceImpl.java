@@ -47,9 +47,10 @@ public class JourneyServiceImpl implements JourneyService {
     private record StationDist(String code, double dist, int weight) {}
 
     private static final Map<String, List<String>> TERMINAL_CLUSTERS = Map.ofEntries(
-            Map.entry("SC", List.of("SC", "HYB", "KCG")),
-            Map.entry("HYB", List.of("SC", "HYB", "KCG")),
-            Map.entry("KCG", List.of("SC", "HYB", "KCG")),
+            Map.entry("SC", List.of("SC", "HYB", "KCG", "CHZ")),
+            Map.entry("HYB", List.of("SC", "HYB", "KCG", "CHZ")),
+            Map.entry("KCG", List.of("SC", "HYB", "KCG", "CHZ")),
+            Map.entry("CHZ", List.of("SC", "HYB", "KCG", "CHZ")),
             Map.entry("NDLS", List.of("NDLS", "NZM", "DLI", "ANVT")),
             Map.entry("NZM", List.of("NDLS", "NZM", "DLI", "ANVT")),
             Map.entry("DLI", List.of("NDLS", "NZM", "DLI", "ANVT")),
