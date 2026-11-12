@@ -146,6 +146,32 @@ public class JourneyServiceImpl implements JourneyService {
         registerCluster(List.of("MAQ", "MAJN"));
         // Kakinada / Samalkot: SLO, CCT, COA
         registerCluster(List.of("SLO", "CCT", "COA"));
+        // Goa: MAO, KRMI, THVM, VSG
+        registerCluster(List.of("MAO", "KRMI", "THVM", "VSG"));
+        // Chandigarh & Ambala: CDG, UMB, KLK
+        registerCluster(List.of("CDG", "UMB", "KLK"));
+        // Haryana (GT Road Corridor): PNP, SNP, KUN, KKDE
+        registerCluster(List.of("PNP", "SNP", "KUN", "KKDE"));
+        // Haryana (Western Corridor): ROK, HSR, BNW
+        registerCluster(List.of("ROK", "HSR", "BNW"));
+        // Haryana (Rewari / Gurgaon): RE, GGN
+        registerCluster(List.of("RE", "GGN"));
+        // Himachal Pradesh (Una / Amb Andaura): UHL, AADR, NLDM
+        registerCluster(List.of("UHL", "AADR", "NLDM"));
+        // Puducherry: PDY, VM
+        registerCluster(List.of("PDY", "VM"));
+        // Tripura: AGTL, DMR, TLMR
+        registerCluster(List.of("AGTL", "DMR", "TLMR"));
+        // Nagaland: DMV, DPU, BXJ
+        registerCluster(List.of("DMV", "DPU", "BXJ"));
+        // Arunachal Pradesh: NHLN, HMY
+        registerCluster(List.of("NHLN", "HMY"));
+        // Meghalaya: MNDP, DDNI
+        registerCluster(List.of("MNDP", "DDNI"));
+        // Manipur: JRBM, SCL
+        registerCluster(List.of("JRBM", "SCL"));
+        // Mizoram: BHRB, KTX, HKD
+        registerCluster(List.of("BHRB", "KTX", "HKD"));
     }
 
     private static void registerCluster(List<String> stations) {
