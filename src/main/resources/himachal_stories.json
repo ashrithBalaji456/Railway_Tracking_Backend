@@ -45,24 +45,24 @@
       {
         "trainNumber": "52453",
         "trainName": "Himalayan Queen (Toy Train)",
-        "route": "Kalka (KLK) \u2794 Shimla (SML)"
+        "route": "Kalka (KLK) ➔ Shimla (SML)"
       },
       {
         "trainNumber": "12011",
         "trainName": "Kalka Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Kalka (KLK)"
+        "route": "New Delhi (NDLS) ➔ Kalka (KLK)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Shimla rose from a secluded Himalayan forest village dedicated to the goddess Shyamala Devi into the supreme Summer Capital of British India in 1864. Spread across seven pine-clad hills\u2014including Jakhoo, Elysium, Prospect, and Observatory Hills\u2014the town became an imperial hub where momentous geopolitical pacts, such as the Simla Accord, were forged. The architectural fabric is a living archive of Tudor-revival timber framing, Neo-Gothic stonework, and grand colonial villas nestled beneath century-old Himalayan deodars."
+        "title": "1. Mountain Heritage, Colonial Legacy & Toy Train Origins",
+        "content": "Perched at an elevation of 2,276 meters (7,467 feet) along a crescent-shaped ridge in the north-western Himalayas, Shimla served as the official Summer Capital of British India from 1864 until Indian Independence in 1947. Originally a dense deodar and oak forest settlement named after the Hindu deity Shyamala Devi (an incarnation of Goddess Kali), Shimla was transformed by British surveyors and administrators who sought relief from the blistering plains of Calcutta and Delhi.\n\nThe crowning jewel of Shimla's heritage is the UNESCO World Heritage Kalka-Shimla Mountain Railway, engineered between 1898 and 1903 under Chief Engineer H.S. Harington. Traversing 96.6 kilometers, this narrow-gauge (2 ft 6 in) marvel negotiates 102 operational tunnels (including the famed 1,143-meter Tunnel No. 33 at Barog), 864 arched stone viaducts, and 919 sharp curves. Ascending from 656 meters at Kalka to 2,075 meters at Shimla, it remains one of humanity's most astounding achievements in mountain transportation.\n\nToday, Shimla seamlessly blends aristocratic Anglo-Swiss architectural remnants—such as mock-Tudor timber frames, sloping corrugated tin roofs, and stone lintels—with vibrant Himachali Pahadi traditions. As the state capital, it stands as the principal cultural and transport nucleus of Himachal Pradesh, offering dramatic vistas of the eternal snows of the Greater Himalayan Range."
       },
       {
         "type": "image",
@@ -72,7 +72,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "The Ridge forms the beating cultural heart of Shimla, offering unhindered panoramas of the snow-crowned Shivalik range alongside the stately 1857 Christ Church with its storied stained-glass windows. Above the town rises Jakhoo Peak (2,455 m), crowned by the revered Hanuman shrine. Stroll down the vehicle-free Mall Road to explore Gaiety Heritage Cultural Complex, Scandal Point, and the sprawling lawns of the Viceregal Lodge (Rashtrapati Niwas), home to the Indian Institute of Advanced Study."
+        "content": "**1. The Ridge & Christ Church**:\n- The Ridge is an expansive open pedestrian esplanade running along the crest of the hill, offering unhindered panoramas of the snow-clad Shivalik and Pir Panjal peaks.\n- Dominating The Ridge is the iconic Neo-Gothic **Christ Church**, consecrated in 1857. It features a towering clock tower, a pipe organ installed in 1899, and five magnificent stained-glass windows representing Faith, Hope, Charity, Fortitude, Patience, and Humility.\n\n**2. Jakhoo Hill & The 108-Foot Hanuman Statue**:\n- Rising to 2,455 meters (8,054 feet), Jakhoo Peak is Shimla's highest geographic point. Legend holds that Lord Hanuman rested here while retrieving the celestial Sanjeevani herb for Lakshmana during the Ramayana.\n- The summit is crowned by a colossal 108-foot vermillion statue of Lord Hanuman, unveiled in 2010. Accessible via a scenic 2.5 km steep forest trek or the modern 6-minute Jakhoo Ropeway aerial cable car from The Ridge.\n\n**3. Viceregal Lodge (Rashtrapati Niwas)**:\n- Situated on Observatory Hill, this Jacobean-style granite manor was completed in 1888 for Viceroy Lord Dufferin. It hosted momentous political summits, including the Shimla Conference of 1945 and the Partition deliberations of 1947.\n- Today housing the Indian Institute of Advanced Study (IIAS), visitors can tour its teak-paneled interiors, historic photo galleries, and meticulously manicured Victorian botanical gardens.\n\n**4. Mall Road, Gaiety Theatre & Scandal Point**:\n- Mall Road is a vehicle-free heritage promenade flanked by traditional handicraft emporiums, woolen stores, and classic cafes.\n- The **Gaiety Heritage Cultural Complex**, opened in 1887, houses a miniature Victorian gothic theatre designed by Henry Irwin that witnessed early performances by Rudyard Kipling and K.L. Saigal."
       },
       {
         "type": "image",
@@ -81,8 +81,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Board the vintage Kalka-Shimla narrow-gauge railway as it chugs through 102 active tunnels and over 800 stone arch bridges. In winter, Kufri and Narkanda (just 16 km and 60 km away) transform into skiing and snowboarding havens. Wander through Lakkar Bazaar to observe generational artisans crafting traditional wooden walking sticks and pine-wood kitchenware, or hike through the tranquil deodar sanctuary of Glen and Chadwick Falls."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Glen Forest Walk & Chadwick Falls**:\n- A serene 4 km descent from Annandale leads through the tranquil Glen Nature Sanctuary, enveloped by towering deodar, pine, and rhododendron canopies.\n- Chadwick Falls cascades 86 meters down sheer rocky gorges, particularly thunderous following the monsoon months between July and October.\n\n**2. Summer Hill & Potter's Hill Adventure Eco-Park**:\n- Located 5 km west of the city along the railway line, Summer Hill offers quiet woodland walking trails where Mahatma Gandhi resided during his visits to Shimla at Chadha House.\n- Potter's Hill covers 100 hectares of reserved forest, featuring zip-lining, rope bridges, botanical nature identification walks, and birdwatching for species like the Himalayan Monal and Koklass Pheasant.\n\n**3. Shali Tibba Peak Trek**:\n- For adventurous hikers, Shali Tibba (2,872 m) is the highest peak in the vicinity of Shimla. Starting from Khatnol village (35 km drive), a 5 km ascending trail meanders through dense blue pine groves to a solitary stone temple dedicated to Goddess Bhima Kali, rewarding summiters with a 360-degree panorama of Himachal's major peaks."
       },
       {
         "type": "image",
@@ -92,7 +92,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- Shimla Railway Station (SML) connects directly to Kalka via the 2-foot-6-inch UNESCO narrow-gauge mountain line (96 km, 5 to 6 hours chug). The main broad-gauge rail gateway is Kalka (KLK, 88 km away) and Chandigarh Junction (CDG, 115 km away). High-speed connections include the New Delhi-Kalka Shatabdi Express (12011/12005) arriving in just 4 hours at Kalka, perfectly synchronised with connecting toy trains.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kalka or Chandigarh, state-run HRTC Himgaurav AC and deluxe buses depart every 30 minutes for Shimla Inter-State Bus Terminus (ISBT Tutikandi). Prepaid taxi unions at Kalka Station charge fixed government rates (~\u20b92,200 to \u20b93,000 for a private sedan; 3 to 3.5 hours via the multi-lane Himalayan Expressway NH-5).\n\n**3. Airport & Flight Connectivity**:\n- Shimla Airport at Jubbarhatti (SLV) is situated 22 km south of the city, operating seasonal regional flights from Delhi and Chandigarh. Chandigarh International Airport (IXC, 120 km) offers daily pan-India flight connectivity with round-the-clock taxi and bus transfers.\n\n**4. Road Network & Highway Driving**:\n- Flawlessly connected via the National Highway 5 (Himalayan Expressway), providing a smooth 4-lane drive from New Delhi (345 km, 7 hours) through Panipat, Ambala, and Kalka before ascending the hill curves."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Direct Broad-Gauge Railhead**: Kalka Junction (Station Code: **KLK**), located 86 km from Shimla, is the terminus for broad-gauge trains from Delhi, Mumbai, Kolkata, and Chandigarh.\n- **Flagship Connectors**: Kalka Shatabdi Express (Train Nos: 12005 / 12011 from New Delhi, 4h 15m), Netaji Express (Train No: 12311 from Howrah), and Paschim SF Express (Train No: 12925 from Mumbai Bandra Terminus).\n- **The UNESCO Toy Train**: Boards directly from Platform 3 at Kalka. Top services include the **Shivalik Deluxe Express** (Train No: 52451, premium panoramic windows and breakfast service, 5h 25m), the **Himalayan Queen** (Train No: 52455, 5h 10m), and the historic **Rail Motor Car** (Train No: 72451).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- **Shared Taxis & Cabs**: Prepaid taxi counter at Kalka Station charges ₹2,200 to ₹2,800 for a private sedan or SUV drop to Shimla Old Bus Stand / Victory Tunnel (2.5 to 3 hours).\n- **HRTC Mountain Buses**: Regular ordinary and luxury AC buses depart every 20 minutes from Kalka Highway Bypass and Chandigarh ISBT Sector 43 directly to Shimla ISBT Tutikandi (fares: ₹140 to ₹450, 3 to 4 hours).\n\n**3. Airport & Flight Connectivity**:\n- **Shimla Airport (Jubbarhatti, Code: SLV)**: Located 22 km south-west of the city. Operates regional Alliance Air flights from New Delhi and Dharamshala under the UDAN scheme.\n- **Chandigarh International Airport (Code: IXC)**: Located 120 km away (3.5 hours drive), connecting daily non-stop flights across major metropolitan centers in India.\n\n**4. Road Network & Highway Driving**:\n- The newly expanded 4-lane **National Highway 5 (NH-5)** connects Chandigarh, Panchkula, and Kalka to Solan and Shimla with well-engineered bypasses and tunnels, slashing driving times to under 3 hours from Chandigarh."
       },
       {
         "type": "image",
@@ -102,7 +102,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Savour authentic Himachali Dham\u2014a ceremonial feast traditionally cooked by hereditary Boti chefs featuring fragrant Sepu Vadi (steamed split urad dal dumplings in spiced spinach-curd gravy), Madra (chickpeas in slow-simmered spiced yoghurt), and sweet Mitha bhat. Warm yourself with piping-hot Babru (Himachali stuffed kachoris) and steaming local mountain apple cider on Mall Road."
+        "content": "**1. Traditional Himachali Dham & Local Specialties**:\n- Sample authentic **Sidu**, a soft fermented whole-wheat steamed bread stuffed with a rich filling of crushed roasted walnuts, poppy seeds (khus-khus), and mountain herbs, served drenched in pure desi ghee and tangy green mint-coriander chutney.\n- Savor **Madra**, a royal slow-cooked dish of chickpeas or kidney beans simmered in spiced yogurt, cardamom, cloves, and dry coconut, traditionally served as a centerpiece in Himachali Dham feasts.\n- Indulge in **Chha Gosht**, tender marinated mountain mutton braised in yogurt, roasted gram flour paste, and bay leaves.\n\n**2. Iconic Heritage Eateries & Cafes**:\n- **Indian Coffee House (Mall Road)**: In operation since 1957, renowned for retro South Indian filter coffee, mutton cutlets, and vintage nostalgic ambiance.\n- **Wake & Bake Cafe**: Famous for fresh French crepes, artisan wood-fired thin crust pizzas, and bird's-eye views over The Ridge.\n- **Baljee's & Trishool Bakery**: Must-visit spots on Mall Road for warm Gulab Jamuns, walnut fudge, and classic savory puff pastries."
       },
       {
         "type": "image",
@@ -112,7 +112,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "When booking the Kalka-Shimla Toy Train, reserve seats on the right side of the coach when ascending to Shimla for unobstructed views of emerald valleys, pine ridges, and cascading viaducts. Keep warm layers handy as temperatures drop sharply past Dharampur and Barog."
+        "content": "**Pro Traveler Tip for Rail Enthusiasts**:\nWhen boarding the Kalka-Shimla Toy Train from Kalka, reserve window seats on the **Right Side** of the carriage for ascending journeys to enjoy breathtaking valley panoramas, viaducts, and terraced orchards. On the return descent from Shimla to Kalka, sit on the **Left Side**. Remember that Shimla's core heritage zone (The Ridge, Mall Road, and Viceregal grounds) is entirely vehicle-free; carry comfortable rubber-soled walking shoes for cobblestone hills."
       }
     ]
   },
@@ -162,24 +162,24 @@
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Una Himachal (UHL)"
+        "route": "New Delhi (NDLS) ➔ Una Himachal (UHL)"
       },
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "12045",
         "trainName": "Chandigarh Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Named after the revered sage Manu, who stepped ashore here to recreate mankind after the great deluge (traditionally known as 'Manu-Alaya'), Manali was historically the terminus of the ancient salt-and-silk trading route crossing the northern passes into Ladakh, Yarkand, and Tibet. The indigenous architecture blends Kath-Kuni timber-lacing with slate shingle roofs designed to withstand heavy winter snowfalls."
+        "title": "1. Mountain Heritage, Geological Origins & Valley Lore",
+        "content": "Nestled at the northern apex of the Kullu Valley at an elevation of 2,050 meters (6,725 feet) along the churning banks of the Beas River, Manali is historically venerated as the 'Cradle of All Mankind'. According to Hindu mythology, when the Great Cosmic Deluge submerged the mortal realm, Sage Manu (the lawgiver of humanity) stepped off his celestial vessel at this sanctuary to recreate the universe, giving birth to 'Manu-Alaya' ('Home of Manu'), which evolved into modern Manali.\n\nFramed by the snow-clad crests of the Pir Panjal and Dhauladhar ranges, Manali historically served as an indispensable trans-Himalayan trading crossroads. Caravans laden with pashmina wool, musk, raw silk, and dried fruits departed from Old Manali to traverse the formidable Rohtang Pass (3,978 m) and Baralacha La (4,890 m) towards Ladakh, Yarkand, and Western Tibet.\n\nWith the completion of the monumental 9.02-kilometer **Atal Tunnel at Rohtang** in October 2020—the world's longest highway tunnel above 10,000 feet—Manali has transformed into an all-weather gateway connecting the lush alpine forests of the south with the dramatic cold-desert moonscapes of Lahaul and Spiti."
       },
       {
         "type": "image",
@@ -189,7 +189,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Visit the multi-tiered 16th-century Hadimba Temple built entirely of intricately carved timber and unmortared stone. Cross the Beas River to explore the laid-back cafes and wooden cottages of Old Manali, and visit the serene Vashisht village famous for its natural hot sulfur springs and carved stone temple. Solang Valley (14 km away) offers paragliding, zorbing, and quad-biking, while the 9.02 km Atal Tunnel unlocks year-round access to the pristine Lahaul Valley."
+        "content": "**1. Hadimba Devi Temple (Dhungri Temple)**:\n- Built in 1553 CE by Raja Bahadur Singh of Kullu, this architectural marvel is nestled amidst a primordial grove of giant deodar trees in Dhungri Forest.\n- Constructed in the multi-tiered pagoda style featuring four wooden roofs topped by a brass finial, its sanctum is adorned with intricate relief carvings of deities, floral vines, and animal skulls. It honors Hadimba, the demon goddess consort of Bhima from the Mahabharata.\n\n**2. Solang Valley & Anjani Mahadev**:\n- Located 14 km north-west of Manali, Solang Valley is Himachal's premier year-round adventure sports amphitheater, offering world-class paragliding, zorbing, quad biking, and winter ski slopes.\n- A 2 km trek up the valley leads to **Anjani Mahadev**, where a natural glacial spring forms a colossal 30-foot frozen ice Shiva lingam during sub-zero winter months, often hailed as the 'Amarnath of Himachal'.\n\n**3. Rohtang Pass (3,978 m / 13,050 ft)**:\n- Situated 51 km from Manali on the highway to Leh, Rohtang Pass offers spellbinding vistas of hanging glaciers, the twin peaks of Geypan, and the cascading source of the Chandra and Beas rivers. Operates from May to November under strict NGT environmental vehicle permit quotas.\n\n**4. Vashisht Hot Sulphur Springs & Manu Temple**:\n- In the ancient stone village of Vashisht (3 km from town), natural geothermal springs rich in therapeutic sulphur minerals flow into separate traditional stone bathing enclosures for men and women.\n- Old Manali houses the solitary ancient stone and timber temple dedicated to Sage Manu in India, surrounded by traditional wooden balcony houses and orchards."
       },
       {
         "type": "image",
@@ -198,8 +198,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Drive across the iconic Rohtang Pass (3,978 m) to touch perennial snowfields and gaze upon twin Himalayan peaks. Go white-water river rafting along Grade II and III rapids on the Beas River near Raison and Babeli. In the evenings, stroll across the vibrant pedestrian boulevard of Mall Road to browse Kullu woollen shawls, Himachali caps, and locally made fruit jams."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Jogini Waterfall Trek**:\n- Starting from Vashisht village, this scenic 4 km trail ascends through terraced apple orchards and pine woods along the Beas River gorge, leading to a cascading multi-tiered waterfall cascading over sheer granite ledges.\n- Considered sacred by local villagers, the natural pool at the base is surrounded by prayer flags and wild mountain mint.\n\n**2. Hampta Pass & Bhrigu Lake Expeditions**:\n- **Bhrigu Lake Trek (4,300 m)**: A 3-day alpine trek through virgin meadows (thatch) to a sacred high-altitude oval tarn that remains partially frozen year-round, named after Maharishi Bhrigu.\n- **Hampta Pass (4,270 m)**: A dramatic 4-day crossover trek bridging the lush green alpine forests of Kullu with the stark, barren arid desert canyons of Lahaul, concluding near the turquoise waters of Chandratal Lake.\n\n**3. Beas River White Water Rafting**:\n- Stretching from Pirdi to Jhiri along the lower Beas River, adventurous travelers can tackle Grade II to Grade IV rapids amidst scenic mountain gorges under licensed river guides."
       },
       {
         "type": "image",
@@ -209,7 +209,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The most efficient broad-gauge railway gateways are Chandigarh Junction (CDG, 310 km) and Kiratpur Sahib (KART, 235 km) or Una Himachal (UHL, 245 km). Board the semi-high-speed New Delhi - Amb Andaura Vande Bharat Express (22447) to Una or Kiratpur Sahib, cutting rail travel from Delhi to under 3.5 hours.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Chandigarh and Kiratpur Sahib, round-the-clock HRTC Volvo, Scania, and luxury sleeper buses traverse the upgraded Kiratpur-Manali four-lane greenfield expressway (NH-21 / NH-3), reducing road travel time down to just 6 to 7 hours. Government taxi union cars at Kiratpur Sahib and Chandigarh charge ~\u20b95,000 to \u20b96,500.\n\n**3. Airport & Flight Connectivity**:\n- Kullu-Manali Airport at Bhuntar (KUU) is situated 50 km south of Manali town, with daily direct turboprop flights connecting from Delhi and Chandigarh, followed by a 1.5-hour scenic taxi ride.\n\n**4. Road Network & Highway Driving**:\n- The newly commissioned Kiratpur-Nerchowk-Pandoh 4-lane expressway and bypassing tunnels have transformed the Delhi-Manali drive (535 km, ~9 to 10 hours), bypassing historical bottlenecks at Swarghat."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: The most practical broad-gauge railhead, situated 310 km south of Manali. Serviced by regular high-speed Vande Bharat Express (Train No: 22447 from New Delhi, 3h 15m) and Shatabdi Express.\n- **Joginder Nagar (JDNX)**: The narrow-gauge Kangra Valley Toy Train railhead located 145 km away, offering a scenic but slower heritage approach.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- **Luxury Volvo Buses from Chandigarh / Delhi**: HRTC Himsuta Volvo and private luxury sleepers operate daily overnight departures (8 to 9 hours from Chandigarh, ₹900 to ₹1,400; 12 to 14 hours from New Delhi ISBT Kashmiri Gate, ₹1,200 to ₹1,800).\n- **Private Taxis from Chandigarh**: Prepaid taxi union sedans charge ₹6,500 to ₹8,500 for a direct drop to Manali.\n\n**3. Airport & Flight Connectivity**:\n- **Kullu-Manali Airport at Bhuntar (Code: KUU)**: Located 50 km south of Manali along NH-3 (1.5 hours drive). Operates daily scheduled flights from New Delhi and Chandigarh via Alliance Air.\n\n**4. Road Network & Highway Driving**:\n- **Kiratpur-Manali 4-Lane Expressway (NH-3)**: Completed with modern tunnels and river bridges, significantly bypassing hazardous mountain bends and reducing travel time from Chandigarh to Manali to just 6 to 7 hours."
       },
       {
         "type": "image",
@@ -219,7 +219,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Indulge in fresh Himalayan Golden Trout delicately pan-fried with garlic butter and lemon herbs. Do not leave without trying steaming Siddu\u2014a fermented wheat flour dough bun stuffed with spiced walnut, crushed poppy seeds (khus-khus), and paneer, generously drenched in molten desi ghee."
+        "content": "**1. Trout Fish & Traditional Himachali Flavors**:\n- **Pan-Fried Himalayan Trout**: Caught fresh from crystal-clear glacial streams of the Tirthan and Beas rivers, lightly seasoned with mountain garlic, wild thyme, and lemon butter sauce.\n- **Kulluvi Siddu**: Steamed fermented wheat bread stuffed with savory spiced dal paste or sweetened poppy seed and walnut puree, served piping hot with abundant clarified butter (ghee).\n- **Tudkiya Bhath**: A fragrant Kullu rice dish cooked with lentils, potatoes, yogurt, cardamom, cinnamon, and whole garlic pods.\n\n**2. Old Manali Bohemian Cafe Culture**:\n- **Cafe 1947**: Situated right on the riverbank in Old Manali, famed for handmade Italian gnocchi, wood-fired pizzas, and live acoustic music sessions.\n- **The Lazy Dog**: Overlooking the rushing Manalsu stream, offering Asian noodle bowls, river trout, and craft mocktails.\n- **Drifter's Cafe**: A cozy haven for breakfast waffles, Shakshuka, and mountain-blend espresso."
       },
       {
         "type": "image",
@@ -229,7 +229,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "If travelling by rail, take the morning Vande Bharat to Kiratpur Sahib (KART) or Chandigarh (CDG), where express state Volvo buses sync directly with train arrival times right outside the platform gate."
+        "content": "**Pro Traveler Tip for Rohtang & Atal Tunnel Excursions**:\nTo visit Rohtang Pass, obtain your mandatory vehicle environmental permit online at the official portal (rohtangpermits.nic.in) 48 to 72 hours in advance, as only limited vehicles are permitted per day. If crossing into Lahaul via the Atal Tunnel, always fill your fuel tank in Manali; carry warm windproof fleece jackets even in peak summer, as high mountain winds cause rapid drops in temperature above 10,000 feet."
       }
     ]
   },
@@ -279,24 +279,24 @@
       {
         "trainNumber": "22439",
         "trainName": "Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Pathankot Cantt (PTKC)"
+        "route": "New Delhi (NDLS) ➔ Pathankot Cantt (PTKC)"
       },
       {
         "trainNumber": "12425",
         "trainName": "Jammu Rajdhani Express",
-        "route": "New Delhi (NDLS) \u2794 Pathankot Cantt (PTKC)"
+        "route": "New Delhi (NDLS) ➔ Pathankot Cantt (PTKC)"
       },
       {
         "trainNumber": "52465",
         "trainName": "Kangra Valley Toy Train",
-        "route": "Pathankot (PTK) \u2794 Kangra Mandir (KGMR)"
+        "route": "Pathankot (PTK) ➔ Kangra Mandir (KGMR)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Following the 1959 Tibetan uprising, His Holiness the 14th Dalai Lama established his exile residence in upper Dharamshala (McLeodganj), transforming this former British garrison hill station into the global epicenter of Tibetan Buddhism and government-in-exile, lovingly earned the moniker 'Little Lhasa'. The lower valley is steeped in 1,000-year-old Katoch dynasty history centered around the ancient Kangra Fort."
+        "title": "1. Sacred Heritage, Tibetan Exile & Kangra Dynastic Roots",
+        "content": "Situated in the scenic Kangra District beneath the jagged, snow-capped granite spires of the Dhauladhar Range, Dharamshala and its upper suburb McLeodganj (1,770 meters to 2,082 meters) represent one of the world's most vibrant crossroads of Tibetan Buddhism and Himalayan Hindu heritage. Originally known as a British sanatorium garrison established in 1849, the town's destiny was irrevocably reshaped in 1959 when His Holiness the 14th Dalai Lama, Tenzin Gyatso, established the Central Tibetan Administration (Government-in-Exile) here following his escape from Lhasa.\n\nEarning the globally revered moniker 'Little Lhasa of India', McLeodganj has blossomed into the premier international headquarters of Tibetan Buddhist philosophy, Tibetan medicine (Men-Tsee-Khang), and monastic education. Monks in maroon robes, maroon-cloaked nuns, international spiritual seekers, and Tibetan craftspeople walk side by side through alleys fragrant with juniper incense and herbal tea.\n\nMeanwhile, Lower Dharamshala, situated 10 km down the hillside, preserves deep-rooted Kangra valley traditions, home to the Katoch Dynasty—one of India's oldest recorded ruling lineages. The region features lush rolling tea gardens producing prized green and orthodox black Kangra teas, celebrated across the globe since the 1880s."
       },
       {
         "type": "image",
@@ -306,7 +306,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Explore the Tsuglagkhang Complex featuring the Dalai Lama's private temple, Tibet Museum, and sacred circumambulation (Kora) path lined with spinning brass prayer wheels. Visit the Norbulingka Institute, a masterwork of Japanese-Tibetan architecture dedicated to preserving thangka painting, woodcarving, and bronze casting. Other highlights include the stone Church of St. John in the Wilderness, the scenic Bhagsunag Waterfall, and the high-altitude Dharamshala Cricket Stadium."
+        "content": "**1. Tsuglagkhang Complex & The Dalai Lama Temple**:\n- The spiritual epicenter of the Tibetan diaspora, housing the private residence of His Holiness the Dalai Lama, the Namgyal Monastery, and the main temple sanctum.\n- Features magnificent gilded bronze statues of Shakyamuni Buddha, Avalokiteshvara (the Bodhisattva of Compassion), and Guru Padmasambhava. Visitors can participate in the peaceful **Kora walk**, a circular path through fluttering prayer flags with prayer wheels spinning clockwise overlooking the valley.\n\n**2. HPCA International Cricket Stadium**:\n- Located in Lower Dharamshala at an altitude of 1,457 meters, this is widely acclaimed as the world's most visually stunning cricket venue. With open pavilions framing the snow-capped Dhauladhar peaks, it has hosted high-profile international tests and ICC World Cup matches.\n\n**3. St. John in the Wilderness Church**:\n- Built in 1852 in the Neo-Gothic style amidst ancient deodar forests between Forsyth Ganj and McLeodganj, this stone church survived the catastrophic 1905 Kangra earthquake.\n- Renowned for its Belgian stained-glass windows depicting John the Baptist and the stone memorial obelisk of British Viceroy Lord Elgin, who passed away here in 1863.\n\n**4. Bhagsu Nag Temple & Bhagsunag Waterfall**:\n- Dedicated to Lord Shiva and the legendary serpent deity Bhagsu Nag, this ancient pilgrimage site features twin freshwater stone bathing tanks.\n- A 1.5 km stone trail climbs past traditional mountain cafes to the 20-meter Bhagsunag Waterfall, cascading into rocky mountain pools."
       },
       {
         "type": "image",
@@ -315,8 +315,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Embark on the famous 9 km Triund Trek starting from Galu Temple or Bhagsu, ascending through rhododendron and oak forests to camp under starlit Himalayan skies. Join Tibetan cooking workshops to learn the art of folding momos and tingmo, or ride the modern Dharamshala Skyway ropeway, connecting lower Dharamshala directly to McLeodganj in just 5 minutes."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. The Triund Hill Day Trek (2,828 m / 9,278 ft)**:\n- Dharamshala's crown jewel trek, covering 9 km from Gallu Devi Temple or Dharamkot. The trail snakes through rhododendron and oak forests up to an expansive alpine ridge.\n- At the summit ridge, trekkers stand face-to-face with the towering granite walls of the Dhauladhar Range on one side and a dramatic 180-degree view of the vast Kangra Valley on the other.\n\n**2. Norbulingka Institute of Tibetan Arts**:\n- Located 15 km south in Sidhpur, Norbulingka is dedicated to preserving authentic Tibetan cultural arts. Modeled after the Dalai Lama's summer palace in Lhasa, its serene Japanese-inspired gardens and willow ponds host working workshops for Thangka painting, woodcarving, metal statue casting, and silk applique embroidery.\n\n**3. Dharamkot & Kareri Lake Trek**:\n- **Dharamkot Village**: Known as the 'Yoga Village', famous for Vipassana meditation retreats, sound healing centers, and artistic retreats.\n- **Kareri Lake (2,934 m)**: A 2-day alpine trek starting from Ghera village to a crystal-clear shallow freshwater glacial lake fed by melting snows of the Minkiani Pass."
       },
       {
         "type": "image",
@@ -326,7 +326,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The primary broad-gauge railhead is Pathankot Cantt (PTKC, 85 km) and Pathankot Junction (PTK, 90 km). Premier superfast trains including the New Delhi-Katra Vande Bharat Express (22439) and Jammu Rajdhani (12425) reach Pathankot in 5.5 to 6 hours from Delhi. For an unforgettable heritage experience, switch to the Kangra Valley narrow-gauge toy train to Kangra Mandir (KGMR, 18 km from Dharamshala).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Pathankot Cantt station, continuous deluxe HRTC buses and private taxis ply to Dharamshala (2.5 to 3 hours, \u20b92,000 to \u20b92,500 for a private car via NH-154).\n\n**3. Airport & Flight Connectivity**:\n- Kangra Airport at Gaggal (DHM) is located just 14 km from Dharamshala, operating scheduled daily flights connecting New Delhi, Chandigarh, and Jaipur.\n\n**4. Road Network & Highway Driving**:\n- Smooth multi-lane connectivity via NH-44 up to Jalandhar, followed by NH-503 and NH-154 winding through Hoshiarpur and Kangra (480 km from Delhi, 8.5 hours)."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Pathankot Cantonment (PTKC) / Pathankot Junction (PTK)**: The primary broad-gauge railhead, situated 85 km west (2.5 to 3 hours drive). Major trains include Jammu Rajdhani (12425), Vande Bharat Express (22439 to Katra, halt at Pathankot Cantt), Dauladhar Express, and Malwa Express.\n- **Kangra Toy Train**: Connects Pathankot to Kangra Mandir railway station (18 km from Dharamshala), offering a charming vintage mountain route across 20 stations.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- **Taxis from Pathankot**: Registered taxi union sedans charge ₹2,200 to ₹2,800 for a direct transfer to Dharamshala / McLeodganj.\n- **Buses**: Regular state HRTC buses depart Pathankot bus stand every 30 minutes (₹120 to ₹180, 3 to 3.5 hours).\n- **Dharamshala Skyway Ropeway**: An advanced monocable aerial ropeway connecting Dharamshala bus stand directly to McLeodganj in just 5 minutes (₹300 one way), avoiding congested mountain switchbacks.\n\n**3. Airport & Flight Connectivity**:\n- **Kangra Airport at Gaggal (Code: DHM)**: Located just 14 km from Dharamshala. Operates daily commercial flights from New Delhi, Chandigarh, and Shimla via IndiGo, SpiceJet, and Alliance Air.\n\n**4. Road Network & Highway Driving**:\n- Accessed via **NH-503** and **NH-154**, providing smooth multi-lane highways from Pathankot, Jalandhar, and Chandigarh."
       },
       {
         "type": "image",
@@ -336,7 +336,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Sip comforting Tibetan Butter Tea (Po Cha) alongside steaming platters of Thukpa (hand-pulled noodle soup), pan-fried Tingmo buns with spicy vegetable stir-fries, and authentic Kangra Dham prepared with whole lentils cooked in pure mustard oil inside brass pots without onion or garlic."
+        "content": "**1. Authentic Tibetan & Kangra Cuisine**:\n- **Tibetan Tingmo & Shapta**: Steamed layered yeast flower buns served alongside spicy stir-fried sliced beef/mutton with peppers and spring onions.\n- **Thenthuk & Momos**: Hearty hand-pulled flat noodle soup boiled with seasonal vegetables, ginger, and garlic; complemented by authentic steamed or pan-fried pork, chicken, or potato-cheese momos.\n- **Kangra Dham**: A traditional ritual feast served on broad leaf plates (pattals) featuring Madra, Mah ki Dal (black lentils in mustard oil), and Meetha Chawal (sweet saffron rice with raisins).\n\n**2. Iconic Cafes & Bakeries**:\n- **Tiby's Tibetan Kitchen & Tibet Kitchen**: Renowned for authentic Tibetan hotpots, Thukpa, and butter tea.\n- **Moonpeak Espresso**: Famous for freshly brewed espresso using single-origin beans, apricot crumble cake, and homemade mutton sandwiches.\n- **Illiterati Books & Coffee**: An iconic book cafe in Jogiwara with floor-to-ceiling libraries, artisan pizzas, and panoramic sunset balconies."
       },
       {
         "type": "image",
@@ -346,7 +346,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "If taking the Kangra Valley toy train from Pathankot, disembark at Kangra Mandir station. Sit on the left side of the narrow-gauge coach to catch stunning vistas of the Dhauladhar range towering dramatically over emerald mustard fields."
+        "content": "**Pro Traveler Tip for Audience with the Dalai Lama**:\nIf planning to attend the public teachings or private audiences with His Holiness the Dalai Lama, check the official schedule on dalailama.com months in advance. Registration must be completed in person at the Branch Security Office in McLeodganj with your original passport and a passport photo. Take the Dharamshala Skyway ropeway from Dharamshala to avoid the narrow, winding traffic jams of the Temple Road."
       }
     ]
   },
@@ -396,24 +396,24 @@
       {
         "trainNumber": "12413",
         "trainName": "Pooja Superfast Express",
-        "route": "Jaipur (JP) \u2794 Pathankot Cantt (PTKC)"
+        "route": "Jaipur (JP) ➔ Pathankot Cantt (PTKC)"
       },
       {
         "trainNumber": "14033",
         "trainName": "Jammu Mail",
-        "route": "Old Delhi (DLI) \u2794 Pathankot (PTK)"
+        "route": "Old Delhi (DLI) ➔ Pathankot (PTK)"
       },
       {
         "trainNumber": "12445",
         "trainName": "Uttar Sampark Kranti",
-        "route": "New Delhi (NDLS) \u2794 Pathankot Cantt (PTKC)"
+        "route": "New Delhi (NDLS) ➔ Pathankot Cantt (PTKC)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Founded in 1854 by the British Empire and named after the then Governor-General Lord Dalhousie, this hill station was carved out of five serene hills\u2014Kathlog, Potreyn, Tehra, Bakrota, and Balun\u2014acquired from the Raja of Chamba. In 1992, Swiss Envoy Willy P. Blazer officially christened Khajjiar as 'Mini Switzerland' due to its topographical and climatic mirror resemblance to Switzerland's alpine landscapes."
+        "title": "1. Colonial Heritage, Scottish Architecture & Chamba Dynastic Lore",
+        "content": "Sprawled across five pine-clad ridges—Kathlog, Potreyn, Tehra, Bakrota, and Balun—at an elevation between 1,970 meters and 2,140 meters, Dalhousie was established in 1854 by the British Empire. Named after James Broun-Ramsay, the 1st Marquess of Dalhousie and Governor-General of India, the sanatorium hill station was acquired from the Raja of Chamba for its pristine mountain air, sweet glacial springs, and dense woodlands.\n\nUnlike bustling commercial hill towns, Dalhousie preserves a remarkably tranquil Victorian and Edwardian ambiance. Winding cobblestone promenades are sheltered by centuries-old Himalayan cedars, oaks, and flowering horse chestnuts, punctuated by stone-built colonial bungalows, Scottish baronial villas, and quiet parish churches.\n\nJust 24 kilometers up the mountain road lies **Khajjiar** (1,920 m), famously christened the 'Mini Switzerland of India' on July 7, 1992, by Swiss Ambassador Willy P. Blazer. Encircled by a ring of dense deodar forests, Khajjiar features a saucer-shaped emerald alpine meadow with a floating island in its central lake, framed by the majestic snow-capped peaks of the Pir Panjal range."
       },
       {
         "type": "image",
@@ -423,7 +423,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Marvel at Khajjiar's expansive emerald saucer meadow set at 1,920 m, complete with a floating reed island in Khajjiar Lake and the 12th-century wooden Khajjinag temple. In Dalhousie, visit the historic St. John\u2019s and St. Francis Churches, hike to Dainkund Peak (the 'Singing Hill'), and take leisurely strolls along the scenic Bakrota Round and Garam Sadak promenades."
+        "content": "**1. Khajjiar Glade, Floating Island Lake & Khajji Nag Temple**:\n- The expansive alpine meadow of Khajjiar spans nearly 5 kilometers in circumference, with a natural freshwater lake at its heart featuring floating clumps of grass and reeds.\n- On the meadow's edge stands the 12th-century **Khajji Nag Temple**, built of dark deodar timber with a gilded dome. It houses ancient wooden carvings depicting the five Pandava brothers alongside the snake god Khajji Nag.\n\n**2. Dainkund Peak (The Singing Hill, 2,755 m)**:\n- The highest elevation in Dalhousie, Dainkund provides an awe-inspiring 360-degree panorama of the Chenab, Beas, and Ravi river valleys alongside snow-covered Himalayan peaks.\n- The mountain is named 'Singing Hill' due to the melodious resonance created by mountain winds whipping through deodar branches. At the summit sits the revered **Pholani Devi Temple**.\n\n**3. Subhash Baoli & Panchpula**:\n- **Subhash Baoli**: A tranquil freshwater spring shaded by towering oaks where freedom fighter Netaji Subhash Chandra Bose spent seven rejuvenating months in 1937.\n- **Panchpula**: A picturesque spot where five mountain streams converge under arched bridges, featuring the memorial samadhi of revolutionary freedom fighter Sardar Ajit Singh (uncle of Bhagat Singh).\n\n**4. Colonial Heritage Churches**:\n- **St. John's Church (Gandhi Chowk)**: Consecrated in 1863, the oldest church in Dalhousie, noted for its fine stained glass and stone masonry.\n- **St. Francis Church (Subhash Chowk)**: Built in 1894, renowned for intricate Belgian glass artwork and polished wood carvings."
       },
       {
         "type": "image",
@@ -432,8 +432,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Trek through the fairytale deodar canopy of Kalatop Wildlife Sanctuary, keeping watch for Himalayan black bears and vibrant monal pheasants. Go horseback riding across the gentle slopes of Khajjiar, paraglide over pine canopies, or take a day trip to the historic town of Chamba to visit the 10th-century Lakshmi Narayan stone temple complex."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Kalatop Wildlife Sanctuary Trail**:\n- Spanning 30 square kilometers between Dalhousie and Khajjiar, this sanctuary preserves dense, untouched deodar and coniferous forests. A scenic 3 km forested trail leads from the Lakkar Mandi checkpoint to the historic colonial forest rest house.\n- Home to leopard cats, Himalayan black bears, serow, barking deer, and birds such as the Black Headed Jay and Eurasian Jay.\n\n**2. Bakrota Round Promenade Walk**:\n- A 5 km level circular paved walking circuit around the Bakrota Hill ridge, celebrated for offering unhindered vistas of the snowy peaks, loved by Rabindranath Tagore, who wrote his early verses while staying at Snowdon Cottage here in 1873.\n\n**3. Chamera Lake Water Sports**:\n- Located 25 km from Dalhousie along the Ravi River, the massive reservoir behind the Chamera Hydroelectric Dam offers speedboating, motorboating, and serene kayaking against sheer rocky mountain cliffs."
       },
       {
         "type": "image",
@@ -443,7 +443,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- Pathankot Cantt (PTKC) and Pathankot Junction (PTK) are the definitive broad-gauge railheads, located 82 km and 80 km from Dalhousie. Major superfast trains like the Uttar Sampark Kranti (12445), Jammu Mail (14033), and Dhauladhar Express link directly from New Delhi and major north Indian junctions.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- State-run HRTC buses operate hourly from Pathankot bus stand directly to Dalhousie (3.5 hours, \u20b9180). Government-authorized prepaid taxis from Pathankot station charge \u20b92,200 to \u20b92,800 for the scenic hill drive ascending via Dunera and Banikhet.\n\n**3. Airport & Flight Connectivity**:\n- Pathankot Airport (IXP) has limited commercial connectivity. Kangra Airport at Gaggal (DHM, 105 km) and Amritsar's Sri Guru Ram Dass Jee International Airport (ATQ, 210 km) provide extensive domestic and international connections.\n\n**4. Road Network & Highway Driving**:\n- Connected via NH-44 up to Pathankot, from where the winding mountain road NH-154A leads directly to Banikhet and Dalhousie (560 km from Delhi, ~10 hours)."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Pathankot Cantonment (PTKC) / Pathankot Junction (PTK)**: The closest broad-gauge railhead, located 80 km south-west (2.5 hours drive).\n- **Key Express Trains**: New Delhi-Katra Vande Bharat Express (Train No: 22439), Jammu Mail (14033), Dhauladhar Express (14035), and Malwa Express (12919).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- **Taxi Union Transfers**: Fixed-rate prepaid taxis from Pathankot Station to Dalhousie charge ₹2,200 to ₹2,600 for a private sedan, and ₹3,500 for an SUV.\n- **HRTC Mountain Buses**: Frequent ordinary state buses operate from Pathankot Bus Stand to Dalhousie Bus Stand every 45 minutes (₹120 to ₹160, 3 to 3.5 hours).\n\n**3. Airport & Flight Connectivity**:\n- **Kangra Airport at Gaggal (DHM)**: 105 km away (3.5 hours drive) with daily connections to New Delhi.\n- **Sri Guru Ram Dass Jee International Airport, Amritsar (ATQ)**: 200 km away (4.5 hours drive), offering widespread domestic and international flight connections.\n\n**4. Road Network & Highway Driving**:\n- Accessed via **NH-154A** from Pathankot through Dunera and Banikhet. The road is well-tarred and scenic, though winter snowfalls occasionally require tire chains between Dalhousie and Khajjiar."
       },
       {
         "type": "image",
@@ -453,7 +453,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Delight in authentic Chamba-style Madra\u2014kidney beans (rajma) slow-cooked in curd, aromatic green cardamom, and dry fruits. Relish local hot piping Gulab Jamuns at Caf\u00e9 Dalhousie and sample famous Chamba Chukh, a fiery red chilli and citrus pickle made according to secret generational recipes."
+        "content": "**1. Chamba Dham & Local Delicacies**:\n- Experience **Chamba Chukh**, a fiery, tangy traditional chili paste prepared from sun-dried red chilies, citrus extract (galgal), mustard oil, and wild mountain spices—an iconic local condiment.\n- Taste **Madra**, prepared in authentic Chamba style with small kidney beans (Rajma) and chickpeas slowly simmered in ghee, curd, and dried raisins.\n\n**2. Historic Bakeries & Cafes**:\n- **Cafe Dalhousie**: Established in the 1930s, celebrated for English breakfast, homemade grilled cheese toasts, and freshly brewed coffees.\n- **Kwality Restaurant (Gandhi Chowk)**: Renowned for sizzling North Indian curries, butter naans, and rich Gulab Jamuns.\n- **Old Sher-e-Punjab**: A beloved heritage stop for tandoori delicacies and spicy Dal Makhani."
       },
       {
         "type": "image",
@@ -463,7 +463,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "If arriving early morning by train at Pathankot, catch the direct 06:30 AM HRTC bus or hire a taxi to arrive in Dalhousie in time for breakfast while watching morning mists clear over the Shivalik foothills."
+        "content": "**Pro Traveler Tip for Khajjiar Day Trips**:\nKhajjiar can get crowded with day tourists between 11 AM and 3 PM. To experience the tranquil magic that earned it the 'Mini Switzerland' title, arrive early in the morning before 9 AM or stay overnight in one of the heritage wooden cottages on the meadow's fringe. Don't miss sampling freshly fried spiced pine nuts and local apple juice sold by village vendors."
       }
     ]
   },
@@ -513,24 +513,24 @@
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Una Himachal (UHL)"
+        "route": "New Delhi (NDLS) ➔ Una Himachal (UHL)"
       },
       {
         "trainNumber": "12045",
         "trainName": "Chandigarh Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Known in Sanskrit scriptures as 'Kulanthapitha'\u2014literally meaning 'the end of the habitable world'\u2014Kullu was ruled by the Pal dynasty and subsequently the Badani kings. Every village in the valley honors its own living deity (Devta), creating a unique spiritual administrative system. The pinnacle of this tradition is Kullu Dussehra, initiated in 1651 when Raja Jagat Singh installed the sacred idol of Lord Raghunath."
+        "title": "1. Sacred Mythology, Valley of Gods & Dussehra Legacy",
+        "content": "Spanning the central river basin of Himachal Pradesh between the Pir Panjal and Greater Himalayan ranges at an altitude of 1,279 meters (4,196 feet), Kullu is universally celebrated as the **'Dev Bhoomi' (Valley of the Gods)**. Ancient scriptures, including the Vishnu Purana and Mahabharata, record this sacred basin as *Kulantapitha*, meaning 'the end of the habitable world'.\n\nThe valley's cultural heartbeat is defined by its deep-seated animistic and Vedic spiritual traditions. Over 360 local village deities (Devtas and Devis) reside in individual sanctums across mountain ridges, communicating with their village subjects through appointed shamans (*Gurs*). Every village maintains its unique wooden palanquin (*Rath*), adorned with sacred brass and silver masks (*Mohras*).\n\nThe pinnacle of this sacred heritage is the world-renowned **Kullu Dussehra**, a week-long UNESCO Intangible Cultural Heritage festival celebrated at Dhalpur Maidan in October. While Dussehra across India concludes with the burning of Ravana's effigies, in Kullu, the festival begins on Vijayadashami day when hundreds of village deities gather to pay homage to Lord Raghunath (Rama), who was brought to Kullu from Ayodhya in 1651 by Raja Jagat Singh."
       },
       {
         "type": "image",
@@ -540,7 +540,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Trek up to Bijli Mahadev Temple for an unforgettable 360-degree viewpoint over the Parvati and Beas river confluences. Explore the medieval wood-and-stone Naggar Castle overlooking the valley, visit the Jagannathi Devi temple in Bhekhli, and wander through the sprawling open greens of Dhalpur Maidan. Nature enthusiasts can venture into the Great Himalayan National Park (GHNP), a UNESCO World Heritage biodiversity hotspot."
+        "content": "**1. Bijli Mahadev Temple (2,460 m / 8,070 ft)**:\n- Perched atop Mathan Hill across the Beas and Parvati river confluence, this ancient stone temple features a 60-foot tall deodar wooden staff (Dhwaj).\n- Legend holds that celestial lightning strikes the high staff and the stone Shiva lingam within the temple sanctum. Following the strike, the temple priest gathers the shattered lingam pieces and restores them using butter and sattu, symbolizing cosmic protection.\n\n**2. Raghunath Temple, Sultanpur**:\n- The primary spiritual seat of Kullu's royal lineage, housing the historic idol of Lord Rama brought from Ayodhya in the 17th century.\n\n**3. Naggar Castle & Nicholas Roerich Art Gallery**:\n- Located 21 km north of Kullu, **Naggar Castle** is a 15th-century fortified timber-and-stone mansion built by Raja Sidh Singh in the Kath-Kuni architectural style, overlooking the cascading Beas River.\n- Nearby stands the estate of Russian philosopher and painter **Nicholas Roerich**, displaying his iconic luminous paintings of the Himalayan peaks alongside his vintage 1930 Dodge car.\n\n**4. Great Himalayan National Park (GHNP) Gateway**:\n- A UNESCO World Heritage Site renowned for its pristine biodiversity, glaciated alpine peaks, and rare fauna like the Western Tragopan and Himalayan Musk Deer."
       },
       {
         "type": "image",
@@ -549,8 +549,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Experience heart-pounding white-water rafting along the 14 km stretch from Pirdi to Jhiri. Visit authentic artisan weaving clusters in Bhutti Colony to see how pure Merino and Angora wool shawls are woven on handlooms, and explore the apple orchards that blanket the valley hillsides in fragrant spring blooms."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Bijli Mahadev Summit Trek**:\n- A rewarding 3 km ascending forest trail from Chansari village that winds through dense pine and oak trees, offering 360-degree aerial views of the Kullu airport runway at Bhuntar and the snow-capped Pir Panjal range.\n\n**2. Kais Dhar Alpine Meadow Trail**:\n- A serene, offbeat forest trail 15 km from Kullu leading through deodar wilderness to an alpine clearing at 2,500 meters, famous for British-era forest rest houses and wildflower blooms.\n\n**3. Beas River Adventure Hub**:\n- The stretch between Babeli and Pirdi is Himachal's premier hub for white water rafting, kayaking, and riverside paragliding tandem flights."
       },
       {
         "type": "image",
@@ -560,7 +560,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railhead is Chandigarh Junction (CDG, 270 km) and Kiratpur Sahib (KART, 195 km). High-speed connections include the New Delhi - Una Vande Bharat (22447) to Kiratpur Sahib, which drastically cuts travel time to the Shivalik gateway.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kiratpur Sahib and Chandigarh, non-stop HRTC Himgaurav and Volvo buses ascend via the new 4-lane expressway (4.5 to 5 hours from Kiratpur; 6.5 hours from Chandigarh; fare ~\u20b9750 to \u20b91,200). Taxi rentals cost ~\u20b94,500 for a private sedan.\n\n**3. Airport & Flight Connectivity**:\n- Kullu-Manali Airport at Bhuntar (KUU) is located right in the heart of Kullu Valley (just 10 km from Kullu town center), offering scheduled flights to Delhi.\n\n**4. Road Network & Highway Driving**:\n- Connected via the modernized NH-21 / NH-3 four-lane corridor from Delhi (495 km, 8.5 hours), passing through Mandi and Pandoh."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: The principal broad-gauge railhead, situated 270 km south (6 hours drive via the new expressway).\n- **Joginder Nagar (JDNX)**: The narrow-gauge terminus located 105 km west (3.5 hours drive).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- **HRTC Buses**: Frequent AC Volvo and deluxe buses run from Chandigarh ISBT Sector 43 and Delhi ISBT Kashmiri Gate to Kullu Bus Stand (₹800 to ₹1,400, 6 to 10 hours).\n- **Taxis**: Prepaid private sedans from Chandigarh to Kullu charge ₹5,500 to ₹7,500.\n\n**3. Airport & Flight Connectivity**:\n- **Kullu-Manali Airport at Bhuntar (Code: KUU)**: Located just 10 km south of Kullu town center, offering daily direct flights to New Delhi and Chandigarh.\n\n**4. Road Network & Highway Driving**:\n- The newly constructed **Kiratpur-Nerchowk-Kullu 4-lane Highway (NH-3)** has eliminated hazardous mountain curves, reducing driving time from Chandigarh to Kullu to just 5.5 hours."
       },
       {
         "type": "image",
@@ -570,7 +570,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Feast on Kullu Trout prepared in local village style with light spices, followed by Chha Gosht (tender mutton marinated in curd and gram flour with cardamom and coriander). End your meal with sweet Mittha\u2014steamed rice sweetened with jaggery, saffron, and raisins."
+        "content": "**1. Kullu Dham & Traditional Culinary Heritage**:\n- The sacred **Kullu Dham** is prepared exclusively by hereditary Brahmin cooks known as *Botis*. Courses include **Chana Madra**, **Kadi**, **Mha ki Dal**, and **Khatta** (a tangy mango powder and tamarind broth), concluded with sweet **Meetha Chawal**.\n- **Kulluvi Shawls & Handloom Centers**: Visit Bhuttico (Bhuttangee Weavers Cooperative Society) in Shamshi to witness hand-weaving of world-famous Kullu shawls, stoles, and caps (*Topis*) adorned with colorful geometric borders.\n\n**2. Fresh River Trout & Local Bakeries**:\n- Enjoy freshly caught river trout roasted over mountain wood with lemon butter sauce at riverside dhabas in Babeli and Naggar."
       },
       {
         "type": "image",
@@ -580,7 +580,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Kiratpur Sahib (KART) is now the preferred railhead for Kullu-bound travelers instead of Chandigarh, as it avoids plain highway traffic and lands you directly at the foothills of the high-speed four-lane mountain expressway."
+        "content": "**Pro Traveler Tip for Kullu Dussehra**:\nIf visiting during the international Kullu Dussehra festival (usually October), book hotels and homestays at least two to three months in advance. Respect local Devta customs: never touch the sacred palanquins or divine masks of the deities without explicit permission from the temple *Kardar* (caretaker)."
       }
     ]
   },
@@ -630,24 +630,24 @@
       {
         "trainNumber": "12011",
         "trainName": "Kalka Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Kalka (KLK)"
+        "route": "New Delhi (NDLS) ➔ Kalka (KLK)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       },
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Meaning 'The Middle Land' (the buffer kingdom between India and Tibet), Spiti was historically part of the Guge Kingdom of Western Tibet. Its monasteries, especially Tabo (founded in 996 AD and often hailed as the 'Ajanta of the Himalayas') and Key Gompa, are repository treasure troves of centuries-old murals, rare thangkas, and ancient Buddhist scriptures surviving in near-arid climatic preservation."
+        "title": "1. The Middle Land, Trans-Himalayan Buddhism & Geological Marvels",
+        "content": "Perched in the extreme north-eastern frontier of Himachal Pradesh at an average elevation exceeding 3,800 meters (12,500 feet), Spiti Valley is famously termed 'The Middle Land'—the trans-Himalayan bridge separating India from Tibet. Surrounded by colossal 6,000-meter peaks of the Greater Himalayan and Zanskar ranges, Spiti is a high-altitude cold desert that remained historically shielded from outside civilizations for centuries.\n\nSpiti's human geography is intrinsically intertwined with Gelugpa and Nyingma Tibetan Buddhism. Ancient monasteries built of sun-dried mud, timber, and river stone cling to precipitous crags, preserving thousand-year-old silk thangkas, hand-carved block-print scriptures (Kangyur), and golden statues.\n\nGeologically, Spiti is a prehistoric open-air museum. Over 50 million years ago, this entire mountain desert lay submerged under the ancient Tethys Sea. The colossal tectonic collision between the Indian Plate and the Eurasian Plate thrust the seabed skyward, leaving marine fossils—including ammonites (Shaligrams)—embedded in cliffs and streambeds at 14,000 feet."
       },
       {
         "type": "image",
@@ -657,7 +657,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Visit Key Monastery to witness young monks learning ancient dialectics and chantings in the prayer halls. Explore the breathtaking clifftop Dhankar Monastery, marvel at Tabo's UNESCO-recognized mud-brick murals, and photograph Chicham Bridge\u2014Asia's highest suspension bridge spanning a 150-meter-deep canyon. Drive up to Komic (the highest village connected by motorable road with a monastery) and Langza with its colossal outdoor Buddha statue."
+        "content": "**1. Key Monastery (Kye Gompa, 4,166 m)**:\n- The largest and most iconic monastic fortress in Spiti, established in the 11th century by Dromtön, a disciple of the great master Atisha.\n- Resembling a cascade of white and ochre stone boxes clinging to a conical hill, Key Monastery houses sacred murals depicting the life of Lord Buddha, ancient weapons used to defend against Mongol and Ladakhi invaders, and rare musical instruments (Dungchen horns).\n\n**2. Tabo Monastery (The Ajanta of the Himalayas, 3,280 m)**:\n- Founded in 996 CE by the legendary royal monk Rinchen Zangpo, Tabo is a UNESCO World Heritage nominee and one of the oldest continuously operating Buddhist complexes in India.\n- Its nine mud-brick temples contain priceless stucco sculptures, life-sized clay statues of the 33 deities of the Vajradhatu Mandala, and delicate ceiling frescoes.\n\n**3. Dhankar Monastery & Sacred Lake (3,894 m)**:\n- The historic medieval capital of Spiti, Dhankar Gompa hangs precariously on the razor-sharp ridge of a crumbling mud cliff overlooking the confluence of the Spiti and Pin rivers.\n- A steep 2 km hike leads to **Dhankar Lake**, a pristine glacial pool reflecting the snowy peaks.\n\n**4. Pin Valley National Park & Kungri Monastery**:\n- Located in the trans-Himalayan cold desert, home to the endangered snow leopard, Siberian ibex, and Himalayan snowcock, anchored by the ancient Nyingma sect monastery of Kungri."
       },
       {
         "type": "image",
@@ -666,8 +666,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Post a postcard from Hikkim, home to the world's highest post office at 4,400 m. Hunt for prehistoric marine ammonite fossils embedded in the sedimentary shale of Langza village\u2014relics of the ancient Tethys Sea that existed before the Himalayas rose. Embark on winter snow-leopard tracking expeditions in Kibber Wildlife Sanctuary."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Highest Altitude Village Circuit (Langza, Komic & Hikkim)**:\n- **Langza (4,400 m)**: Overlooked by the snow-capped Chau Chau Kang Nilda peak and a giant 1,000-year-old golden Buddha statue; renowned fossil-hunting paradise.\n- **Komic (4,587 m)**: Officially the highest village in the world connected by a motorable road, home to the ancient Tangyud Gompa.\n- **Hikkim (4,440 m)**: Home to the **World's Highest Post Office**, where travelers can hand-stamp and post postcards to anywhere on Earth.\n\n**2. Chicham Bridge (Asia's Highest Suspension Bridge, 4,037 m)**:\n- Spanning a staggering 150-meter deep vertical gorge connecting Kibber with Chicham village, a breathtaking feat of high-altitude civil engineering.\n\n**3. Stargazing & Milky Way Astrophotography**:\n- With zero light pollution and ultra-dry thin air, Spiti is a world-class dark-sky destination where the galactic core of the Milky Way is visible to the naked eye."
       },
       {
         "type": "image",
@@ -677,7 +677,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The two rail access routes are via the Shimla-Kinnaur Highway (railheads at Kalka [KLK, 440 km] and Shimla [SML, 410 km]) or via the Manali-Atal Tunnel route (railhead at Chandigarh Junction [CDG, 465 km]). The Shimla route provides gradual altitude acclimatization.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Chandigarh or Shimla, high-ground-clearance SUVs (Innova/Scorpio) or rugged HRTC mountain buses ply to Kaza. Taxis from Chandigarh charge approximately \u20b928,000 to \u20b935,000 for a 7-day round-trip circuit.\n\n**3. Airport & Flight Connectivity**:\n- Bhuntar Airport near Kullu (KUU, 250 km from Kaza via Atal Tunnel and Kunzum Pass) is the nearest operational domestic airport.\n\n**4. Road Network & Highway Driving**:\n- Two primary routes: Route 1 (Shimla-Reckong Peo-Sumdo-Kaza on NH-5 and NH-505, open year-round). Route 2 (Manali-Atal Tunnel-Gramphu-Batal-Kunzum Pass-Kaza on NH-505, open mid-May to October)."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Kalka (KLK)**: 450 km away via Shimla and Kinnaur along NH-5.\n- **Chandigarh Junction (CDG)**: 470 km via Kinnaur, or 380 km via Manali and Atal Tunnel (summer only).\n\n**2. Two Primary Driving Circuits**:\n- **Circuit 1: The Hindustan-Tibet Road via Kinnaur (Open Year-Round)**: Shimla -> Narkanda -> Rampur -> Reckong Peo -> Nako -> Tabo -> Kaza (NH-5 & NH-505). Best for gradual altitude acclimatization.\n- **Circuit 2: The High-Pass Route via Manali (Open June to October)**: Manali -> Atal Tunnel -> Gramphu -> Batal -> Kunzum Pass (4,551 m) -> Kaza (NH-505).\n\n**3. Local Transit & Taxis**:\n- HRTC operates daily buses from Shimla to Kaza (24-hour split journey) and daily summer buses from Manali to Kaza (9 to 11 hours). Private 4x4 Bolero campers or Scorpio SUVs charge ₹18,000 to ₹25,000 for a multi-day Spiti circuit.\n\n**4. Airports**:\n- **Kullu Bhuntar (KUU)**: 250 km via Manali.\n- **Chandigarh (IXC)**: 470 km via Kinnaur."
       },
       {
         "type": "image",
@@ -687,7 +687,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Warm up with steaming bowls of Spiti Thukpa, Tibetan Tingmo with stir-fried local black peas (Kala Chana grown at high altitude), Seabuckthorn tea rich in Vitamin C, and hearty Tsampa (roasted barley flour mixed with warm butter tea)."
+        "content": "**1. High Altitude Spitian Superfoods**:\n- **Spitian Seabuckthorn (Tsermang) Tea**: Brewed from wild thorny orange berries thriving at 12,000 feet, rich in Vitamin C and antioxidants.\n- **Tsampa (Roasted Barley Flour)**: Eaten mixed with salted yak butter tea (*Gur Gur Cha*) or kneaded into sweet energy balls.\n- **Spiti Thukpa, Tingmo & Potato Momos**: Warm, hearty soups and dumplings stuffed with famous organic Spiti potatoes.\n\n**2. Renowned Cafes in Kaza**:\n- **The Himalayan Cafe**: Known for wood-fired pizzas, herbal teas, and yak cheese platters.\n- **Cafe Zomsa**: A vibrant eco-hub offering traditional acoustic Spitian music, local barley beer, and baked apple pies."
       },
       {
         "type": "image",
@@ -697,7 +697,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Take the overnight train to Kalka or early morning Vande Bharat to Chandigarh. Always choose the Kinnaur route for your inbound journey to allow your body 3 full days of progressive altitude acclimatization before crossing into high Spiti (above 3,600 m)."
+        "content": "**Pro Traveler Tip for Acute Mountain Sickness (AMS)**:\nSpiti's altitude (3,800 to 4,500 meters) poses genuine risks of altitude sickness. Never fly or rush into Kaza directly; always take the Shimla-Kinnaur route, spending nights at Narkanda (2,700 m) and Kalpa (2,960 m) to acclimatize. Drink 4-5 liters of water daily. Carry adequate hard cash, as Kaza's isolated ATMs frequently run out of money or power. Foreign nationals must obtain an Inner Line Permit (ILP) at Reckong Peo, Shimla, or Kaza."
       }
     ]
   },
@@ -747,24 +747,24 @@
       {
         "trainNumber": "12011",
         "trainName": "Kalka Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Kalka (KLK)"
+        "route": "New Delhi (NDLS) ➔ Kalka (KLK)"
       },
       {
         "trainNumber": "52453",
         "trainName": "Himalayan Queen",
-        "route": "Kalka (KLK) \u2794 Shimla (SML)"
+        "route": "Kalka (KLK) ➔ Shimla (SML)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "In classical Indian epics, the people of Kinnaur were believed to be 'Kinnaras'\u2014half-divine musicians and celestial dancers described in the Mahabharata. Guarding the historic Hindustan-Tibet trade route along the roaring Satluj River canyon, Kinnaur developed a remarkable synthesis where Hinduism and Tibetan Buddhism blend harmoniously. The landscape is dominated by the sacred Kinnaur Kailash peak, revered as the mythical winter abode of Lord Shiva."
+        "title": "1. Borderlands, Kinner Kailash Lore & Apple Valleys",
+        "content": "Kinnaur, known in Hindu cosmology as the 'Land of the Celestial Kinners' (mythical half-divine musicians), forms a breathtaking transition zone between the green deodar-clad mountains of lower Himachal and the stark desert ridges of Tibet. Crowned by the sacred 6,050-meter **Kinner Kailash Peak**, venerated by both Hindus and Buddhists as the celestial abode of Lord Shiva, Kinnaur is blessed with roaring glacial rivers, towering granite cliffs, and terraced apple orchards.\n\nHistorically traversed by the ancient Silk and Salt routes, Kinnaur's indigenous people practice a unique synthesis of Hinduism and Tibetan Buddhism. Local village temples often feature both Hindu idols and Buddhist prayer flags, guarded by wooden pagoda sanctuaries constructed in the intricate *Kath-Kuni* architectural style.\n\n**Kalpa**, situated at 2,960 meters directly opposite the Kinner Kailash massif, served as the historic regional administrative capital. Renowned for yielding some of the world's finest, crunchiest Royal and Golden apples, Kalpa provides front-row seats to the dramatic colour-changing granite pillars of Shiva's rock obelisk at sunrise and sunset."
       },
       {
         "type": "image",
@@ -774,7 +774,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Witness sunrise over the Kinnaur Kailash range from Kalpa, where the sacred summit monolith dramatically changes color from bronze to fiery gold as dawn breaks. In Sangla Valley, visit the multi-tiered 15th-century Kamru Fort and the wood-carved Bering Nag Temple. Brave the iconic cliff-hewn overhang at Roghi\u2019s 'Suicide Point', and explore the ancient Hu-Bu-Lan-Kar Buddhist gompa in Kalpa."
+        "content": "**1. Kinner Kailash Shivling Panorama**:\n- The sacred 79-foot natural rock monolith perched atop the Kinner Kailash massif changes hue dynamically through the day—from crimson red at dawn to emerald gold at noon and deep violet at dusk.\n\n**2. Roghi Village & The Suicide Point Cliff**:\n- Located 6 km from Kalpa along a narrow road carved into vertical granite precipices with a sheer 1,000-meter drop down to the Sutlej River gorge.\n- Roghi village preserves traditional wooden houses, ancient apple warehouses, and an ornate village temple dedicated to the village deity.\n\n**3. Hu-Bu-Lan-Kar Monastery & Chini Village**:\n- Founded by the great translator Rinchen Zangpo in the 10th century, located in the ancient village core of Chini with panoramic vistas.\n\n**4. Sangla Valley & Kamru Fort**:\n- Spanning 40 km along the turquoise Baspa River, Sangla is famed as one of Asia's most picturesque valleys, anchored by the 1,000-year-old five-story **Kamru Fort**, the ancestral coronation seat of the rulers of Bushahr."
       },
       {
         "type": "image",
@@ -783,8 +783,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Stroll through royal Golden Delicious and Royal Gala apple orchards during the harvest season (August-October). Camp alongside the turquoise Baspa River in Sangla, angling for trout or hiking to the scenic glacier viewpoints of Rakcham. Buy hand-loomed Kinnauri woollen shawls and traditional green-velvet Kinnauri caps (Thepang) directly from local cooperative weavers."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Kinner Kailash Parikrama Trek**:\n- A grueling 7-day high-altitude pilgrimage trek covering 75 km across the Charang La Pass (5,260 m), circumnavigating the sacred holy mountain.\n\n**2. Sangla Kanda Alpine Meadow Hike**:\n- A 7 km day trek ascending from Sangla village to pristine high-altitude meadows (Kanda) with natural glacial tarns reflecting glaciated peaks.\n\n**3. Batseri Village Cultural Walk**:\n- A peaceful riverside village near Sangla famous for cobblestone alleys, traditional trout hatcheries, and the intricately hand-carved wood-and-stone temple of Lord Badri Narayan."
       },
       {
         "type": "image",
@@ -794,7 +794,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railway hub is Kalka (KLK, 310 km) and Chandigarh Junction (CDG, 330 km). Travelers can also take the narrow-gauge toy train to Shimla (SML, 220 km from Kalpa).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Shimla ISBT, regular HRTC deluxe buses depart for Reckong Peo and Kalpa (8 to 9 hours, \u20b9450). Private SUVs from Shimla or Kalka charge \u20b98,000 to \u20b912,000 for a one-way transfer through the Satluj River gorge via Rampur Bushahr.\n\n**3. Airport & Flight Connectivity**:\n- Shimla Airport at Jubbarhatti (SLV, 240 km) and Chandigarh International Airport (IXC, 335 km) are the closest air gateways.\n\n**4. Road Network & Highway Driving**:\n- Connected via the historic Hindustan-Tibet Road (NH-5) passing through Narkanda, Rampur, Jeori, and Tapri, featuring incredible rock-cut tunnels and gorge bridges."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Kalka (KLK)**: 310 km south-west; connected by Kalka Shatabdi and Netaji Express.\n- **Shimla Toy Train Railhead (SML)**: 220 km away.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- Direct HRTC ordinary and semi-deluxe buses depart daily from Shimla ISBT Tutikandi to Reckong Peo and Kalpa (9 to 10 hours, ₹350 to ₹500).\n- Private taxis from Shimla charge ₹8,000 to ₹10,000 for a one-way drop to Kalpa/Sangla.\n\n**3. Airport & Flight Connectivity**:\n- **Shimla Airport (SLV)**: 240 km away.\n- **Chandigarh International (IXC)**: 330 km away (9 hours drive).\n\n**4. Road Network & Highway Driving**:\n- The legendary **NH-5 (Hindustan-Tibet Road)** traces the dramatic Sutlej River gorge through Solan, Shimla, Narkanda, and Rampur up to Reckong Peo and Powari."
       },
       {
         "type": "image",
@@ -804,7 +804,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Taste authentic Kinnauri cuisine including salty Butter Tea paired with Chuli (local wild apricot kernels), roasted Buckwheat pancakes (Phaphra), and rich Ogla dumplings simmered with mountain herbs and ghee."
+        "content": "**1. Kinnauri Specialties & Orchard Produce**:\n- **Ogla & Phaphra Khura**: Nutritious whole buckwheat flatbreads and pancakes eaten with fresh churned mountain butter and wild apricot chutney.\n- **Kinnauri Royal Apples & Chilgoza**: Kinnaur is India's sole commercial producer of **Chilgoza** (wild pine nuts harvested from Pinus gerardiana trees), prized for their buttery texture and rich nutrients.\n- **Sattu & Butter Tea**: High-energy roasted barley porridge stirred into piping-hot salted tea."
       },
       {
         "type": "image",
@@ -814,7 +814,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Take the overnight Kalka Mail or morning Shatabdi to Kalka, stop overnight at Narkanda or Rampur, and continue into Kinnaur the following morning to enjoy the spectacular cliff-cut gorge scenery in daylight."
+        "content": "**Pro Traveler Tip for Road Travel in Kinnaur**:\nThe Hindustan-Tibet Road (NH-5) along the Tranda Dhank cliff section is one of the world's most dramatic cliff-hanger roads. Drive only during daylight hours, as rockfalls are unpredictable after dusk. Carry adequate cash, as Reckong Peo is the final reliable hub with operating bank branches and ATMs before entering the deep upper valleys."
       }
     ]
   },
@@ -864,24 +864,24 @@
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Una Himachal (UHL)"
+        "route": "New Delhi (NDLS) ➔ Una Himachal (UHL)"
       },
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "12045",
         "trainName": "Chandigarh Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "In Hindu mythology, Chandratal is revered as the sacred location from where Lord Indra\u2019s celestial chariot descended to pick up Yudhishthira, the eldest Pandava brother, to ascend to heaven in his mortal body. Designated as a protected Ramsar Wetland of International Importance, this endorheic crescent-shaped glacial tarn is fed by subterranean mountain springs without any visible outflow."
+        "title": "1. The Moon Lake, Mythological Mahabharata Lore & Glacial Genesis",
+        "content": "Resting like an ethereal turquoise crescent jewel at a breathtaking altitude of 4,300 meters (14,100 feet) in the high wilderness of the Lahaul and Spiti district, **Chandratal (The Lake of the Moon)** is one of the Himalayas' most sacred high-altitude wetlands. Declared a Ramsar Wetland of International Importance, the lake spans a circumference of nearly 2.5 kilometers, fed by subterranean glacial seepages beneath the Samudra Tapu glacier system.\n\nAccording to the ancient Hindu epic Mahabharata, Chandratal is the sacred spot where Indra, the king of the gods, descended in his celestial golden chariot to welcome Yudhishthira, the eldest Pandava brother, to ascend bodily into heaven upon his completion of the mortal journey.\n\nSurrounded by vast boulder-strewn moraines, scree slopes, and rare high-altitude alpine tundra, Chandratal's crystal-clear waters change color dramatically throughout the day—shifting from morning shades of crystalline emerald green to afternoon azure blue, and evening turquoise reflecting the jagged peaks of the Chandra Bhaga (CB) mountain range."
       },
       {
         "type": "image",
@@ -891,7 +891,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Walk the 1.5 km scenic natural trail from the vehicle parking head to the tranquil banks of the lake. Undertake the 4 km sacred Parikrama (circumambulation) around the perimeter, admiring how the crystal-clear waters shift color through the day from deep Prussian blue to bright emerald and liquid turquoise. Marvel at the imposing peaks of CB-11, CB-12, and the Samudra Tapu glacier."
+        "content": "**1. The Chandratal Lake Perimeter Circuit (Parikrama)**:\n- A 5 km circular walking path around the lake's grassy banks, surrounded by red-flowering alpine mosses, stone stupas, and fluttering Buddhist prayer flags.\n\n**2. Kunzum Pass (Kunzum La, 4,551 m / 14,931 ft)**:\n- Located 14 km away, Kunzum Pass is the majestic high-mountain threshold connecting the Lahaul Valley with the Spiti Valley. Features a revered shrine dedicated to Goddess Kunzum Mata, around which every passing driver and traveler circumambulates clockwise for divine blessings.\n\n**3. Chandra Bhaga (CB) Glacial Range Views**:\n- Towering over the lake are the formidable glaciated peaks of CB-13, CB-14, and the imposing Minar peak, with massive hanging glaciers descending into the valley.\n\n**4. Batal & The Famous Chacha-Chachi Dhaba**:\n- Situated at the base of the mountain near the Chandra River bridge, this legendary stone dhaba run by an elderly couple (Dorje and Hishey Chhomo) has provided life-saving shelter, hot dal-rice, and rescue coordination to stranded mountain travelers for over 45 years."
       },
       {
         "type": "image",
@@ -900,8 +900,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Stargaze in one of India's clearest dark-sky corridors, with the Milky Way visible to the naked eye. Stop at the legendary 'Chacha Chachi Dhaba' at Batal for steaming rajma-chawal and heartwarming tales of mountain rescues by the elderly couple. Cross the high Kunzum Pass (4,590 m) and circumambulate the shrine of Goddess Kunzum Devi."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Kunzum La to Chandratal Ridge Trek**:\n- An iconic 14 km high-altitude ridge walk descending gently from Kunzum Pass to Chandratal. Trekkers traverse panoramic alpine slopes with unhindered views of the Chandra River meandering through gravel riverbeds far below.\n\n**2. High-Altitude Wilderness Camping & Night Sky Observation**:\n- Environmental regulations prohibit camping within 3 km of the fragile lake shoreline. Seasonal eco-camps operate at the designated campsite 3 km below the lake, offering canvas tents under Bortle Class 1 dark night skies with visible satellites and shooting stars.\n\n**3. Wildlife Spotting**:\n- In summer, the lake margins host rare migratory birds including the Ruddy Shelduck (Brahminy Duck), Bar-headed Goose, and snow finches, alongside Himalayan marmots and blue sheep (Bharal)."
       },
       {
         "type": "image",
@@ -911,7 +911,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The recommended rail gateways are Kiratpur Sahib (KART, 310 km) or Chandigarh Junction (CDG, 390 km), connecting directly to Manali via the modern expressway.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Manali (125 km from Chandratal), hire a 4x4 SUV (Mahindra Thar / Scorpio) via Atal Tunnel, Gramphu, and the rugged unpaved Chandra River bed to Batal and the Chandratal track (~\u20b910,000 to \u20b914,000 round trip; 5 to 6 hours drive).\n\n**3. Airport & Flight Connectivity**:\n- Kullu-Manali Airport at Bhuntar (KUU, 175 km) is the nearest airport, connected to Delhi by regular flights.\n\n**4. Road Network & Highway Driving**:\n- Accessible only during summer and autumn (mid-June to mid-October) via the Atal Tunnel and Gramphu-Batal unpaved mountain track (NH-505)."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: 340 km via Manali and the Atal Tunnel.\n- **Joginder Nagar (JDNX)**: 215 km away.\n\n**2. Road Approach & Seasonal Access (June to October Only)**:\n- **Via Manali**: Manali -> Atal Tunnel -> Gramphu -> Chhatru -> Batal -> Chandratal diversion road (125 km, 6 to 7 hours of rugged mountain driving).\n- **Via Kaza**: Kaza -> Losar -> Kunzum Pass -> Chandratal (85 km, 4 to 5 hours).\n\n**3. The Final 14 km Dirt Track from Batal**:\n- From Batal, a narrow, single-lane dirt track follows the river up to the Chandratal parking lot. From the parking lot, visitors walk a gentle 1 km stone path to the water's edge.\n\n**4. Airport Connectivity**:\n- **Kullu-Manali Airport at Bhuntar (KUU)**: 175 km away."
       },
       {
         "type": "image",
@@ -921,7 +921,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Due to strict Ramsar environmental conservation guidelines, no food stalls operate on the lake shore. Camps at the 2 km base camp serve wholesome hot dal, roti, vegetable stews, piping hot Maggi, and soothing ginger-lemon-honey tea."
+        "content": "**1. Mountain Camp Comfort Fare**:\n- Steaming bowls of spiced vegetable Maggi, hot soupy Thukpa, and freshly prepared Rajma Chawal served in dining tents at Batal and the Chandratal base camps.\n- Thermos flasks of hot ginger-lemon-honey tea and warm spiced Kahwa are essential companions against the biting sub-zero mountain winds."
       },
       {
         "type": "image",
@@ -931,7 +931,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Ensure you take at least one acclimatization night in Manali or Keylong before ascending to Chandratal's 14,100-foot altitude to prevent Acute Mountain Sickness (AMS)."
+        "content": "**Pro Traveler Tip for High-Altitude Survival & Photography**:\nNighttime temperatures at Chandratal frequently plummet below -5°C even in July and August. Carry heavy thermal innerwear, down jackets, windproof gloves, and woolen beanies. Camera and phone batteries drain rapidly in extreme cold; keep batteries in inside jacket pockets close to your body. Strictly observe leave-no-trace ethics: carrying any plastic or washing in the sacred lake waters is strictly prohibited."
       }
     ]
   },
@@ -981,24 +981,24 @@
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "12045",
         "trainName": "Chandigarh Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Part of the ancient inner Seraj region of Kullu, Jibhi and Tirthan Valley preserved their unique community-based forest stewardship for generations. The region is celebrated for monumental examples of Kath-Kuni architecture\u2014earthquake-resistant interlocked cedar-wood and schist masonry\u2014epitomized by the legendary 45-meter-high Chehni Kothi tower built by King Dhadhu in the 17th century."
+        "title": "1. Evergreen Sanctuaries, Wood-and-Stone Architecture & Trout Streams",
+        "content": "Tucked away in the pristine Banjar Valley of Kullu district at an elevation of 1,600 meters (5,250 feet), **Jibhi** and the adjoining **Tirthan Valley** represent one of Himachal Pradesh's finest unspoiled eco-tourism destinations. Shielded from commercial mass tourism, Jibhi is framed by virgin forests of cedar, pine, and wild chestnut, through which crystalline glacial tributaries cascade down rocky ravines into the rushing Tirthan River.\n\nThe architecture of Jibhi is rooted in age-old Himachali craftsmanship. Village homes, bridges, and cozy traveler chalets are built of fragrant Himalayan deodar logs and locally quarried slate stone without industrial mortar. Balconies with ornate wooden latticework overlook apple orchards and terraced buckwheat fields.\n\nServing as the southern gateway to the **Great Himalayan National Park (GHNP)**—inscribed as a UNESCO World Heritage Site in 2014 for its exceptional biodiversity and conservation of rare species—Jibhi has emerged as a haven for creative artists, digital nomads, fly-fishermen, and trekking purists."
       },
       {
         "type": "image",
@@ -1008,7 +1008,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Explore the multi-tiered Jibhi Waterfall nestled deep inside cedar groves with handmade wooden walking bridges. Hike up to the towering Chehni Kothi and Shringa Rishi Temple in Bagi village. In Tirthan Valley, visit the serene hamlet of Gushaini, hike to Choie Waterfall, and enter the pristine core zone of the Great Himalayan National Park."
+        "content": "**1. Jibhi Waterfall & Hidden Wooden Bridges**:\n- Located inside a lush deodar forest just 1 km from the village center, this multi-tiered waterfall cascades through narrow moss-covered granite crevices, crossed by rustic hand-carved wooden footbridges.\n\n**2. Chehni Kothar (The Great Tower of Chehni, 2,100 m)**:\n- A 1,500-year-old architectural wonder, this fortified stone-and-timber defensive tower stands over 45 meters (150 feet) tall, making it the tallest indigenous structure in the Western Himalayas.\n- Built by King Dhadhu in the *Kath-Kuni* style without iron or cement, it miraculously withstood the devastating 1905 Kangra earthquake with minimal structural shifts.\n\n**3. Shringi Rishi Temple, Bagi**:\n- Dedicated to the revered patron sage Shringi Rishi, who performed the Putrakameshti Yajna for King Dasharatha in the Ramayana, featuring three tiers of pagoda woodwork.\n\n**4. Chhoie (Sai Ropa) Waterfall**:\n- A picturesque 45-minute uphill trail through pine woods in Tirthan Valley leading to a dramatic 30-meter single-drop waterfall."
       },
       {
         "type": "image",
@@ -1017,8 +1017,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Cast a line for Brown and Rainbow Trout in the officially protected Tirthan River with local conservation guides. Stay in eco-friendly handcrafted wooden treehouses suspended among deodars, and drive up to Jalori Pass (10,800 ft) to trek to the mysterious lake of Serolsar."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Jalori Pass (3,120 m) & Serolsar Lake Trek**:\n- Located 12 km up the switchbacks from Jibhi, Jalori Pass is the highest motorable mountain pass in the outer Seraj range.\n- A 5 km gentle walking trail through ancient oak forests leads to **Serolsar Lake**, a sacred emerald tarn protected by the serpent goddess Buddhi Nagin, whose waters remain perpetually spotless.\n\n**2. Tirthan River Angling for Brown & Rainbow Trout**:\n- Regulated as an eco-conservation river, the Tirthan River offers India's premier fly-fishing beats. Angling permits are issued by the State Fisheries Department at Sai Ropa.\n\n**3. Great Himalayan National Park Buffer Zone Treks**:\n- Day hikes to Rolla, Gushaini, and the eco-zone trails where trekkers can spot the elusive Western Tragopan (Jujurana, 'King of Birds'), Himalayan Monal, and musk deer."
       },
       {
         "type": "image",
@@ -1028,7 +1028,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The most convenient broad-gauge railhead is Kiratpur Sahib (KART, 175 km) or Chandigarh Junction (CDG, 250 km). Board the early morning New Delhi - Amb Andaura Vande Bharat Express (22447) to Kiratpur Sahib (3.5 hours from Delhi).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kiratpur Sahib, take a direct deluxe bus or taxi towards Manali along the new 4-lane highway up to the Aut Tunnel exit (145 km). From Aut, local buses and private cabs branch off through Larji into Banjar, Jibhi, and Tirthan (27 km, 1 hour; taxi ~\u20b91,200 to \u20b91,500).\n\n**3. Airport & Flight Connectivity**:\n- Kullu-Manali Airport at Bhuntar (KUU) is just 50 km away, connected to Delhi with regular flights.\n\n**4. Road Network & Highway Driving**:\n- Drive from Delhi (470 km, 8.5 to 9 hours) via Chandigarh and the Kiratpur-Nerchowk expressway up to Aut Tunnel, followed by the scenic Banjar-Jibhi valley road."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: 250 km away (5.5 to 6.5 hours drive).\n- **Shimla Toy Train Railhead (SML)**: 160 km via Jalori Pass (summer route).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- Board any Delhi/Chandigarh to Manali Volvo bus and alight at **Aut Tunnel** (28 km before Kullu). From Aut, local buses and shared taxis run to Banjar (1 hour, ₹40) and Jibhi (additional 30 minutes, ₹30).\n- Private taxi from Aut to Jibhi charges ₹1,200 to ₹1,500.\n\n**3. Airport & Flight Connectivity**:\n- **Kullu-Manali Airport at Bhuntar (KUU)**: Located 50 km away (1.5 hours drive).\n\n**4. Road Network & Highway Driving**:\n- Take NH-21 up to Aut, turn right onto the scenic Aut-Larji-Sainj road, and proceed along the Banjar-Jibhi mountain road."
       },
       {
         "type": "image",
@@ -1038,7 +1038,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Savour freshly caught river Trout prepared in mountain herbs, authentic Siddu paired with local wild apricot chutney, and fragrant Kheer sweetened with natural forest honey."
+        "content": "**1. Trout Feasts & Local Flavors**:\n- Savor fresh pan-fried or herb-crusted Tirthan trout served with garlic butter, mashed mountain potatoes, and wild nettle soup (*Bichhu Booti Saag*).\n- Enjoy fresh homemade **Siddu** stuffed with crushed walnut paste and served with mountain bee honey or desi ghee.\n\n**2. Artisan Cafes in Jibhi**:\n- **Mudhouse Cafe**: Perched beside the gushing Jibhi stream, famed for wood-fired pizzas, lemon ginger tea, and live music jam sessions.\n- **The Jungle Book Cafe**: Cozy treehouse ambiance serving fresh mountain crepes and espresso."
       },
       {
         "type": "image",
@@ -1048,7 +1048,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Alight at the Aut Tunnel bus stop when traveling on any Delhi/Chandigarh-to-Manali bus connecting from the railheads. Pre-book a local Banjar taxi to avoid waiting at the Aut junction."
+        "content": "**Pro Traveler Tip for Jalori Pass Winter Transit**:\nWhile Jibhi is accessible year-round, the road crossing over Jalori Pass to Shimla remains closed by heavy snow between December and March. If planning a circular road trip connecting Shimla and Jibhi, schedule your journey between May and November, or take the alternate lower route via Mandi and Bilaspur."
       }
     ]
   },
@@ -1098,24 +1098,24 @@
       {
         "trainNumber": "12011",
         "trainName": "Kalka Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Kalka (KLK)"
+        "route": "New Delhi (NDLS) ➔ Kalka (KLK)"
       },
       {
         "trainNumber": "52453",
         "trainName": "Himalayan Queen",
-        "route": "Kalka (KLK) \u2794 Shimla (SML)"
+        "route": "Kalka (KLK) ➔ Shimla (SML)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Chitkul represents the ultimate frontier settlement along the ancient trans-Himalayan trade passage that crossed into Tibet via the high Borasu and Lamkhaga Passes. Guarded by the Indo-Tibetan Border Police (ITBP), civilians are not permitted beyond the ITBP checkpost situated just 3 km outside the village. The local community remains deeply devoted to the goddess Mathi, the presiding guardian deity of the entire Baspa Valley."
+        "title": "1. Mountain Heritage, Geography & Epic Frontier Origins",
+        "content": "Perched at a dramatic elevation of 3,450 meters (11,320 feet) in the upper reaches of the Baspa Valley in Kinnaur district, **Chitkul** is officially venerated as the **Last Inhabited Village of India** along the old Indo-Tibet trade route. Beyond Chitkul, no civilian settlements exist—only forward outposts of the Indo-Tibetan Border Police (ITBP) guarding the frontier, culminating in the glaciated high passes of Borasu (5,450 m) and Lamkhaga (5,280 m) leading into the Garhwal and Tibet autonomous regions.\n\nAccording to local folklore, the valley is protected by the goddess Mathi, the presiding guardian deity of the entire Baspa region. Legend tells that Goddess Mathi traveled all the way from Vrindavan through Garhwal, bestowing prosperity and divine peace upon Chitkul, choosing this pristine river valley as her eternal abode.\n\nThe village presents a fairytale aesthetic of traditional Kinnauri architecture: houses built of interlocking cedar deodar logs and heavy slate stones, stacked without mortar to flex during earthquakes and withstand massive winter snow loads. Wooden balconies are carved with intricate dragons, geometric talismans, and brass plaques that reflect centuries of cross-cultural trade."
       },
       {
         "type": "image",
@@ -1125,17 +1125,17 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Visit the 500-year-old Mathi Devi Temple Complex, featuring striking multi-tiered woodwork, embossed brass plaques, and yak-tail adornments. Walk down to the scenic banks of the Baspa River to enjoy unhindered views of towering glaciated granite peaks. Don't miss taking a photo at the iconic 'Hindustan Ka Aakhri Dhaba' sign."
+        "content": "**1. The 500-Year-Old Mathi Devi Temple Complex**:\n- The spiritual core of Chitkul, this three-tiered pagoda sanctuary is constructed of walnut and deodar timber, featuring repousse brass plaques, yak-tail adornments, and stone-carved courtyards.\n- The sanctum houses the revered deity idol made of pure walnut wood, covered in fine silk robes and ornaments, worshipped daily with ritual conch shells and mountain drums.\n\n**2. Hindustan Ka Aakhri Dhaba (The Last Dhaba of India)**:\n- Situated on the edge of the village at 3,450 meters, this iconic wooden signboard has welcomed intrepid travelers and explorers for decades. A must-visit photography landmark overlooking the roaring Baspa River.\n\n**3. Baspa River Confluence & Glacial Pebble Banks**:\n- The turquoise glacial waters of the Baspa River flow over colorful polished granite pebbles, surrounded by towering glaciated peaks of the Greater Himalayas.\n\n**4. Chitkul Kila (Ancient Fortified Watchtower)**:\n- A three-story tower situated inside the village, used in medieval times to spot invading clans and trans-Himalayan trading caravans."
       },
       {
         "type": "image",
         "imageUrl": "/images/blogs/chitkul-last-village-border-2.jpg",
-        "imageCaption": "The famous 'Hindustan Ka Aakhri Dhaba' (Last Dhaba of India) board welcoming adventurous mountain travelers."
+        "imageCaption": "The majestic wooden village of Chitkul nestled against glaciated mountain walls along the Baspa River."
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Trek along the scenic 3 km border patrol trail up to the ITBP forward checkpost. Explore the lush, organic potato and buckwheat fields, reputed to produce some of the finest seed potatoes in Asia. Spend a quiet evening watching the setting sun paint the peaks across the valley in dazzling shades of amber and rose gold."
+        "title": "3. Immersive Alpine Experiences, Treks & Nature",
+        "content": "**1. ITBP Border Patrol Trail (Nagasti Post Hike)**:\n- A scenic 3.5 km gentle walk along the Baspa River gorge to the forward ITBP checkpost at Nagasti. Civilians are not permitted beyond this checkpoint without special defense and IMF permits.\n\n**2. Asia's Highest Potato & Buckwheat Terraces**:\n- Chitkul's organic fields produce some of the world's finest, disease-free seed potatoes, highly sought after by agricultural universities.\n- In August and September, the terraced fields bloom in brilliant hues of crimson-red and golden buckwheat (Ogla/Phaphra), creating a visual spectacle against the snow-dusted peaks.\n\n**3. Stargazing & Astrophotography**:\n- With zero industrial light pollution, Chitkul offers prime dark-sky conditions for capturing the Milky Way core stretching across the glaciated peaks."
       },
       {
         "type": "image",
@@ -1145,7 +1145,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The broad-gauge railheads are Kalka (KLK, 335 km) and Chandigarh Junction (CDG, 355 km). The narrow-gauge toy train can be taken up to Shimla (SML, 245 km).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Shimla, catch the daily direct HRTC bus to Sangla or Reckong Peo (8 to 9 hours). From Sangla, local buses and shared utility taxis make the scenic 24 km ascent to Chitkul (1.5 hours, \u20b960 to \u20b980). Private taxis from Sangla charge ~\u20b91,500 for a day excursion.\n\n**3. Airport & Flight Connectivity**:\n- Shimla Airport at Jubbarhatti (SLV, 265 km) and Chandigarh International Airport (IXC, 360 km) are the primary air gateways.\n\n**4. Road Network & Highway Driving**:\n- Accessed via NH-5 (Hindustan-Tibet Road) up to Karcham Dam, where you turn right onto the scenic Sangla-Chitkul mountain road."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Kalka (KLK)**: 335 km south-west (9 to 10 hours drive).\n- **Chandigarh Junction (CDG)**: 355 km away.\n- **Shimla Toy Train Railhead (SML)**: 245 km away.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- Take the daily direct HRTC bus from Shimla ISBT to Sangla or Reckong Peo (8 to 9 hours, ₹380). From Sangla, shared camper taxis run the 24 km mountain climb to Chitkul (1.5 hours, ₹70 to ₹90).\n- Private taxi from Sangla to Chitkul charges ₹1,500 to ₹2,000 for a round-trip excursion.\n\n**3. Airport & Flight Connectivity**:\n- **Shimla Airport at Jubbarhatti (SLV)**: 265 km away.\n- **Chandigarh International (IXC)**: 360 km away.\n\n**4. Road Network & Highway Driving**:\n- Drive via **NH-5 (Hindustan-Tibet Road)** through Narkanda, Rampur, to Karcham Dam, where you turn right onto the scenic 40 km Sangla-Chitkul mountain road."
       },
       {
         "type": "image",
@@ -1155,7 +1155,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Sip piping-hot Chai and enjoy warm bowls of Maggi or hearty Rajma-Chawal at the Last Dhaba of India. Savor traditional Kinnauri Buckwheat bread (Khura) served with tangy wild mountain berry jams."
+        "content": "**1. Frontier Fare & Traditional Kinnauri Cuisine**:\n- Enjoy piping-hot spiced mountain tea, vegetable Maggi, and warm Rajma-Chawal at the **Hindustan Ka Aakhri Dhaba**.\n- Savor traditional **Khura** (crispy buckwheat flatbreads) served with wild mountain apricot jam and freshly churned butter.\n- Drink fresh sea-buckthorn infusions and local Kinnauri apple juice."
       },
       {
         "type": "image",
@@ -1165,7 +1165,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Due to freezing mountain temperatures and early darkness, schedule your train arrivals at Kalka to allow a two-stage journey: stay overnight at Narkanda or Rampur on Day 1, and reach Chitkul comfortably by late afternoon on Day 2."
+        "content": "**Pro Traveler Tip for Weather, ATMs & Connectivity**:\nChitkul has no operating ATMs and limited mobile connectivity (BSNL and Jio offer the best intermittent 4G coverage). Withdraw sufficient cash at Sangla or Reckong Peo. The road from Sangla to Chitkul can become blocked by heavy snow between December and March; the ideal season for travel is May to October."
       }
     ]
   },
@@ -1215,24 +1215,24 @@
       {
         "trainNumber": "52471",
         "trainName": "Kangra Valley Passenger",
-        "route": "Pathankot (PTK) \u2794 Joginder Nagar (JDNX)"
+        "route": "Pathankot (PTK) ➔ Joginder Nagar (JDNX)"
       },
       {
         "trainNumber": "22439",
         "trainName": "Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Pathankot Cantt (PTKC)"
+        "route": "New Delhi (NDLS) ➔ Pathankot Cantt (PTKC)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Una Himachal (UHL)"
+        "route": "New Delhi (NDLS) ➔ Una Himachal (UHL)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Barot was born in the 1920s when British engineer Colonel B.C. Batty conceived the daring Shanan Hydel Project. Waters of the Uhl River were impounded by a gravity dam in Barot and diverted through a 4.5 km underground tunnel through the mountain ridge down to the powerhouse in Joginder Nagar. To haul heavy turbine equipment up the vertical mountain, the British constructed an extraordinary funicular haulage trolley railway climbing to 'Headgear' and 'Winch Camp'."
+        "title": "1. Heritage Engineering, Uhl River Ecology & British Hydel Origins",
+        "content": "Nestled in the lush, secluded Chuhar Valley of Mandi district at an elevation of 1,830 meters (6,000 feet), **Barot** is a tranquil mountain haven originally brought to life by British hydel engineers in the 1920s. Masterminded by Colonel B.C. Batty, the **Shaanan Hydroelectric Project** was commissioned in 1932 to harness the torrential waters of the glacial Uhl River for generating power for the united Punjab province.\n\nThe engineering marvel of Barot is its vintage **Funicular Haulage Trolley System**, an extraordinary narrow-gauge cable railway track built along the dizzying 45-degree slope of the mountain connecting Barot with Joginder Nagar across the 2,450-meter ridge of Winch Camp. Using counter-weighted steel cables, this system carried massive machinery and workers through virgin cedar forests long before motorable roads existed.\n\nToday, Barot is celebrated across Himachal as a pristine eco-tourism retreat and India's premier angling destination, surrounded by the deodar-covered slopes of the **Nargu Wildlife Sanctuary** and rushing cold-water rivers populated by prized brown and rainbow trout."
       },
       {
         "type": "image",
@@ -1242,7 +1242,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Explore the historic Barot Dam reservoir and the surrounding deodar forests. Visit the Government Trout Breeding Farm established in 1959. Walk along the vintage funicular haulage railway track starting from Winch Camp. Cross the wooden suspension bridges into the Nargu Wildlife Sanctuary, home to the Himalayan monal and musk deer."
+        "content": "**1. Uhl River Reservoir & Shaanan Hydel Barrage**:\n- A picturesque masonry dam across the Uhl River diverting water through a 3-mile tunnel under the mountain to Joginder Nagar power station, surrounded by pine-shaded riverbanks.\n\n**2. The Historic Funicular Haulage Track & Winch Camp**:\n- The vintage rail track ascends steeply up the hill to Winch Camp (2,450 m), offering an adrenaline-inducing hike along stone railway sleepers with dramatic valley views.\n\n**3. Government Trout Breeding Farm**:\n- Established in 1959, this state-run trout hatchery features circular stone pools fed by mountain streams, breeding thousands of brown and rainbow trout fingerlings for river stocking.\n\n**4. Nargu Wildlife Sanctuary**:\n- Spanning 278 square kilometers across the Dhauladhar foothills, preserving dense habitats for Himalayan black bears, musk deer, leopards, and rare pheasants."
       },
       {
         "type": "image",
@@ -1251,8 +1251,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Obtain an angling permit and spend serene mornings fly-fishing for rainbow and brown trout in the gushing Uhl River. Camp alongside the riverbanks with nighttime bonfires, or trek across the mountain ridge to the high alpine glades of Billing (famous for world-cup paragliding) via scenic pastoral trails."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Barot to Kothi Kohr & Bada Bhangal Trail**:\n- A scenic mountain road leads to the remote traditional villages of Kothi Kohr and Chhota Bhangal, serving as the trail-head for the remote trans-Himalayan expedition into the isolated shepherd republic of **Bada Bhangal** across Thamsar Pass (4,700 m).\n\n**2. Uhl River Fly-Fishing & Angling**:\n- Dedicated angling beats along the Uhl River allow catch-and-release fishing for prized rainbow trout under permits issued by the local fisheries officer.\n\n**3. Riverside Camping & Pine Forest Walks**:\n- Tranquil walking trails wind through cedar canopies to riverside campsites in Multhan and Luhandi, ideal for birdwatching and campfire evenings."
       },
       {
         "type": "image",
@@ -1262,7 +1262,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The heritage narrow-gauge railhead is Joginder Nagar (JDNX, 35 km away, terminus of the 164 km Kangra Valley Railway). Broad-gauge connections are Pathankot Cantt (PTKC, 170 km) or Una Himachal (UHL, 185 km).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Joginder Nagar or Mandi, local HRTC buses wind through Ghatasani junction into Barot (1.5 to 2 hours from Joginder Nagar; fare \u20b970). Taxis from Joginder Nagar cost ~\u20b91,200 to \u20b91,500.\n\n**3. Airport & Flight Connectivity**:\n- Kangra Airport at Gaggal (DHM, 110 km) and Kullu Airport at Bhuntar (KUU, 125 km) are the closest airports.\n\n**4. Road Network & Highway Driving**:\n- Follow the Mandi-Pathankot highway (NH-154) up to Ghatasani, then take the scenic 25 km mountain link road descending through deodar canopies into the Barot bowl."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Joginder Nagar (JDNX)**: The terminus of the Kangra Valley narrow-gauge toy train, located just 35 km away (1.5 hours drive).\n- **Pathankot Junction (PTK)**: The primary broad-gauge railhead, 145 km west.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- Local buses run from Joginder Nagar Bus Stand to Barot via Ghatasani (2 hours, ₹60 to ₹80). Private taxis charge ₹1,400 to ₹1,800.\n\n**3. Airport Connectivity**:\n- **Kangra Airport at Gaggal (DHM)**: 95 km away (3 hours drive).\n\n**4. Road Network & Driving**:\n- Located off **NH-154** (Mandi-Pathankot highway). At Ghatasani, turn right onto the scenic 25 km mountain road descending through Tikkan into Barot."
       },
       {
         "type": "image",
@@ -1272,7 +1272,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Savor authentic Himalayan trout coated in semolina and mountain spices and fried to a golden crunch. Enjoy wholesome village dishes like Kadi-Pakora and fresh seasonal greens (sarson and lingri - wild fiddlehead fern) gathered from the forest."
+        "content": "**1. Fresh Trout Feasts & Pahadi Home Cooking**:\n- Savor fresh Himalayan trout, pan-fried with mountain garlic and carom seeds, served with hot rotis and dal at local dhabas in Multhan.\n- Taste local Mandi-style **Sepu Vadi**, dumplings of split urad dal boiled, fried, and simmered in a spiced curd and spinach gravy."
       },
       {
         "type": "image",
@@ -1282,7 +1282,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Take the scenic Kangra Valley toy train from Pathankot to Joginder Nagar. The 8-hour journey over 900+ bridges through rustic tea gardens and pine ridges is one of the most romantic rail journeys in India."
+        "content": "**Pro Traveler Tip for Angling & Mobile Coverage**:\nAngling licenses are mandatory for trout fishing on the Uhl River and must be obtained from the Fisheries Department counter at Barot. Mobile network coverage is dominated by BSNL and Jio; carry cash as ATMs in Barot can be offline."
       }
     ]
   },
@@ -1332,24 +1332,24 @@
       {
         "trainNumber": "52463",
         "trainName": "Kangra Valley Passenger",
-        "route": "Pathankot (PTK) \u2794 Baijnath Paprola (BJPL)"
+        "route": "Pathankot (PTK) ➔ Baijnath Paprola (BJPL)"
       },
       {
         "trainNumber": "22439",
         "trainName": "Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Pathankot Cantt (PTKC)"
+        "route": "New Delhi (NDLS) ➔ Pathankot Cantt (PTKC)"
       },
       {
         "trainNumber": "12425",
         "trainName": "Jammu Rajdhani Express",
-        "route": "New Delhi (NDLS) \u2794 Pathankot Cantt (PTKC)"
+        "route": "New Delhi (NDLS) ➔ Pathankot Cantt (PTKC)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Erected in 1204 AD by two wealthy merchant brothers, Manyuka and Ahuka, the Baijnath temple is an architectural masterpiece of the classical Nagara idiom. Dedicated to Lord Shiva as Vaidyanath ('Lord of Physicians'), sacred local lore connects this shrine to the Ramayana epic: Ravana performed intense penance here, cutting off his ten heads to please Lord Shiva, who granted him the sacred Atmalinga on the condition that he never place it down on earth before reaching Lanka."
+        "title": "1. 13th-Century Nagara Architecture, Ravana Penance & Shaivite Legacy",
+        "content": "Located at an elevation of 1,000 meters in the verdant shadows of the Dhauladhar Range in Kangra district, **Baijnath** is home to one of northern India's most architecturally exquisite and spiritually revered Shiva temples. According to epigraphic inscriptions preserved on stone slabs in the temple mandapa, the magnificent stone temple was constructed in **1204 CE** by two wealthy merchant brothers, Manyuka and Manyuka's brother Manyuka, during the reign of King Lakshmanachandra of Trigarta (Kangra).\n\nThe temple is steeped in ancient Treta Yuga mythology. According to the Shiva Purana, Ravana, the demon king of Lanka, performed intense austerities (Tapasya) here to appease Lord Shiva. Ravana offered his ten heads one by one into the sacrificial fire. Pleased by his devotion, Shiva restored his heads and bestowed upon him an invincible Atma-Linga, with the condition that he must not place the lingam on the earth before reaching Lanka. Tricked by Lord Ganesha disguised as a shepherd boy, Ravana placed the lingam down here, and it became permanently anchored as **Vaidyanath** (Lord of Physicians).\n\nRemarkably, the temple survived the devastating April 4, 1905 Kangra earthquake that flattened surrounding towns, owing to its interlocking megalithic stone construction without mortar."
       },
       {
         "type": "image",
@@ -1359,7 +1359,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Study the breathtaking high-relief sandstone carvings of Chamunda, Surya, Kartikeya, and Ganesha embedded in the outer temple niches. Walk down the stone steps behind the temple to the tranquil banks of the Binwa River. Nearby, explore the ancient Mahakal Temple, the serene Tashi Jong Tibetan Buddhist Monastery, and the lush tea estates of Palampur."
+        "content": "**1. The Baijnath Temple Complex**:\n- A premier masterpiece of early medieval **Nagara stone architecture**, featuring a towering curvilinear Shikhara crowned by an Amalaka and Kalasha.\n- The outer walls and pillared mandapa are covered in masterly relief carvings of Ganesha, Surya, Chamunda, Kartikeya, and celestial Apsaras. In the courtyard sits a colossal stone Nandi bull facing the sanctum.\n\n**2. Binwa River Ghats & Suspension Bridge**:\n- The temple overlooks the perennial Binwa River (a tributary of the Beas), accessible via ancient stone steps leading to peaceful bathing ghats and a suspension footbridge.\n\n**3. Mukut Nath Temple, Sansal**:\n- An ancient stone temple located 6 km away amidst terraced paddy fields, featuring ancient lingams and freshwater springs."
       },
       {
         "type": "image",
@@ -1368,8 +1368,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Take a 20-minute drive to Bir Billing, globally celebrated as India's premier paragliding destination. Visit organic tea factories in Palampur to taste orthodox Kangra Green Tea, and take a heritage ride on the narrow-gauge Kangra toy train between Baijnath Paprola and Palampur."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Binwa River Gorge Walk**:\n- A peaceful 3 km walking trail along the rocky banks of the Binwa River through pine groves and bamboo clumps, popular for morning meditation and birdwatching.\n\n**2. Kangra Valley Toy Train Excursion**:\n- Baijnath-Paprola is a key junction station along the scenic narrow-gauge Kangra railway line, allowing travelers to experience a vintage ride across stone viaducts through tea country.\n\n**3. Bir Billing Foothills Transition**:\n- Baijnath is situated just 12 km from Bir, making it an ideal cultural-spiritual morning stop before afternoon paragliding flights at Billing."
       },
       {
         "type": "image",
@@ -1379,7 +1379,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- Baijnath Paprola Railway Station (BJPL) is located just 2 km from the temple on the narrow-gauge Kangra line. Pathankot Cantt (PTKC, 125 km) is the nearest broad-gauge hub, served by fast trains from Delhi, Mumbai, and Kolkata.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- Frequent HRTC express buses connect Pathankot and Dharamshala directly to Baijnath (3.5 hours from Pathankot, \u20b9200; 1.5 hours from Dharamshala). Local autos from Baijnath Paprola station cost \u20b980.\n\n**3. Airport & Flight Connectivity**:\n- Kangra Airport at Gaggal (DHM) is 50 km away, connected to Delhi by daily commercial flights.\n\n**4. Road Network & Highway Driving**:\n- Situated directly on the well-maintained Pathankot-Mandi National Highway (NH-154), offering easy connectivity from Chandigarh, Manali, and Dharamshala."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Baijnath-Paprola (BJPL)**: Narrow-gauge Kangra Valley toy train station right in town.\n- **Pathankot Junction (PTK)**: Broad-gauge railhead 120 km west (3.5 hours drive).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- State buses from Dharamshala, Palampur, and Mandi pass through Baijnath Bus Stand every 20 minutes (fares: ₹30 to ₹90). Taxis from Palampur charge ₹600 to ₹800.\n\n**3. Airport Connectivity**:\n- **Kangra Airport at Gaggal (DHM)**: 50 km away (1.5 hours drive).\n\n**4. Road Network & Highway Driving**:\n- Located directly along **NH-154** (Mandi-Pathankot Highway), providing smooth, well-paved transit from Palampur (16 km) and Dharamshala (50 km)."
       },
       {
         "type": "image",
@@ -1389,7 +1389,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Sample Kangra Dham prepared during festivals featuring Sepu Vadi, Mah ki Dal (black lentils in mustard oil), and Khatta (tangy pumpkin and amchoor curry). Sip freshly brewed Kangra orthodox tea at local tea boutique cafes."
+        "content": "**1. Kangra Dham & Local Temple Prasadam**:\n- Taste authentic **Boti-prepared Kangra Dham**, including Rajma Madra, sour Boor ki Kadi, and fragrant Meetha Bhat.\n- Local stalls around the temple courtyard serve freshly fried hot Jalebis, crisp kachoris, and refreshing buttermilk."
       },
       {
         "type": "image",
@@ -1399,7 +1399,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Hop onto the morning narrow-gauge passenger train at Kangra or Palampur towards Baijnath Paprola. The tracks pass directly through sprawling tea estates with the gleaming Dhauladhar snow wall visible right outside your train window."
+        "content": "**Pro Traveler Tip for Mahashivratri & Local Customs**:\nDuring the annual festival of **Mahashivratri** (February/March), Baijnath hosts a grand multi-day fair drawing thousands of pilgrims. In reverence to Ravana's legendary devotion, locals in Baijnath uniquely do not burn effigies of Ravana during Dussehra, and goldsmith shops traditionally abstain from making gold crowns."
       }
     ]
   },
@@ -1449,24 +1449,24 @@
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "12045",
         "trainName": "Chandigarh Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "According to ancient Hindu texts, Lord Shiva and Goddess Parvati spent 1,100 blissful years meditating here. When Parvati lost her precious gemstone earring (Mani) in the waters, Shesha the serpent king retrieved it from the underworld with a fierce hiss, causing boiling geothermal waters to burst forth across the valley floor. In 1574 AD, Guru Nanak Dev Ji visited with Bhai Mardana, sanctifying the site and inaugurating the free geothermal community kitchen."
+        "title": "1. Sacred Geothermal Springs, Sikh & Hindu Pilgrimage Syncretism",
+        "content": "Nestled deep in the dramatic Parvati Valley along the roaring Parvati River at an elevation of 1,760 meters (5,774 feet), **Manikaran** is universally revered by both Sikhs and Hindus as a sacred sanctuary of profound divine energy. Renowned worldwide for its boiling geothermal springs that emerge directly from the riverbed at temperatures reaching 94°C (201°F), Manikaran has been a revered pilgrimage destination for centuries.\n\nAccording to Hindu legend recorded in the Brahmanda Purana, Lord Shiva and Goddess Parvati meditated here for eleven hundred years. While sporting in the crystal waters, Parvati dropped a precious jewel (*Mani*) from her earring, which sank into the waters and was carried away by the serpent king Shesha. When Shesha finally yielded to Shiva's cosmic wrath, he hissed boiling water from the netherworld, showering the valley with precious gems, thus naming the place **Mani-Karan** ('Earring Jewel').\n\nFor Sikhs, Manikaran is sanctified by the historic visit of the founder of Sikhism, **Guru Nanak Dev Ji**, in 1574 CE along with his disciple Bhai Mardana. When Bhai Mardana expressed hunger, Guru Nanak asked him to lift a stone, beneath which a boiling hot spring gushed forth, allowing him to bake wheat rotis that miraculously floated on the sacred waters."
       },
       {
         "type": "image",
@@ -1476,7 +1476,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Visit Sri Guru Nanak Dev Ji Gurdwara and bathe in the separate indoor medicinal sulfur thermal pools. Marvel at the natural hot water vents where cloth bags filled with rice and lentils are lowered into boiling springs and cooked thoroughly within 20 minutes. Visit the ancient stone Shiva Temple, which tilted noticeably during the 1905 Kangra earthquake yet remained standing firm."
+        "content": "**1. Gurudwara Shri Manikaran Sahib**:\n- An imposing multi-story white marble Gurudwara spanning across the Parvati River, connected by historic suspension bridges. It features large natural hot water pools for holy bathing (Ishnan), a massive 24-hour free Langar hall, and guest chambers.\n\n**2. Geothermal Hot Springs & Langar Cooking Pools**:\n- The boiling natural mineral waters contain therapeutic sulphur and uranium traces, renowned for alleviating rheumatism and skin ailments. Cotton bags of raw rice, lentils, and potatoes are placed in the boiling water vats and cook naturally within 20 minutes for the community Langar.\n\n**3. Ancient Lord Shiva & Ramchandra Temples**:\n- Built in traditional stone pagoda style, tilted slightly by the 1905 earthquake, featuring an ancient stone lingam and idols brought by the Raja of Kullu from Ayodhya."
       },
       {
         "type": "image",
@@ -1485,8 +1485,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Partake in the blessed, round-the-clock Langar feast served with immense humility inside the gurdwara dining halls. Cross the footbridge into Kasol (4 km downstream) to explore pine-fringed cafes and flea markets. Trek to the picturesque pastoral villages of Chalal, Rasol, or Tosh, surrounded by towering Himalayan ridges."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Parvati River Gorge Walk to Kasol & Chalal**:\n- Manikaran is situated just 4 km from Kasol, connected by scenic riverside trails through pine groves.\n\n**2. Kheer Ganga (2,960 m) & Tosh Valley Gateway**:\n- Manikaran serves as the transportation hub for travelers heading to the base of the Kheer Ganga hot water spring trek and the alpine village of Tosh."
       },
       {
         "type": "image",
@@ -1496,7 +1496,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railhead is Kiratpur Sahib (KART, 220 km) and Chandigarh Junction (CDG, 285 km). Catch the Vande Bharat Express (22447) to Kiratpur Sahib for the fastest rail link from Delhi.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kiratpur Sahib or Chandigarh, take any Manali-bound bus up to Bhuntar junction (just south of Kullu). From Bhuntar bus stand, local buses depart every 30 minutes directly into Parvati Valley for Manikaran (35 km, 1.5 hours, \u20b960). Private cabs from Bhuntar cost ~\u20b91,200.\n\n**3. Airport & Flight Connectivity**:\n- Kullu-Manali Airport at Bhuntar (KUU) is only 35 km away, offering the fastest air connectivity from Delhi.\n\n**4. Road Network & Highway Driving**:\n- Follow NH-21 / NH-3 four-lane corridor up to Bhuntar, then branch east onto the scenic Manikaran-Kasol valley road along the Parvati River."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: 280 km south (6.5 hours drive).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- Frequent local buses run from Bhuntar Bus Stand and Kullu to Manikaran via Kasol (1.5 to 2 hours, ₹60 to ₹80). Taxis from Bhuntar charge ₹1,400 to ₹1,800.\n\n**3. Airport Connectivity**:\n- **Kullu-Manali Airport at Bhuntar (KUU)**: 35 km away (1 hour drive).\n\n**4. Road Network**:\n- Turn off NH-21 at Bhuntar and proceed along the scenic, winding Parvati Valley road."
       },
       {
         "type": "image",
@@ -1506,7 +1506,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Enjoy the revered Gurdwara Langar featuring steaming black dal, rice cooked in geothermal springs, hot rotis, and sweet Kheer. In nearby Kasol, savor authentic Shakshuka, Hummus platters, and fresh apple crumbles at riverside bohemian bakeries."
+        "content": "**1. The Sacred 24/7 Langar of Manikaran Sahib**:\n- Partake in the blessed community meal of hot yellow dal, fresh rotis, rice, and sweet kheer, prepared using the pure boiling geothermal spring waters.\n- Local stalls along the stone bazaar sell geothermal-boiled sweet potatoes, spiced corn cobs, and herbal mountain tea."
       },
       {
         "type": "image",
@@ -1516,7 +1516,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Alight at Kiratpur Sahib railway station early morning. Pre-book an HRTC seat on the direct Chandigarh-Manali Volvo up to Bhuntar, where local valley taxis are readily available right at the bridge."
+        "content": "**Pro Traveler Tip for Geothermal Baths**:\nThe natural spring water in the private and public bathing chambers inside the Gurudwara is extremely hot; always test the water temperature with a scoop before entering the bath. Cover your head and remove footwear before entering the Gurudwara complex."
       }
     ]
   },
@@ -1566,24 +1566,24 @@
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "14053",
         "trainName": "Himachal Express",
-        "route": "Old Delhi (DLI) \u2794 Kiratpur Sahib (KART)"
+        "route": "Old Delhi (DLI) ➔ Kiratpur Sahib (KART)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Known in Tibetan as 'Tso Pema' (Lotus Lake), Rewalsar is sacred across three world religions. In Tibetan Buddhism, when the King of Zahor attempted to immolate Guru Padmasambhava on a funeral pyre for teaching the princess Mandarava, the flames miraculously transformed into a deep mountain lake with a blooming lotus supporting the master. In Hinduism, Sage Lomas performed severe penance here to please Lord Shiva. In Sikhism, the tenth Guru, Guru Gobind Singh Ji, stayed here in 1701 for a council of regional hill chieftains."
+        "title": "1. The Tri-Religious Sacred Lake, Padmasambhava Lore & Floating Islands",
+        "content": "Surrounded by rugged pine-clad hills at an altitude of 1,360 meters (4,460 feet) in Mandi district, **Rewalsar Lake** (venerated by Tibetans as **Tso Pema**, 'The Lotus Lake') is one of the world's most extraordinary multi-faith pilgrimage centers. The sacred lake is revered equally by **Buddhists, Hindus, and Sikhs**, with vibrant monasteries, temples, and a Gurudwara standing peacefully along its calm shoreline.\n\nIn Tibetan Buddhism, Tso Pema is the sacred birthplace of Vajrayana Buddhism in Tibet. Here, in the 8th century, the great Indian tantric master **Guru Padmasambhava (Guru Rinpoche)** instructed Mandarava, the royal princess of Sahor (Mandi). Enraged, the king attempted to burn Padmasambhava alive on a pyre of cedar wood and oil. By his miraculous powers, the flames transformed into a deep, cool lake of water, in the center of which Padmasambhava blossomed atop a radiant lotus flower, leading the king and subjects to embrace the Dharma.\n\nFor Hindus, the lake is associated with Rishi Lomas, who performed penance here to Lord Shiva. For Sikhs, the lake commemorates the historic 1701 CE assembly held by the tenth Sikh Guru, **Guru Gobind Singh Ji**, who gathered hill chieftains here to unite against Mughal forces."
       },
       {
         "type": "image",
@@ -1593,7 +1593,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Marvel at the monumental 123-foot statue of Padmasambhava overlooking the lake. Walk the peaceful Parikrama path, spinning brass prayer wheels alongside monks and visiting the Drikung Kagyu and Nyingma monasteries. Pay homage at the Gurudwara Damdama Sahib and visit the ancient temples dedicated to Lord Shiva, Lord Krishna, and Sage Lomas."
+        "content": "**1. The Colossal 138-Foot Guru Padmasambhava Statue**:\n- Towering high on the mountain ridge above the lake, this monumental 138-foot golden bronze and copper statue of Guru Rinpoche was inaugurated by the Dalai Lama in 2012, visible from across the entire valley.\n\n**2. Drikung Kagyu Monastery & Nyingma Gompa**:\n- Beautiful monastic complexes overlooking the lake with golden pagodas, vibrant silk thangkas, and massive prayer wheels.\n\n**3. Sacred Floating Reed Islands (Sarkanda)**:\n- The lake features tiny floating reed islands that drift across the surface with the wind, regarded as sacred living embodiments of prayer.\n\n**4. Gurudwara Shri Rewalsar Sahib & Rishi Lomas Temple**:\n- Historic places of worship framing the lake, where pilgrims feed thousands of sacred common carp fish that swim freely along the stone ghats."
       },
       {
         "type": "image",
@@ -1602,8 +1602,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Hike 7 km up the hillside to the sacred meditation caves of Guru Padmasambhava and Princess Mandarava, adorned with thousands of vibrant prayer flags. Observe the miraculous floating reed islands on the lake surface, considered auspicious by locals. Attend the vibrant Tsechu festival (held in February/March) featuring masked cham dances."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Padmasambhava Holy Meditation Caves**:\n- Located 8 km up the winding hill road, these natural stone caverns are where Guru Padmasambhava and Princess Mandarava retreated for long ascetic meditation, surrounded by prayer flags.\n\n**2. Lake Kora (Circumambulation)**:\n- A 1.5 km level paved walking path around the lake's perimeter, performed by monks, sadhus, and travelers spinning brass prayer wheels."
       },
       {
         "type": "image",
@@ -1613,7 +1613,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railhead is Kiratpur Sahib (KART, 125 km) or Una Himachal (UHL, 135 km). Chandigarh Junction (CDG, 185 km) offers extensive pan-India rail connectivity.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kiratpur Sahib or Chandigarh, take any bus to the major transit city of Mandi (90 km from Kiratpur; 3 hours). From Mandi bus stand, local buses and shared taxis depart for Rewalsar every 20 minutes (24 km, 45 minutes, \u20b935).\n\n**3. Airport & Flight Connectivity**:\n- Kullu-Manali Airport at Bhuntar (KUU, 85 km) and Kangra Airport at Gaggal (DHM, 125 km) are the nearest airports.\n\n**4. Road Network & Highway Driving**:\n- Easily reached via the new Kiratpur-Nerchowk 4-lane expressway, exiting at Nerchowk directly onto the scenic country road to Rewalsar (15 km from Nerchowk)."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: 195 km south (4.5 hours drive).\n- **Kiratpur Sahib (KART)**: 130 km away.\n\n**2. Local Transit & Taxis**:\n- Rewalsar is located just 24 km south-west of Mandi town. Frequent local buses run from Mandi Bus Stand every 30 minutes (1 hour, ₹35). Private taxis charge ₹700 to ₹900.\n\n**3. Airports**:\n- **Kullu Bhuntar (KUU)**: 85 km away.\n- **Chandigarh (IXC)**: 205 km away."
       },
       {
         "type": "image",
@@ -1623,7 +1623,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Sip Tibetan butter tea and warm barley soup inside quiet monastery cafes. Relish the local Mandi Dham\u2014famous for its rich Sepu Vadi, Kaddu ka Khatta (tangy pumpkin), and Badana (sweet boondi) served on fresh leaf plates."
+        "content": "**1. Tibetan & Pahadi Flavors**:\n- Sample steamed vegetable and cheese momos, hot noodle Thukpa, and butter tea in monastery cafes around the lake.\n- Taste authentic Mandi-style **Kachori** stuffed with spiced urad dal served with tamarind chutney in the bazaar."
       },
       {
         "type": "image",
@@ -1633,7 +1633,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Alight at Kiratpur Sahib from the morning Vande Bharat Express. Take the newly opened four-lane expressway to Nerchowk; you can reach the peaceful lake of Rewalsar before 2:00 PM on the same day."
+        "content": "**Pro Traveler Tip for Tsechu Festival**:\nVisit during the vibrant **Tsechu Festival** in February/March, commemorating Guru Padmasambhava's birth, when monks perform spectacular sacred Cham dances in elaborate silk robes and deity masks."
       }
     ]
   },
@@ -1683,24 +1683,24 @@
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "12045",
         "trainName": "Chandigarh Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Jalori Pass has served for centuries as the strategic natural gateway dividing Inner Seraj (Kullu) from Outer Seraj (Shimla/Rampur). The 16th-century fortress of Raghupur was built by the Mandi kings to command military control over this high pass. The sacred lake of Serolsar is revered as the spiritual sanctum of Mata Budhi Nagin, the legendary mother of all mountain serpents who resides in a golden underwater palace."
+        "title": "1. The High Seraj Frontier, Ancient Fortresses & Alpine Pass Lore",
+        "content": "Perched at an elevation of 2,690 meters (8,825 feet) along the steep, forested slopes of the Outer Seraj range, **Shoja** is a tranquil mountain hamlet overlooking the formidable **Jalori Pass (3,120 m / 10,236 ft)**. Historically connecting the Sutlej valley (Shimla/Rampur) with the Beas valley (Kullu/Manali), Jalori Pass is the highest motorable mountain saddle in the lower Himalayas.\n\nThe landscape around Shoja is blanketed by ancient, misty forests of Himalayan fir, brown oak, and deodar trees, through which mountain streams tumble into narrow limestone canyons. Traditional wooden houses featuring curved slate roofs and hand-carved balconies cling to emerald hillside terraces.\n\nStanding guard atop the alpine ridges are medieval fortified outposts, including the legendary **Raghupur Fort**, built by the rulers of Mandi to repel invading Kullu chieftains, offering unhindered vistas of the snow-clad Pir Panjal and Great Himalayan National Park massifs."
       },
       {
         "type": "image",
@@ -1710,7 +1710,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Stand atop Jalori Pass to take in dramatic views stretching from the snow peaks of the Dhauladhar to the Kinnaur Kailash range. Trek 5 km along a gentle forested trail from the pass to the pristine waters of Serolsar Lake. Explore the high alpine meadows and stone ruins of Raghupur Fort, perched at 3,540 m with breathtaking drops on three sides."
+        "content": "**1. Jalori Pass (3,120 m / 10,236 ft)**:\n- A high-altitude pass crowned by the temple of **Jalori Mata (Mahakali)**, offering a breathtaking 360-degree vista of rugged snow peaks.\n\n**2. Serolsar Lake & Buddhi Nagin Temple**:\n- A sacred glacial lake located 5 km from the pass, surrounded by oak and rhododendron canopies. Local folklore reveres the lake as the womb of **Buddhi Nagin** (the divine mother of all serpent deities).\n\n**3. Raghupur Fort Ruins (3,540 m)**:\n- A 3 km ascending trek from the pass leading to the ruins of a medieval stone fortress surrounded by expansive rolling alpine meadows (Thatch)."
       },
       {
         "type": "image",
@@ -1719,8 +1719,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Stay in tranquil wooden homestays in Shoja village, enjoying peaceful nature walks to the Waterfall Point. Trek through dense stands of blue pine, spruce, and flowering rhododendrons. In winter, brave the thrill of deep snow hiking on the pass before heavy blizzards close the road."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Waterfall Point & Forest Trail Walk**:\n- A serene 2 km walk from Shoja village through deodar forest to a natural cascade, rich in birdlife such as the Himalayan Griffon and Western Tragopan.\n\n**2. Wildflower Blooms & Autumn Colors**:\n- In spring and summer, the meadows erupt with wild iris, primulas, and anemones, while autumn turns the slopes into a blazing tapestry of amber and crimson."
       },
       {
         "type": "image",
@@ -1730,7 +1730,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railway hub is Kiratpur Sahib (KART, 185 km) or Chandigarh Junction (CDG, 255 km).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kiratpur Sahib, take a Volvo or deluxe bus to Aut Tunnel (145 km). Switch to a local bus or private taxi to Banjar and Shoja (38 km from Aut, 1.5 hours; taxi ~\u20b91,800 to \u20b92,200).\n\n**3. Airport & Flight Connectivity**:\n- Kullu Airport at Bhuntar (KUU, 60 km) is the closest airport, followed by Chandigarh International (265 km).\n\n**4. Road Network & Highway Driving**:\n- Connected via the modernized Kiratpur-Manali highway up to Aut, followed by the Banjar-Jibhi-Shoja mountain road (NH-305)."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: 255 km away.\n- **Shimla Toy Train Railhead (SML)**: 155 km via Narkanda and Ani (summer route).\n\n**2. Local Transit & Road Access**:\n- From Aut tunnel on the Chandigarh-Manali expressway, hire a taxi or take a local bus to Banjar and Shoja (45 km, 2 hours).\n- The road climbing from Shoja to Jalori Pass is steep with unpaved sections; skilled mountain driving or 4WD vehicles are recommended.\n\n**3. Airport Connectivity**:\n- **Kullu Bhuntar Airport (KUU)**: 55 km away."
       },
       {
         "type": "image",
@@ -1740,7 +1740,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Warm up at rustic pass-top dhabas with steaming Kadhi-Chawal, piping-hot Rajma, spicy Maggi, and soothing herbal mint teas. In Shoja homestays, enjoy authentic Siddu topped with fresh homemade cow butter."
+        "content": "**1. Homestyle Seraj Feasts**:\n- Savor fresh **Siddu** served with wild mountain honey or ghee, spicy **Rajma Madra**, and freshly brewed Himalayan herbal tea at wooden dhabas at Jalori Pass."
       },
       {
         "type": "image",
@@ -1750,7 +1750,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "If travelling during November or late March, check pass clearance status at Banjar. Jalori Pass receives heavy snowfall and icy conditions that may require four-wheel-drive vehicles with snow chains."
+        "content": "**Pro Traveler Tip for Jalori Pass Snow Closures**:\nJalori Pass is prone to heavy snowfall between December and March, closing road access between Shimla and Kullu. Always check road conditions with local authorities in Banjar or Ani before attempting the crossing in winter."
       }
     ]
   },
@@ -1800,24 +1800,24 @@
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "14053",
         "trainName": "Himachal Express",
-        "route": "Old Delhi (DLI) \u2794 Kiratpur Sahib (KART)"
+        "route": "Old Delhi (DLI) ➔ Kiratpur Sahib (KART)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Tradition holds that the Pandavas meditated on this soaring mountain during their exile and built the stone idol of Goddess Shikari Devi (the Goddess of Hunters). The most astounding marvel of this temple is that it has no roof: repeated historical attempts by kings and devotees to erect a timber or stone roof over the sanctum were miraculously thwarted by divine winds and blizzards, as the goddess insists on direct open communion with the skies."
+        "title": "1. Roofless Goddess Sanctum, Untouched Valleys & Pandava Lore",
+        "content": "Situated in the remote southern highlands of Mandi district at an altitude of 2,150 meters, **Janjehli** is an unspoiled mountain valley famed for its pristine deodar forests, terraced apple orchards, and rushing glacial streams. Overlooking the valley is the formidable peak of **Shikari Devi (3,359 m / 11,020 ft)**, the highest geographic point in Mandi district.\n\nThe crowning spiritual jewel of this wilderness is the extraordinary **Shikari Devi Temple**. According to ancient legend, the temple was established during the Mahabharata era by the Pandava brothers during their exile. Remarkably, the temple sanctum dedicated to Goddess Shikari Devi (the Hunter Goddess) is completely **roofless**—open directly to the sky.\n\nLocal folklore and temple priests affirm that despite receiving many feet of torrential snow during harsh Himalayan winters, snow miraculously never accumulates over the sacred stone idol of the Goddess, melting immediately upon touching the sanctum stone."
       },
       {
         "type": "image",
@@ -1827,7 +1827,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Climb the scenic flight of 500 stone steps to the summit of Shikari Devi Peak for jaw-dropping vistas of the Pir Panjal and Shivalik ranges. Wander through the peaceful pastoral meadows of Janjehli Valley. Trekkers can explore the remote Kamrunag Lake (the Rain God's shrine), the historical Tungasi Fort ruins, and the sacred caves of Budha Kedar."
+        "content": "**1. Shikari Devi Roofless Temple (3,359 m)**:\n- Accessible via a scenic road and a final flight of 500 stone stairs climbing the summit ridge, offering a staggering 360-degree panorama of the Dhauladhar, Pir Panjal, and Kinnaur ranges.\n\n**2. Shikari Devi Wildlife Sanctuary**:\n- Spanning 72 square kilometers of dense temperate forest, home to the endangered Monal, cheer pheasant, musk deer, and leopards.\n\n**3. Budha Kedar & Tungasi Dhar**:\n- Ancient stone shrines and panoramic meadow peaks nestled amidst high-altitude deodar groves."
       },
       {
         "type": "image",
@@ -1836,8 +1836,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Embark on the 16 km ridge trek connecting Janjehli to Shikari Devi through deep oak and deodar sanctuaries. Camp under unpolluted night skies in eco-friendly alpine tents. Experience rural Himachali hospitality by staying in heritage wooden village homestays in Janjehli."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Janjehli to Shikari Devi Trek (16 km)**:\n- An exhilarating forest trek climbing 1,200 meters through virgin deodar, oak, and rhododendron wilderness.\n\n**2. Kamrunag Lake Trek**:\n- A rugged ridge trail connecting Shikari Devi with the sacred Kamrunag Lake, where pilgrims make offerings of gold and silver into the deep waters."
       },
       {
         "type": "image",
@@ -1847,7 +1847,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railway station is Kiratpur Sahib (KART, 155 km) and Chandigarh Junction (CDG, 220 km).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kiratpur Sahib, take the expressway to Nerchowk/Mandi. From Mandi or Nerchowk, direct HRTC buses ply to Janjehli via Gohar and Chachyot (85 km, 3.5 hours, \u20b9130). Local 4x4 taxis from Janjehli ascend to the Shikari Devi base (16 km, 45 minutes; \u20b91,500).\n\n**3. Airport & Flight Connectivity**:\n- Kullu Airport at Bhuntar (KUU, 110 km) and Chandigarh International (230 km) are the closest airports.\n\n**4. Road Network & Highway Driving**:\n- Take the four-lane expressway to Nerchowk, then proceed along the scenic Nerchowk-Chail Chowk-Gohar-Janjehli road."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: 240 km south (6 hours drive).\n\n**2. Local Transit & Taxis**:\n- Located 85 km from Mandi and 35 km from Gohar. State buses and private taxis connect Mandi to Janjehli (3.5 hours, taxi ₹2,500 to ₹3,000).\n\n**3. Airport Connectivity**:\n- **Kullu Bhuntar (KUU)**: 75 km away."
       },
       {
         "type": "image",
@@ -1857,7 +1857,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Taste authentic village-style Sepu Vadi, freshly prepared local cow ghee with warm Makki ki Roti (cornmeal bread), and aromatic herbal teas brewed with wild mountain thyme and jaggery."
+        "content": "**1. Traditional Mandi Seraj Cuisine**:\n- Enjoy hot **Sepu Vadi**, local wheat rotis, fresh mountain curd, and piping-hot chai at village dhabas."
       },
       {
         "type": "image",
@@ -1867,7 +1867,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Take the New Delhi - Amb Andaura Vande Bharat to Kiratpur Sahib, hire a private cab at the station, and arrive in Janjehli before sunset to enjoy evening tea amidst quiet pine breezes."
+        "content": "**Pro Traveler Tip for Shikari Devi Weather**:\nThe summit of Shikari Devi experiences fierce, cold winds and rapid weather shifts. Even in mid-summer, carry windproof fleece jackets. Avoid trekking in the afternoon during the monsoon months due to high lightning activity on the ridge."
       }
     ]
   },
@@ -1917,24 +1917,24 @@
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       },
       {
         "trainNumber": "12045",
         "trainName": "Chandigarh Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Malana holds a distinct identity as one of the world's oldest surviving village democracies, governed by an autonomous bicameral parliament consisting of the Upper House (Jayeshthang) and Lower House (Kaneshthang). Local inhabitants speak 'Kanashi', an unwritten Sino-Tibetan dialect unintelligible to neighboring valley communities. Legend claims the villagers are direct descendants of wounded Greek soldiers left behind by Alexander the Great's army in 326 BC."
+        "title": "1. The World's Oldest Democracy, Jamlu Devta & Ancient Village Taboos",
+        "content": "Perched on a narrow, isolated plateau high above the Malana Gorge in the Parvati Valley at an altitude of 2,652 meters (8,700 feet), **Malana** is renowned worldwide as one of the oldest surviving continuous democracies on Earth. Completely disconnected from modern governance until recent decades, Malana is governed by its own sovereign, two-tier parliament—the *Hakhra* (Upper House) and *Kanishtha* (Lower House)—which resolves all civil, criminal, and religious disputes under the supreme divine authority of their presiding deity, **Lord Jamlu (Rishi Jamadagni)**.\n\nLocal oral tradition holds that the people of Malana are the direct descendants of stranded soldiers from the army of Alexander the Great (326 BCE). The villagers speak an archaic, unwritten Sino-Tibetan dialect called **Kanashi**, which is completely unintelligible to neighboring Kulluvi and Hindi speakers.\n\nMalana enforces strict customary taboos. Visitors are strictly prohibited from touching the villagers, their traditional wooden houses, sacred stones, or temple walls. Any accidental physical contact requires ritual cleansing through the sacrifice of a sacrificial goat or payment of a fine."
       },
       {
         "type": "image",
@@ -1944,7 +1944,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Observe the unique multi-story Kath-Kuni wooden houses and the ancient temple dedicated to Jamlu Devta (an incarnation of Rishi Jamadagni). Marvel at the dramatic surrounding peaks of Deo Tibba and Indrasan. Take the iconic hiking trail starting from the Malana Dam project site."
+        "content": "**1. Jamlu Rishi Temple**:\n- An ancient multi-tiered wooden temple constructed in the Kath-Kuni style, adorned with animal horns, ancient carvings, and embossed silver plaques.\n\n**2. The Historic Malana Parliament Square**:\n- The central stone courtyard where village elders and council members convene to debate village policies.\n\n**3. Chandrakhani Pass (3,660 m) & Deotibba Views**:\n- Towering directly above Malana is the majestic Chandrakhani Pass, connecting the village with Naggar in the Kullu Valley."
       },
       {
         "type": "image",
@@ -1953,8 +1953,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Undertake the thrilling 1.5 to 2-hour uphill trek from the road-head at Malana Dam, crossing the roaring river gorge. Learn about their strict cultural taboos\u2014outsiders must not touch villagers or their sacred stone walls (penalties are imposed for transgressions). Explore the challenging alpine route across the Chanderkhani Pass (3,660 m)."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. The Malana Gorge Hike**:\n- The trail begins from the Malana Dam roadhead, crossing a footbridge over the Malana stream and climbing a steep 4 km stone-step path (2 hours) to the village gate.\n\n**2. Chandrakhani Pass Trek (Naggar to Malana)**:\n- A classic 3-day trans-valley trek crossing through wildflower-strewn meadows with 360-degree panoramas of the Deo Tibba and Pir Panjal peaks."
       },
       {
         "type": "image",
@@ -1964,7 +1964,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railhead is Kiratpur Sahib (KART, 215 km) and Chandigarh Junction (CDG, 280 km).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Kiratpur Sahib, take a Volvo to Bhuntar (175 km). From Bhuntar, take a local bus to Jari (22 km into Parvati Valley). At Jari, hire a dedicated taxi up to the Malana Dam trek point (16 km, \u20b91,200). The final 3 km to the village is reached strictly on foot via a steep mountain trail.\n\n**3. Airport & Flight Connectivity**:\n- Kullu-Manali Airport at Bhuntar (KUU) is just 30 km from Jari.\n\n**4. Road Network & Highway Driving**:\n- Follow NH-3 to Bhuntar, turn into Parvati Valley up to Jari, and ascend the narrow dam road."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Chandigarh Junction (CDG)**: 285 km away (6.5 hours drive).\n\n**2. Local Transit & Approach**:\n- From Jari on the Bhuntar-Kasol road, a 16 km unpaved mountain road ascends along the gorge to the Malana Dam gate. From the dam, you must hike the remaining 4 km on foot.\n\n**3. Airport Connectivity**:\n- **Kullu Bhuntar Airport (KUU)**: 40 km away (1.5 hours drive to roadhead)."
       },
       {
         "type": "image",
@@ -1974,7 +1974,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Because of traditional purity customs, visitors cannot enter domestic kitchens. Village cafes on the village outskirts serve hot Tibetan noodle soups, dal-rice, instant noodles, and hot lemon tea."
+        "content": "**1. Village Trail Refreshments**:\n- Small traveler cafes located outside the sacred village perimeter serve hot tea, Maggi, Tibetan momos, and simple dal-rice meals."
       },
       {
         "type": "image",
@@ -1984,7 +1984,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Visit Malana as a respectful day-trip hike from Kasol or Jari to avoid night stays and to respect local village council customs. Keep exact cash for local taxi fares at Jari."
+        "content": "**Pro Traveler Tip for Cultural Respect & Photography**:\nAlways respect local customs: never touch any person, wall, temple, or domestic animal in Malana. Non-villagers are not permitted to stay overnight inside the historic village core; stay in designated guesthouses on the village outskirts. Always ask explicit permission before taking photographs of village elders."
       }
     ]
   },
@@ -2034,24 +2034,24 @@
       {
         "trainNumber": "22447",
         "trainName": "New Delhi - Amb Andaura Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Amb Andaura (AADR)"
+        "route": "New Delhi (NDLS) ➔ Amb Andaura (AADR)"
       },
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Amb Andaura (AADR)"
+        "route": "New Delhi (NDLS) ➔ Amb Andaura (AADR)"
       },
       {
         "trainNumber": "14053",
         "trainName": "Himachal Express",
-        "route": "Old Delhi (DLI) \u2794 Amb Andaura (AADR)"
+        "route": "Old Delhi (DLI) ➔ Amb Andaura (AADR)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "In 1997, the Government of Himachal Pradesh officially notified Pragpur as India\u2019s very first Heritage Village, followed shortly by its sister settlement Garli. Founded in the late 16th century by the Patial community under Princess Prag Dei of the Jaswan royal family, the twin villages flourished as wealthy trading hubs of the merchant Sud clan, who built grand havelis blending British colonial, Portuguese, Islamic, and traditional Kangra timber craftsmanship."
+        "title": "1. India's First Certified Heritage Village, Haveli Architecture & Mercantile Splendor",
+        "content": "Nestled in the gentle, rolling Kangra Valley foothills at an altitude of 550 meters, **Pragpur** was officially declared India's very first certified **Heritage Village** in 1997 by the Himachal Pradesh State Government, with its sister hamlet **Garli** designated a heritage zone in 2002. Founded in the late 16th century by the Patial clan of the Sood mercantile community in memory of Princess Prag Dei of Jaswan, Pragpur flourished as a prosperous hub along the ancient caravan routes connecting Punjab with Ladakh and Tibet.\n\nThe architecture of Pragpur and Garli is a captivating fusion of styles unseen anywhere else in the Himalayas. Prosperous Sood merchants who made fortunes in timber, banking, and trade across British India built palatial multi-story mansions that combine **Italian Renaissance arches, Portuguese balconies, British colonial brick facades, and traditional Kangra slate woodwork**.\n\nCobblestone streets lined with open stone water channels wind past mud-plastered ancestral courtyards, decorative wrought-iron street lamps, and peaceful village water ponds."
       },
       {
         "type": "image",
@@ -2061,7 +2061,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Stroll down the paved stone streets to visit 'The Judge's Court', a pristine 1918 country estate set amidst fruit orchards. In Garli (4 km away), marvel at the ornate facades of Chateau Garli, the Hidden Shield Haveli, and the Naurang Yatri Niwas. Relax beside the historic central water tank (The Taal), built in 1868 and fed by natural subterranean springs."
+        "content": "**1. The Taal (Historic Village Water Tank)**:\n- Built in 1864, this central stone-paved reservoir is the social and heritage heart of Pragpur, fed by natural underground springs.\n\n**2. The Judge's Court (Heritage Manor)**:\n- Built in 1918 by Justice Sir Jai Lal in the stately Indo-European country manor style, surrounded by 12 acres of certified organic orchards of mango, lychee, and citrus trees.\n\n**3. Garli's Chateau & Mystery Mansions**:\n- Includes the **Chateau Garli**, an exquisitely restored 1921 Portuguese-style mansion, the timber-clad **Bhagwan Niwas**, and the Gothic-windowed **Secretariat building**."
       },
       {
         "type": "image",
@@ -2070,8 +2070,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Watch master craftsmen handcraft traditional Kangra miniature paintings and hand-hammered brass utensils. Take a day trip to the sacred Jwalamukhi Temple (20 km away), famous for its natural eternal blue flames emerging from rock fissures, or enjoy a picnic on the serene banks of the Beas River at Nadaun."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Heritage Walking Trails**:\n- Guided walking circuits through cobblestone lanes to meet traditional silversmiths, brass metal casters, and weavers of Kangra woolen blankets (*Pattus*).\n\n**2. Pong Dam Wetland & Bird Sanctuary Excursion**:\n- Located 25 km away on the Beas River, this Ramsar wetland hosts over 100,000 migratory waterfowl in winter, including the Bar-headed Goose and Northern Pintail."
       },
       {
         "type": "image",
@@ -2081,7 +2081,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- Exceptionally well connected by broad-gauge rail: Amb Andaura Railway Station (AADR) is only 32 km away, and Una Himachal (UHL) is 64 km away. The New Delhi - Amb Andaura Vande Bharat Express (22447) reaches Amb Andaura in just 5 hours from Delhi.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Amb Andaura station, private taxis reach Pragpur in 45 minutes (~\u20b9800 to \u20b91,000). Regular HRTC buses connect via Kaloha and Dehra.\n\n**3. Airport & Flight Connectivity**:\n- Kangra Airport at Gaggal (DHM) is 45 km away, offering direct daily flights to Delhi.\n\n**4. Road Network & Highway Driving**:\n- Connected via smooth highways from Chandigarh (160 km, 3.5 hours) via Ropar, Kiratpur, Anandpur Sahib, and Una."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Amb Andaura (AAMB)**: Broad-gauge railhead 30 km away, connected by the high-speed **New Delhi-Amb Andaura Vande Bharat Express** (Train No: 22447, 5h 15m from Delhi).\n- **Hoshiarpur (HSP)**: 65 km away.\n\n**2. Local Transit & Taxis**:\n- Taxis from Amb Andaura Station to Pragpur charge ₹800 to ₹1,000 (45 minutes drive).\n\n**3. Airport Connectivity**:\n- **Kangra Gaggal Airport (DHM)**: 55 km away (1.5 hours drive).\n\n**4. Road Network**:\n- Located just 8 km off the **NH-503** expressway connecting Chandigarh and Kangra."
       },
       {
         "type": "image",
@@ -2091,7 +2091,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Savour authentic Kangra Dham prepared with Teliah Mah (lentils fried in mustard oil), Madra, and Khatta. Enjoy evening tea served with traditional fresh seasonal mangoes and lychees grown in the heritage estate orchards."
+        "content": "**1. Authentic Kangra Valley Delicacies**:\n- Savor **Chana Madra**, fried **Babru** (stuffed kachori with spiced black gram), and tangy mango pickle made from heritage orchard fruits.\n- Enjoy freshly harvested organic lychee and honey served at heritage homestays."
       },
       {
         "type": "image",
@@ -2101,7 +2101,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Board the morning Vande Bharat Express from New Delhi to Amb Andaura (AADR), arriving at 1:00 PM. A short 40-minute taxi ride places you in a Victorian heritage hotel in Pragpur in time for a colonial lunch."
+        "content": "**Pro Traveler Tip for Heritage Walking**:\nExplore Pragpur and Garli early in the morning or late afternoon on foot; the narrow cobblestone alleyways are closed to heavy vehicular traffic, preserving a timeless 19th-century serenity."
       }
     ]
   },
@@ -2151,24 +2151,24 @@
       {
         "trainNumber": "12011",
         "trainName": "Kalka Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Kalka (KLK)"
+        "route": "New Delhi (NDLS) ➔ Kalka (KLK)"
       },
       {
         "trainNumber": "52453",
         "trainName": "Himalayan Queen",
-        "route": "Kalka (KLK) \u2794 Shimla (SML)"
+        "route": "Kalka (KLK) ➔ Shimla (SML)"
       },
       {
         "trainNumber": "22447",
         "trainName": "Vande Bharat Express",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Historically part of the princely state of Bushahr and Jubbal, Pabbar Valley is the spiritual heart of the powerful Mahasu Devta cult. In the 1930s, British Viceroy Lord Linlithgow introduced Brown and Rainbow Trout into the cold, oxygen-rich waters of the Pabbar River. Chanshal Pass is the historic lifeline connecting the outer valleys to the isolated twin mountain kingdoms of Dodra and Kwar."
+        "title": "1. Golden Apple Country, Chanshal Pass & Roaring Trout Waters",
+        "content": "Carved by the pristine Pabbar River in the south-eastern highlands of Shimla district, the **Pabbar Valley** (centered around Rohru and Chirgaon) is an untamed mountain wonderland rising from 1,525 meters to the soaring summit of the **Chanshal Peak (4,520 m / 14,830 ft)**. Historically a secluded frontier of the royal Bushahr kingdom, Pabbar Valley is celebrated as the premier **Golden Delicious Apple Bowl of India**.\n\nThe valley was introduced to the international sporting world in the early 20th century by British civil servant Mr. Glover, who introduced brown and rainbow trout into the icy glacial waters of the Pabbar River in 1938, establishing it as one of the world's most coveted fly-fishing destinations.\n\nConnecting Rohru with the remote trans-Himalayan valleys of Dodra and Kwar is the formidable **Chanshal Pass (3,750 m)**, renowned for its dramatic rolling alpine meadows, carpeted in wild purple and yellow alpine flowers in summer, and deep powder snow in winter."
       },
       {
         "type": "image",
@@ -2178,7 +2178,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Drive up to the windswept summit of Chanshal Pass (3,750 m) to gaze upon rolling meadows that resemble Scottish highlands. Visit the sacred 8th-century Hatkoti Temple Complex, home to an exquisite two-meter bronze idol of the eight-armed Mahishasuramardini. Explore the classical wood-and-stone Jubbal Palace and hike through the pine forests of Khara Pathar up to the sacred source of the Giri Ganga river."
+        "content": "**1. Chanshal Pass (3,750 m / 12,300 ft)**:\n- A high-altitude pass offering spellbinding panoramas of the snow-crowned Garhwal and Kinnaur Himalayan peaks.\n\n**2. Shikru Devta Temple, Rohru**:\n- An ancient multi-story wooden temple dedicated to the presiding warrior deity Shikru Devta, adorned with delicate wood carvings and brass relief plaques.\n\n**3. Hatkoti Temples (Hateshwari Mata Complex)**:\n- Located 14 km downstream at the confluence of the Pabbar and Bishkulti rivers, this 8th-century stone temple complex was built in the classical Nagara style during the Gurjara-Pratihara era.\n- The sanctum houses a magnificent 1.5-meter bronze idol of Goddess Mahishasuramardini (Durga) crafted of eight sacred metals (*Ashtadhatu*).\n\n**4. Larot & Chirgaon Angling Beats**:\n- Scenic riverside villages surrounded by dense pine forests, famous for trout angling and apple packing houses."
       },
       {
         "type": "image",
@@ -2187,8 +2187,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Engage in world-class trout fishing along the pebble banks of the Pabbar River near Sandasu and Chirgaon. Drive across Chanshal Pass into the remote, timeless valleys of Dodra and Kwar. Experience the annual apple harvest festivities when the valley smells delightfully of sweet ripe fruit."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. Chanshal Peak Hike (4,520 m)**:\n- A 4 km ridge hike from Chanshal Pass across expansive alpine meadows to the highest peak in the Shimla district.\n\n**2. Dodra-Kwar Expedition**:\n- Traversing the pass leads into the isolated sister villages of Dodra and Kwar, which preserve ancient wooden culture and traditional lifestyles.\n\n**3. Pabbar River Fly-Fishing**:\n- Fly-fishing for wild brown trout in designated beats at Sandasu, Tikkar, and Dhamwari."
       },
       {
         "type": "image",
@@ -2198,7 +2198,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The nearest broad-gauge railhead is Kalka (KLK, 180 km) and Chandigarh Junction (CDG, 200 km). Shimla (SML, 115 km) serves as the narrow-gauge rail gateway.\n\n**2. Station-to-Destination Local Transit & Fares**:\n- From Shimla ISBT, regular HRTC deluxe and express buses run to Rohru via Theog, Kotkhai, and Khara Pathar (4.5 to 5 hours, \u20b9220). Private taxis from Shimla cost ~\u20b93,500 to \u20b94,500.\n\n**3. Airport & Flight Connectivity**:\n- Shimla Airport at Jubbarhatti (SLV, 135 km) and Dehradun's Jolly Grant Airport (DED, 180 km via Tiuni) are the nearest airports.\n\n**4. Road Network & Highway Driving**:\n- Follow NH-5 from Shimla to Theog, then branch onto the scenic state highway traversing apple valleys through Kotkhai and Khara Pathar down into Rohru."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Shimla Toy Train Railhead (SML)**: 115 km west.\n- **Kalka (KLK)**: 200 km away.\n\n**2. Local Transit & Road Access**:\n- Regular HRTC buses run daily from Shimla ISBT to Rohru via Theog, Kotkhai, and Kharapathar (5 to 6 hours, ₹220). Private taxis charge ₹4,000 to ₹5,000.\n\n**3. Airport Connectivity**:\n- **Shimla Jubbarhatti (SLV)**: 135 km away.\n\n**4. Road Network**:\n- Drive along the scenic **Theog-Hatkoti-Rohru Highway**, newly widened with smooth tarmac winding through apple country."
       },
       {
         "type": "image",
@@ -2208,7 +2208,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Savor fresh trout cooked over charcoal with mountain salt and lemon. Enjoy homemade Apple Crumbles prepared with freshly picked valley fruit, and try traditional Pabbar-style Siddu stuffed with crushed hemp seeds and walnut paste."
+        "content": "**1. Apple Country Feasts**:\n- Savor fresh **Kulluvi-style Siddu** with spicy dal filling, fresh river trout, and freshly plucked Golden Delicious and Royal apples straight from orchard trees."
       },
       {
         "type": "image",
@@ -2218,7 +2218,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Take the overnight train to Kalka, hop onto a shared taxi to Shimla, and catch an early morning HRTC bus to Rohru. This ensures you cross the scenic 8,000-foot Khara Pathar pass in clear afternoon light."
+        "content": "**Pro Traveler Tip for Chanshal Pass Excursions**:\nChanshal Pass is motorable between May and November, closing under deep snow in winter. Carry warm windbreakers even in summer, as sudden squalls and dense fog can sweep over the ridge within minutes."
       }
     ]
   },
@@ -2268,24 +2268,24 @@
       {
         "trainNumber": "22447",
         "trainName": "Amb Andaura Vande Bharat",
-        "route": "New Delhi (NDLS) \u2794 Chandigarh (CDG)"
+        "route": "New Delhi (NDLS) ➔ Chandigarh (CDG)"
       },
       {
         "trainNumber": "12011",
         "trainName": "Kalka Shatabdi Express",
-        "route": "New Delhi (NDLS) \u2794 Kalka (KLK)"
+        "route": "New Delhi (NDLS) ➔ Kalka (KLK)"
       },
       {
         "trainNumber": "12057",
         "trainName": "Daulatpur Chowk Jan Shatabdi",
-        "route": "New Delhi (NDLS) \u2794 Kiratpur Sahib (KART)"
+        "route": "New Delhi (NDLS) ➔ Kiratpur Sahib (KART)"
       }
     ],
     "sections": [
       {
         "type": "heading",
-        "title": "1. Mountain Heritage & Epic Origins",
-        "content": "Fifty million years ago, before the collision of the Indian and Eurasian tectonic plates created the Himalayas, the vast prehistoric Tethys Sea covered this entire region. Today, the high plateau of Langza sits studded with millions of marine invertebrate fossils, belemnites, and ammonites. In neighboring Hikkim, the postal department established the world's highest post office (PIN code 172114) in 1983, maintaining vital mail communication across snowy passes."
+        "title": "1. Prehistoric Tethys Ocean Bed, Giant Buddha & World's Highest Frontiers",
+        "content": "Perched in the high trans-Himalayan wilderness of Spiti at astonishing elevations between 4,400 meters and 4,600 meters (14,500 to 15,000 feet), the high-altitude villages of **Langza, Komic, and Hikkim** represent the pinnacle of human habitation on Earth. Framed by the imposing snow-capped pyramid of **Chau Chau Kang Nilda (6,303 m)**, these golden mud-and-stone settlements look out over a stark, lunar mountain desert.\n\nGeologically, this entire region formed the ancient seabed of the prehistoric **Tethys Ocean** over 50 million years ago. As the Indian tectonic plate collided with Asia, the ancient ocean floor was uplifted into the stratosphere, leaving vast deposits of marine fossils—including extinct ammonites (*Cephalopods*, revered in Hinduism as holy *Shaligram* stones)—embedded in the shale cliffs of Langza, earning it the title **'Fossil Village of the Himalayas'**.\n\nAt **Komic** (4,587 m), the sacred **Tangyud Monastery** has watched over the windswept passes since the 14th century, while nearby **Hikkim** (4,440 m) is home to the **World's Highest Post Office**, an international landmark of global communication."
       },
       {
         "type": "image",
@@ -2295,7 +2295,7 @@
       {
         "type": "heading",
         "title": "2. Iconic Landmarks & Scenic Wonders",
-        "content": "Stand before the radiant 1,000-year-old golden Buddha statue in Langza set against the gleaming 6,303 m snow pyramid of Chau Chau Kang Nilda. Send hand-stamped postcards to loved ones from the Hikkim Post Office. Drive 3 km further to Komic, the highest village in the world connected by a motorable road, and visit its historic Tangyud Monastery."
+        "content": "**1. The 1,000-Year-Old Golden Buddha of Langza**:\n- A magnificent, colossal golden statue of Lord Buddha seated in meditation overlooking the entire valley, framed by Chau Chau Kang Nilda peak.\n\n**2. The World's Highest Post Office at Hikkim (PIN 172114, 4,440 m)**:\n- Operational since 1983, travelers from around the world visit this traditional mud-brick outpost to purchase postcards, hand-stamp them with the iconic postmark, and mail them to loved ones.\n\n**3. Tangyud Monastery at Komic (4,587 m)**:\n- Built like a fortified mud castle, one of the highest continuously occupied monasteries in the world, belonging to the Sakya sect of Tibetan Buddhism.\n\n**4. The Fossil Marine Reserves of Langza**:\n- Walk through the shale ravines to spot prehistoric marine ammonite and belemnite fossils preserved in rock."
       },
       {
         "type": "image",
@@ -2304,8 +2304,8 @@
       },
       {
         "type": "heading",
-        "title": "3. Immersive Alpine Experiences & Nature",
-        "content": "Search for ancient fossilized sea creatures with local village guides (remember to respect local conservation regulations by not removing fossils). Stay in traditional mud-insulated Spitian homestays in Langza, savoring warm yak butter tea beside glowing wood-fired bukhari stoves while stargazing beneath dazzling skies."
+        "title": "3. Immersive Alpine Experiences & Nature Trails",
+        "content": "**1. The High-Plateau Circuit Hike**:\n- A 10 km panoramic day hike connecting Langza, Hikkim, and Komic across alpine pastures grazed by yaks and Himalayan blue sheep (Bharal).\n\n**2. Dark Sky Astrophotography**:\n- At 14,500 feet with near-zero humidity and zero artificial light, the stars appear so close they seem touchable, with the galactic core of the Milky Way casting shadows on the snow."
       },
       {
         "type": "image",
@@ -2315,7 +2315,7 @@
       {
         "type": "heading",
         "title": "4. Complete Guide: How to Reach by Rail, Air & Road",
-        "content": "**1. Nearest Railway Station & Key Trains**:\n- The broad-gauge rail access is via Chandigarh Junction (CDG, 475 km via Atal Tunnel & Kaza) or Kalka (KLK, 450 km via Shimla & Kaza).\n\n**2. Station-to-Destination Local Transit & Fares**:\n- Langza and Hikkim are located 14 km and 16 km from the sub-divisional capital of Kaza. Hire a local 4x4 taxi from the Kaza taxi union stand (~\u20b92,500 to \u20b93,500 for the full Langza-Hikkim-Komic circuit; 30 minutes drive on paved mountain roads).\n\n**3. Airport & Flight Connectivity**:\n- Kullu Airport at Bhuntar (KUU, 260 km via Atal Tunnel) is the nearest airport.\n\n**4. Road Network & Highway Driving**:\n- Reach Kaza via NH-505 (from Manali via Atal Tunnel & Kunzum Pass) or NH-5 (from Shimla via Reckong Peo), then take the local spur road ascending to the high plateau."
+        "content": "**1. Nearest Railway Station & Key Trains**:\n- **Kalka (KLK)**: 460 km via Kinnaur.\n- **Chandigarh (CDG)**: 480 km via Kinnaur, or 390 km via Manali and Atal Tunnel (summer).\n\n**2. Local Transit from Kaza**:\n- Located 16 to 22 km up the steep mountain switchbacks from Kaza. Shared local utility campers and 4x4 private taxis (₹2,500 to ₹3,500 for the full day circuit) depart daily from Kaza taxi stand.\n\n**3. Airport Connectivity**:\n- **Kullu Bhuntar (KUU)**: 260 km via Manali.\n\n**4. Road Conditions**:\n- Unpaved gravel mountain roads climbing steeply with narrow hairpins; high-clearance SUV or 4WD recommended."
       },
       {
         "type": "image",
@@ -2325,7 +2325,7 @@
       {
         "type": "heading",
         "title": "5. Mountain Gastronomy & Local Food Trail",
-        "content": "Sip hot Seabuckthorn juice, warm Tibetan Thukpa, and freshly steamed Momos filled with spiced potatoes and local cheese. Enjoy Khambir\u2014a thick, crusty fermented whole-wheat bread baked on open iron stoves."
+        "content": "**1. High-Altitude Spitian Homestay Feasts**:\n- Relish fresh steaming bowls of **Spiti Thukpa**, handmade potato-cheese momos, **Tingmo** flower buns, and warm salted yak butter tea (*Gur Gur Cha*).\n- **World's Highest Cafe in Komic**: Savor hot cinnamon tea, apple crumble, and pancakes at 4,587 meters."
       },
       {
         "type": "image",
@@ -2335,7 +2335,7 @@
       {
         "type": "tip",
         "title": "6. Essential Tips for Mountain & Rail Travelers",
-        "content": "Ensure you have spent at least 2 full nights in Kaza (3,800 m) to acclimatize before ascending to Langza and Hikkim (above 4,400 m). Drink plenty of water and avoid overexertion when walking up to the Buddha statue."
+        "content": "**Pro Traveler Tip for Post Office & Fossil Ethics**:\nThe Hikkim post office is open on weekdays from 10 AM to 5 PM; carry exact change and addresses written in clear ink. While searching for prehistoric fossils in Langza is encouraged, environmental regulations strictly prohibit commercial excavation or removing fossils from their natural geological context—photograph them and leave them for future generations."
       }
     ]
   }
