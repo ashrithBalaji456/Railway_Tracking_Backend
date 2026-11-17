@@ -23,8 +23,29 @@ public class BlogServiceImpl implements BlogService {
     private final Map<String, List<BlogTipDTO>> tipsMap = new ConcurrentHashMap<>();
 
     public BlogServiceImpl() {
+        loadExternalStories("himachal_stories.json");
         initArticles();
         initTips();
+    }
+
+    private void loadExternalStories(String resourceName) {
+        try {
+            var is = getClass().getClassLoader().getResourceAsStream(resourceName);
+            if (is != null) {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                List<BlogArticleDTO> externalList = mapper.readValue(
+                    is,
+                    mapper.getTypeFactory().constructCollectionType(List.class, BlogArticleDTO.class)
+                );
+                if (externalList != null && !externalList.isEmpty()) {
+                    articles.addAll(externalList);
+                    System.out.println("Loaded " + externalList.size() + " external stories from " + resourceName);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Could not load external stories from " + resourceName + ": " + e.getMessage());
+        }
     }
 
     private void initArticles() {
